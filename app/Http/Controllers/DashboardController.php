@@ -2,76 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Absensi;
-use App\Models\AnalisisSiswa;
-use App\Models\Guru;
-use App\Models\Kelas;
-use App\Models\Nilai;
-use App\Models\Siswa;
 use Illuminate\Http\Request;
+
+
 
 class DashboardController extends Controller
 {
-    public function operator()
-    {
-        $totalSiswa = 990; // Canonical school total from mockup
-        $kehadiranHariIni = 93;
-        $rataRataNilai = 90.5;
-        $perluPerhatian = 5;
 
-        // Siswa Perlu Perhatian list matching Figma
-        $siswaPerhatian = [
-            ['nama' => 'Firdausi Anam', 'kelas' => 'VII A', 'avatar' => 'orange'],
-            ['nama' => 'Iqbal Imam', 'kelas' => 'XI F', 'avatar' => 'orange'],
-            ['nama' => 'Fahar Alif', 'kelas' => 'VII G', 'avatar' => 'orange'],
-            ['nama' => 'Lukman Hilman', 'kelas' => 'VI H', 'avatar' => 'orange'],
+    public function index(Request $request)
+    {
+        if (!session('user_login')) {
+            return redirect()->route('login');
+        }
+
+        // --- Ambil info pengguna dari sesi ---
+        $userLogin = session('user_login');
+
+        $dataDashboard = [
+            'total_siswa'     => 990,
+            'kehadiran_hari'  => '93%',
+            'rata_nilai'      => '90.5',
+            'perlu_perhatian' => 5,
         ];
 
-        return view('operator.dashboard', compact(
-            'totalSiswa',
-            'kehadiranHariIni',
-            'rataRataNilai',
-            'perluPerhatian',
-            'siswaPerhatian'
-        ));
-    }
-
-    public function wali()
-    {
-        $totalSiswa = 34; // Total students in class VII A
-        $kehadiranHariIni = 93;
-        $rataRataNilai = 90.5;
-        $perluPerhatian = 1;
-
         $siswaPerhatian = [
-            ['nama' => 'Firdausi Anam', 'kelas' => 'VII A', 'avatar' => 'orange'],
+            ['nama' => 'Firdausi Anam', 'kelas' => 'VII A'],
+            ['nama' => 'Iqbal Imam',    'kelas' => 'VII B'],
+            ['nama' => 'Fahar Alif',    'kelas' => 'VIII C'],
+            ['nama' => 'Lukman Hilman', 'kelas' => 'VIII D'],
         ];
 
-        return view('wali.dashboard', compact(
-            'totalSiswa',
-            'kehadiranHariIni',
-            'rataRataNilai',
-            'perluPerhatian',
-            'siswaPerhatian'
-        ));
-    }
-
-    public function guru()
-    {
-        $totalSiswa = 34;
-        $kehadiranHariIni = 93;
-        $rataRataNilai = 90.5;
-        $perluPerhatian = 5;
-
-        $siswaPerhatian = [
-            ['nama' => 'Iqbal Imam', 'kelas' => 'XI F', 'avatar' => 'orange'],
-        ];
-
-        return view('guru.dashboard', compact(
-            'totalSiswa',
-            'kehadiranHariIni',
-            'rataRataNilai',
-            'perluPerhatian',
+        return view('dashboard.index', compact(
+            'userLogin',
+            'dataDashboard',
             'siswaPerhatian'
         ));
     }
