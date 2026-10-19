@@ -2,48 +2,63 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'users';
+    protected $primaryKey = 'id_user';
+    public $timestamps = false;
+
     protected $fillable = [
-        'name',
-        'email',
+        'username',
         'password',
+        'role',
+        'id_guru',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function guru()
+    {
+        return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
+    }
+
+    public function isOperator(): bool
+    {
+        return $this->role === 'Operator';
+    }
+
+    public function isWaliKelas(): bool
+    {
+        return $this->role === 'Wali Kelas';
+    }
+
+    public function isGuruMapel(): bool
+    {
+        return $this->role === 'Guru Mapel';
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->guru) {
+            return $this->guru->nama_guru;
+        }
+        if ($this->role === 'Operator') {
+            return 'Admin Operator Website';
+        }
+        return $this->username;
     }
 }
