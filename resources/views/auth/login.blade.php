@@ -111,9 +111,6 @@
 
             {{-- Panduan Akun Skeleton untuk Belajar/Testing --}}
             <div class="mt-8 pt-5 border-t border-gray-100 text-center">
-                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
-                    Akun Percobaan (Password: <span class="text-edu-orange font-bold font-mono">password</span>)
-                </p>
                 <div class="grid grid-cols-3 gap-1.5 text-[11px] font-medium text-gray-600">
                     <div class="bg-gray-50 py-1.5 px-1 rounded-lg border border-gray-100">
                         <b class="text-gray-900 block">operator</b> (Admin)
