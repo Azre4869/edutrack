@@ -36,11 +36,6 @@
 </head>
 <body class="min-h-screen bg-edu-blue flex items-center justify-center font-heading p-4">
 
-    {{--
-        CATATAN BELAJAR:
-        Halaman Login ini sengaja TIDAK menggunakan @extends('layouts.app')
-        karena halaman login memiliki desain mandiri (layar penuh tanpa sidebar).
-    --}}
 
     <div class="w-full max-w-md">
         <div class="bg-white rounded-[32px] shadow-2xl p-8 md:p-10 border border-white/20">
