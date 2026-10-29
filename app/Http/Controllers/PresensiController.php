@@ -57,7 +57,9 @@ class PresensiController extends Controller
         $tanggal = $request->input('tanggal', now()->toDateString());
         $semesterId = $request->input('semester_id', 2);
         $statusList = $request->input('status', []); // [id_siswa => 'Hadir'|'Sakit'|'Izin'|'Alpha']
-        $mapelId = $request->input('mapel_id', 1);
+        
+        $firstMapel = MataPelajaran::first();
+        $mapelId = $request->input('mapel_id', $firstMapel->id_mapel ?? 1);
 
         foreach ($statusList as $siswaId => $status) {
             Absensi::updateOrCreate(
@@ -73,7 +75,14 @@ class PresensiController extends Controller
             );
         }
 
-        return back()->with('success', 'Presensi kelas berhasil disimpan.');
+        $role = auth()->user()->role ?? 'Wali Kelas';
+        $prefix = $role === 'Operator' ? 'operator' : 'wali';
+
+        return redirect()->route($prefix . '.presensi-kelas', [
+            'tanggal' => $tanggal,
+            'kelas_id' => $request->input('kelas_id', 1),
+            'semester_id' => $semesterId,
+        ])->with('success', 'Presensi kelas tanggal ' . date('d/m/Y', strtotime($tanggal)) . ' berhasil disimpan.');
     }
 
     // ==================== PRESENSI EKSTRAKURIKULER ====================
