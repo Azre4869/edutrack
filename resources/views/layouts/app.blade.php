@@ -138,35 +138,23 @@
                         </div>
                     </div>
 
-                    <!-- Submenu Nilai (Operator) -->
-                    <div>
-                        <button onclick="document.getElementById('submenu-nilai-op').classList.toggle('hidden')" class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100">
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-book-open w-6 text-center mr-2 text-edu-orange"></i>
-                                <span>Nilai</span>
-                            </span>
-                            <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
-                        </button>
-                        <div id="submenu-nilai-op" class="pl-6 space-y-1 {{ request()->is('operator/nilai*') || request()->is('operator/capaian*') ? '' : 'hidden' }}">
-                            <a href="{{ route('operator.nilai') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.nilai*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Input Nilai</a>
-                            <a href="{{ route('operator.capaian') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.capaian*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Input Capaian</a>
-                        </div>
-                    </div>
+                    <!-- Nilai Siswa (Operator) -->
+                    <a href="{{ route('operator.nilai') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('operator.nilai*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-book-open w-6 text-center mr-2 {{ request()->routeIs('operator.nilai*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Nilai Siswa</span>
+                    </a>
 
-                    <!-- Submenu Presensi (Operator) -->
-                    <div>
-                        <button onclick="document.getElementById('submenu-presensi-op').classList.toggle('hidden')" class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100">
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-clipboard-check w-6 text-center mr-2 text-edu-orange"></i>
-                                <span>Presensi</span>
-                            </span>
-                            <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
-                        </button>
-                        <div id="submenu-presensi-op" class="pl-6 space-y-1 {{ request()->is('operator/presensi*') ? '' : 'hidden' }}">
-                            <a href="{{ route('operator.presensi-kelas') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.presensi-kelas*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Presensi Kelas</a>
-                            <a href="{{ route('operator.presensi-ekskul') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.presensi-ekskul*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Ekstrakulikuler</a>
-                        </div>
-                    </div>
+                    <!-- Presensi Siswa (Operator) -->
+                    <a href="{{ route('operator.presensi-kelas') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('operator.presensi-kelas*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-clipboard-user w-6 text-center mr-2 {{ request()->routeIs('operator.presensi-kelas*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Presensi Siswa</span>
+                    </a>
+
+                    <!-- Ekstrakurikuler (Operator) -->
+                    <a href="{{ route('operator.presensi-ekskul') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('operator.presensi-ekskul*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-medal w-6 text-center mr-2 {{ request()->routeIs('operator.presensi-ekskul*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Ekstrakurikuler</span>
+                    </a>
 
                     <a href="{{ route('operator.rapor') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('operator.rapor*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-book-bookmark w-6 text-center mr-2 {{ request()->routeIs('operator.rapor*') ? 'text-white' : 'text-edu-orange' }}"></i>
@@ -225,20 +213,17 @@
                         <span>Input Prestasi</span>
                     </a>
 
-                    <!-- Submenu Presensi -->
-                    <div>
-                        <button onclick="document.getElementById('submenu-presensi-wali').classList.toggle('hidden')" class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100">
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-clipboard-check w-6 text-center mr-2 text-edu-orange"></i>
-                                <span>Presensi</span>
-                            </span>
-                            <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
-                        </button>
-                        <div id="submenu-presensi-wali" class="pl-6 space-y-1 {{ request()->is('wali/presensi*') ? '' : 'hidden' }}">
-                            <a href="{{ route('wali.presensi-kelas') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('wali.presensi-kelas*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Presensi Kelas</a>
-                            <a href="{{ route('wali.presensi-ekskul') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('wali.presensi-ekskul*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Ekstrakulikuler</a>
-                        </div>
-                    </div>
+                    <!-- Presensi Siswa (Wali Kelas) -->
+                    <a href="{{ route('wali.presensi-kelas') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('wali.presensi-kelas*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-clipboard-user w-6 text-center mr-2 {{ request()->routeIs('wali.presensi-kelas*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Presensi Siswa</span>
+                    </a>
+
+                    <!-- Ekstrakurikuler (Wali Kelas) -->
+                    <a href="{{ route('wali.presensi-ekskul') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('wali.presensi-ekskul*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-medal w-6 text-center mr-2 {{ request()->routeIs('wali.presensi-ekskul*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Ekstrakurikuler</span>
+                    </a>
 
                     <!-- Rapor -->
                     <a href="{{ route('wali.rapor') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('wali.rapor*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
@@ -288,20 +273,11 @@
                         </div>
                     </div>
 
-                    <!-- Submenu Nilai -->
-                    <div>
-                        <button onclick="document.getElementById('submenu-nilai-guru').classList.toggle('hidden')" class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100">
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-book-open w-6 text-center mr-2 text-edu-orange"></i>
-                                <span>Nilai</span>
-                            </span>
-                            <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
-                        </button>
-                        <div id="submenu-nilai-guru" class="pl-6 space-y-1 {{ request()->is('guru/nilai*') || request()->is('guru/capaian*') ? '' : 'hidden' }}">
-                            <a href="{{ route('guru.nilai') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('guru.nilai*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Input Nilai</a>
-                            <a href="{{ route('guru.capaian') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('guru.capaian*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Input Capaian</a>
-                        </div>
-                    </div>
+                    <!-- Nilai Siswa (Guru Mapel) -->
+                    <a href="{{ route('guru.nilai') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('guru.nilai*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-book-open w-6 text-center mr-2 {{ request()->routeIs('guru.nilai*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Nilai Siswa</span>
+                    </a>
 
                     <!-- Notifikasi -->
                     <a href="{{ route('guru.notifikasi') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('guru.notifikasi*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">

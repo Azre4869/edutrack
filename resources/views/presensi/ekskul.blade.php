@@ -1,64 +1,89 @@
 @extends('layouts.app')
 
-@section('title', 'Presensi Ekstrakurikuler')
-@section('page_title', 'Presensi')
-@section('page_subtitle', 'Dashboard > Presensi > Ekstrakulikuler')
+@section('title', 'Ekstrakurikuler')
+@section('page_title', 'Ekstrakurikuler')
+@section('page_subtitle', 'Dashboard > Ekstrakurikuler')
 
 @section('content')
-<form action="{{ route('wali.presensi-ekskul.store') }}" method="POST">
-    @csrf
+@php
+    $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'wali';
+    $isWali = auth()->user()->isWaliKelas();
+@endphp
 
-    <!-- FILTER BAR -->
-    <div class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-4">
-                <!-- Tahun Ajaran -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
-                    <select name="tahun_ajaran" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        <option value="2026/2027" selected>2026/2027</option>
-                        <option value="2025/2026">2025/2026</option>
-                    </select>
-                </div>
+@if(session('success'))
+    <div class="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 px-5 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-sm font-heading">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+@endif
 
-                <!-- Semester -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
-                    <select name="semester_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        @foreach($semesterList as $sm)
-                            <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Kelas -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Kelas</label>
-                    <select name="kelas_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        @foreach($kelasList as $k)
-                            <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Search -->
-                <div class="pt-4 flex-1 min-w-[240px]">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-edu-orange text-xs"></i>
-                        <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, atau ekstrakulikuler......" class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
-                    </div>
-                </div>
+<!-- FILTER BAR (FORM MURNI GET - TIDAK MENYIMPAN DATA SAAT GANTI FILTER) -->
+<form id="filterForm" method="GET" action="{{ route($rolePrefix . '.presensi-ekskul') }}" class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Tahun Ajaran -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
+                <select name="tahun_ajaran" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <option value="2026/2027" selected>2026/2027</option>
+                    <option value="2025/2026">2025/2026</option>
+                </select>
             </div>
 
-            <!-- Simpan Semua -->
-            <div class="pt-4">
-                <button type="submit" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    <span>Simpan Semua</span>
-                </button>
+            <!-- Semester -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
+                <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @foreach($semesterList as $sm)
+                        <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Kelas -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Kelas
+                    @if($isWali)
+                        <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
+                    @endif
+                </label>
+                <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @foreach($kelasList as $k)
+                        <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="pt-4 flex-1 min-w-[240px]">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-edu-orange text-xs"></i>
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, atau ekstrakulikuler......" class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
+                </div>
             </div>
         </div>
+
+        <!-- Simpan Semua -->
+        <div class="pt-4">
+            <button type="submit" form="formPresensiEkskul" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Simpan Semua</span>
+            </button>
+        </div>
     </div>
+</form>
+
+<!-- FORM SIMPAN NILAI EKSTRAKURIKULER (POST) -->
+<form id="formPresensiEkskul" action="{{ route($rolePrefix . '.presensi-ekskul.store') }}" method="POST">
+    @csrf
+    <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
+    <input type="hidden" name="kelas_id" value="{{ $selectedKelasId }}">
 
     <!-- EXCEL TABLE -->
     <div class="bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden w-full max-w-full">
@@ -103,58 +128,69 @@
 
                             <!-- Ekskul 1 -->
                             <td class="p-1 border border-black">
-                                <select name="ekskul[{{ $s->id_siswa }}][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
+                                <select name="ekskul[{{ $s->id_siswa }}][0][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
                                     <option value="">-- Pilih --</option>
                                     @foreach($ekskulList as $e)
-                                        <option value="{{ $e->id_ekskul }}" {{ ($ne1 && $ne1->id_ekskul == $e->id_ekskul) || ($loop->first && $idx == 0) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
+                                        <option value="{{ $e->id_ekskul }}" {{ ($ne1 && $ne1->id_ekskul == $e->id_ekskul) || (!$ne1 && $loop->first && $idx == 0) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
                                     @endforeach
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <select name="ekskul[{{ $s->id_siswa }}][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
-                                    <option value="Sangat Baik" selected>A</option>
-                                    <option value="Baik">B</option>
-                                    <option value="Cukup">C</option>
+                                <select name="ekskul[{{ $s->id_siswa }}][0][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
+                                    <option value="Sangat Baik" {{ ($ne1 && $ne1->predikat == 'Sangat Baik') || (!$ne1) ? 'selected' : '' }}>A</option>
+                                    <option value="Baik" {{ ($ne1 && $ne1->predikat == 'Baik') ? 'selected' : '' }}>B</option>
+                                    <option value="Cukup" {{ ($ne1 && $ne1->predikat == 'Cukup') ? 'selected' : '' }}>C</option>
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <button type="button" onclick="alert('Deskripsi Ekskul 1: {{ $ne1->deskripsi ?? 'Sangat aktif dalam kegiatan kepramukaan.' }}')" class="w-6 h-6 rounded bg-edu-blue text-white inline-flex items-center justify-center text-[10px]">
+                                <input type="hidden" name="ekskul[{{ $s->id_siswa }}][0][deskripsi]" value="{{ $ne1->deskripsi ?? 'Aktif dan disiplin dalam kegiatan.' }}">
+                                <button type="button" onclick="alert('Deskripsi Ekskul 1: {{ $ne1->deskripsi ?? 'Aktif dan disiplin dalam kegiatan.' }}')" class="w-6 h-6 rounded bg-edu-blue text-white inline-flex items-center justify-center text-[10px] hover:bg-blue-700 transition">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                             </td>
 
                             <!-- Ekskul 2 -->
                             <td class="p-1 border border-black">
-                                <select class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
+                                <select name="ekskul[{{ $s->id_siswa }}][1][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
                                     <option value="">-- Pilih --</option>
                                     @foreach($ekskulList as $e)
-                                        <option value="{{ $e->id_ekskul }}" {{ $idx == 0 && $e->id_ekskul == 3 ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
+                                        <option value="{{ $e->id_ekskul }}" {{ ($ne2 && $ne2->id_ekskul == $e->id_ekskul) || (!$ne2 && $idx == 0 && $e->id_ekskul == 3) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
                                     @endforeach
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <span class="px-2 py-0.5 rounded font-bold text-xs bg-amber-100 text-amber-700">B</span>
+                                <select name="ekskul[{{ $s->id_siswa }}][1][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
+                                    <option value="Sangat Baik" {{ ($ne2 && $ne2->predikat == 'Sangat Baik') ? 'selected' : '' }}>A</option>
+                                    <option value="Baik" {{ ($ne2 && $ne2->predikat == 'Baik') || (!$ne2) ? 'selected' : '' }}>B</option>
+                                    <option value="Cukup" {{ ($ne2 && $ne2->predikat == 'Cukup') ? 'selected' : '' }}>C</option>
+                                </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <button type="button" class="w-6 h-6 rounded bg-edu-blue text-white inline-flex items-center justify-center text-[10px]">
+                                <input type="hidden" name="ekskul[{{ $s->id_siswa }}][1][deskripsi]" value="{{ $ne2->deskripsi ?? 'Mengikuti kegiatan secara teratur.' }}">
+                                <button type="button" onclick="alert('Deskripsi Ekskul 2: {{ $ne2->deskripsi ?? 'Mengikuti kegiatan secara teratur.' }}')" class="w-6 h-6 rounded bg-edu-blue text-white inline-flex items-center justify-center text-[10px] hover:bg-blue-700 transition">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                             </td>
 
                             <!-- Ekskul 3 -->
                             <td class="p-1 border border-black">
-                                <select class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
+                                <select name="ekskul[{{ $s->id_siswa }}][2][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
                                     <option value="">-- Pilih --</option>
                                     @foreach($ekskulList as $e)
-                                        <option value="{{ $e->id_ekskul }}" {{ $idx == 0 && $e->id_ekskul == 2 ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
+                                        <option value="{{ $e->id_ekskul }}" {{ ($ne3 && $ne3->id_ekskul == $e->id_ekskul) || (!$ne3 && $idx == 0 && $e->id_ekskul == 2) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
                                     @endforeach
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <span class="px-2 py-0.5 rounded font-bold text-xs bg-red-100 text-red-700">C</span>
+                                <select name="ekskul[{{ $s->id_siswa }}][2][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
+                                    <option value="Sangat Baik" {{ ($ne3 && $ne3->predikat == 'Sangat Baik') ? 'selected' : '' }}>A</option>
+                                    <option value="Baik" {{ ($ne3 && $ne3->predikat == 'Baik') ? 'selected' : '' }}>B</option>
+                                    <option value="Cukup" {{ ($ne3 && $ne3->predikat == 'Cukup') || (!$ne3) ? 'selected' : '' }}>C</option>
+                                </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <button type="button" class="w-6 h-6 rounded bg-edu-blue text-white inline-flex items-center justify-center text-[10px]">
+                                <input type="hidden" name="ekskul[{{ $s->id_siswa }}][2][deskripsi]" value="{{ $ne3->deskripsi ?? 'Perlu ditingkatkan keaktifannya.' }}">
+                                <button type="button" onclick="alert('Deskripsi Ekskul 3: {{ $ne3->deskripsi ?? 'Perlu ditingkatkan keaktifannya.' }}')" class="w-6 h-6 rounded bg-edu-blue text-white inline-flex items-center justify-center text-[10px] hover:bg-blue-700 transition">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                             </td>
@@ -174,4 +210,5 @@
         </div>
     </div>
 </form>
+@endsection
 @endsection

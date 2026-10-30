@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Presensi Kelas')
+@section('title', 'Presensi Siswa')
 @section('page_title', 'Presensi')
-@section('page_subtitle', 'Dashboard > Presensi')
+@section('page_subtitle', 'Dashboard > Presensi Siswa')
 
 @section('content')
 @php
@@ -57,7 +57,12 @@
 
                 <!-- Kelas -->
                 <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Kelas</label>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                        Kelas
+                        @if((auth()->user()->role ?? '') === 'Wali Kelas')
+                            <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
+                        @endif
+                    </label>
                     <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                         @foreach($kelasList as $k)
                             <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
