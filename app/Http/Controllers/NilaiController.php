@@ -16,13 +16,41 @@ class NilaiController extends Controller
     // ==================== INPUT NILAI (GURU MAPEL) ====================
     public function inputNilai(Request $request)
     {
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $user = auth()->user();
         $semesterList = Semester::orderBy('id_semester')->get();
-        $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
+
+        // --- Data-Level Access Control ---
+        if ($user->isGuruMapel()) {
+            // Guru Mapel hanya melihat mapel yang diampu
+            $mapelList = $user->getMataPelajaranAmpuan();
+            $kelasList = Kelas::orderBy('nama_kelas')->get(); // Guru bisa mengajar di banyak kelas
+            $defaultMapelId = $mapelList->first()->id_mapel ?? null;
+        } elseif ($user->isWaliKelas()) {
+            // Wali Kelas hanya melihat kelas binaannya
+            $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
+            $kelasBinaan = $user->getKelasBinaan();
+            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
+            $defaultMapelId = $mapelList->first()->id_mapel ?? null;
+        } else {
+            // Operator: akses penuh
+            $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $defaultMapelId = 3; // Default Bahasa Inggris as in mockup
+        }
 
         $selectedKelasId = $request->query('kelas_id', $kelasList->first()->id_kelas ?? 1);
         $selectedSemesterId = $request->query('semester_id', 2);
-        $selectedMapelId = $request->query('mapel_id', 3); // Default Bahasa Inggris as in mockup
+        $selectedMapelId = $request->query('mapel_id', $defaultMapelId);
+
+        // Proteksi jika user mencoba mengubah ID via URL query string
+        if ($user->isGuruMapel() && $mapelList->isNotEmpty()) {
+            if (!$mapelList->contains('id_mapel', $selectedMapelId)) {
+                $selectedMapelId = $mapelList->first()->id_mapel;
+            }
+        } elseif ($user->isWaliKelas() && $user->getKelasBinaan()) {
+            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        }
+
         $search = $request->query('search');
 
         $query = Siswa::where('id_kelas', $selectedKelasId);
@@ -56,9 +84,17 @@ class NilaiController extends Controller
 
     public function storeNilai(Request $request)
     {
+        $user = auth()->user();
         $semesterId = $request->input('semester_id', 2);
         $mapelId = $request->input('mapel_id', 3);
         $nilaiData = $request->input('nilai', []);
+
+        if ($user->isGuruMapel()) {
+            $mapelAmpuan = $user->getMataPelajaranAmpuan();
+            if ($mapelAmpuan->isNotEmpty() && !$mapelAmpuan->contains('id_mapel', $mapelId)) {
+                abort(403, 'Akses ditolak: Anda hanya dapat menyimpan nilai untuk mata pelajaran yang Anda ampu.');
+            }
+        }
 
         foreach ($nilaiData as $siswaId => $item) {
             $nilaiAkhir = $item['nilai_akhir'] ?? $item['rata_rata'] ?? 85.00;
@@ -101,6 +137,14 @@ class NilaiController extends Controller
 
     public function storeCapaian(Request $request)
     {
+        $user = auth()->user();
+        if ($user->isGuruMapel()) {
+            $mapelAmpuan = $user->getMataPelajaranAmpuan();
+            if ($mapelAmpuan->isNotEmpty() && !$mapelAmpuan->contains('id_mapel', $request->mapel_id)) {
+                return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak mengampu mata pelajaran ini.'], 403);
+            }
+        }
+
         $request->validate([
             'siswa_id' => 'required|exists:siswa,id_siswa',
             'mapel_id' => 'required|exists:mata_pelajaran,id_mapel',
@@ -143,10 +187,25 @@ class NilaiController extends Controller
     // ==================== INPUT PRESTASI (WALI KELAS) ====================
     public function inputPrestasi(Request $request)
     {
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $user = auth()->user();
         $semesterList = Semester::orderBy('id_semester')->get();
 
-        $selectedKelasId = $request->query('kelas_id', $kelasList->first()->id_kelas ?? 1);
+        // --- Data-Level Access Control ---
+        if ($user->isWaliKelas()) {
+            // Wali Kelas hanya melihat kelas binaannya
+            $kelasBinaan = $user->getKelasBinaan();
+            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+        } else {
+            // Operator: akses penuh
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+        }
+
+        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
+        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
+            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        }
         $selectedSemesterId = $request->query('semester_id', 2);
         $search = $request->query('search');
 

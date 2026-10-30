@@ -16,10 +16,24 @@ class PresensiController extends Controller
     // ==================== PRESENSI KELAS ====================
     public function presensiKelas(Request $request)
     {
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $user = auth()->user();
         $semesterList = Semester::orderBy('id_semester')->get();
 
-        $selectedKelasId = $request->query('kelas_id', $kelasList->first()->id_kelas ?? 1);
+        // Data-Level Access Control
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->getKelasBinaan();
+            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+        } else {
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+        }
+
+        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
+        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
+            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        }
+
         $selectedSemesterId = $request->query('semester_id', 2);
         $selectedTanggal = $request->query('tanggal', now()->toDateString());
         $search = $request->query('search');
@@ -88,11 +102,25 @@ class PresensiController extends Controller
     // ==================== PRESENSI EKSTRAKURIKULER ====================
     public function presensiEkskul(Request $request)
     {
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $user = auth()->user();
         $semesterList = Semester::orderBy('id_semester')->get();
         $ekskulList = Ekstrakurikuler::orderBy('nama_ekskul')->get();
 
-        $selectedKelasId = $request->query('kelas_id', $kelasList->first()->id_kelas ?? 1);
+        // Data-Level Access Control
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->getKelasBinaan();
+            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+        } else {
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+        }
+
+        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
+        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
+            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        }
+
         $selectedSemesterId = $request->query('semester_id', 2);
         $search = $request->query('search');
 
@@ -127,19 +155,25 @@ class PresensiController extends Controller
         $semesterId = $request->input('semester_id', 2);
         $ekskulEntries = $request->input('ekskul', []);
 
-        foreach ($ekskulEntries as $siswaId => $data) {
-            if (!empty($data['id_ekskul'])) {
-                NilaiEkstrakurikuler::updateOrCreate(
-                    [
-                        'id_siswa' => $siswaId,
-                        'id_ekskul' => $data['id_ekskul'],
-                        'id_semester' => $semesterId,
-                    ],
-                    [
-                        'predikat' => $data['predikat'] ?? 'Baik',
-                        'deskripsi' => $data['deskripsi'] ?? 'Aktif mengikuti kegiatan.',
-                    ]
-                );
+        foreach ($ekskulEntries as $siswaId => $items) {
+            // Dukung format single array atau multi-ekskul (Ekskul 1, 2, 3)
+            if (isset($items['id_ekskul'])) {
+                $items = [$items];
+            }
+            foreach ($items as $data) {
+                if (!empty($data['id_ekskul'])) {
+                    NilaiEkstrakurikuler::updateOrCreate(
+                        [
+                            'id_siswa' => $siswaId,
+                            'id_ekskul' => $data['id_ekskul'],
+                            'id_semester' => $semesterId,
+                        ],
+                        [
+                            'predikat' => $data['predikat'] ?? 'Baik',
+                            'deskripsi' => $data['deskripsi'] ?? 'Aktif mengikuti kegiatan ekstrakurikuler.',
+                        ]
+                    );
+                }
             }
         }
 

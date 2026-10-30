@@ -14,10 +14,26 @@ class DataMasterController extends Controller
     // ==================== SISWA ====================
     public function siswa(Request $request)
     {
+        $user = auth()->user();
         $search = $request->query('search');
         $perPage = $request->query('per_page', 21);
 
         $query = Siswa::with('kelas');
+
+        // Data-Level Access Control untuk Wali Kelas
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->getKelasBinaan();
+            if ($kelasBinaan) {
+                $query->where('id_kelas', $kelasBinaan->id_kelas);
+                $kelasList = collect([$kelasBinaan]);
+            } else {
+                $query->whereRaw('1 = 0');
+                $kelasList = collect();
+            }
+        } else {
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+        }
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
@@ -29,7 +45,6 @@ class DataMasterController extends Controller
         }
 
         $siswa = $query->paginate($perPage)->withQueryString();
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
 
         return view('master.siswa', compact('siswa', 'kelasList', 'search', 'perPage'));
     }
