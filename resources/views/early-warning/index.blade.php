@@ -5,6 +5,10 @@
 @section('page_subtitle', 'Dashboard > Early Warning')
 
 @section('content')
+@php
+    $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'wali';
+    $isWali = auth()->user()->isWaliKelas();
+@endphp
 <!-- 4 TOP STAT CARDS -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 font-heading">
     <!-- Tinggi -->
@@ -76,7 +80,7 @@
             <!-- Semester -->
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
-                <select name="semester_id" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                <select name="semester_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($semesterList as $sm)
                         <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
                     @endforeach
@@ -85,8 +89,13 @@
 
             <!-- Kelas -->
             <div>
-                <label class="block text-[11px] font-bold text-gray-700 mb-1">Kelas</label>
-                <select name="kelas_id" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Kelas
+                    @if($isWali)
+                        <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
+                    @endif
+                </label>
+                <select name="kelas_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($kelasList as $k)
                         <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
                     @endforeach
@@ -281,7 +290,7 @@
 
         <!-- ACTION BUTTON KE TINDAK LANJUT -->
         <div class="mt-6 pt-4 border-t border-gray-100">
-            <a href="{{ route('wali.tindak-lanjut', $selectedSiswa['id_siswa']) }}" class="w-full bg-edu-blue hover:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold font-heading flex items-center justify-center space-x-2 shadow-md transition">
+            <a href="{{ route($rolePrefix . '.tindak-lanjut', $selectedSiswa['id_siswa']) }}" class="w-full bg-edu-blue hover:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold font-heading flex items-center justify-center space-x-2 shadow-md transition">
                 <span>Tindak Lanjut Siswa Ini</span>
                 <i class="fa-solid fa-arrow-right text-xs"></i>
             </a>
