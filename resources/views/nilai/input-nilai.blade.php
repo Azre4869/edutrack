@@ -5,70 +5,104 @@
 @section('page_subtitle', 'Dashboard > Nilai > Input Nilai')
 
 @section('content')
-<form id="formInputNilai" action="{{ route('guru.nilai.store') }}" method="POST">
-    @csrf
+@php
+    $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'guru';
+    $isGuru = auth()->user()->isGuruMapel();
+    $isWali = auth()->user()->isWaliKelas();
+@endphp
 
-    <!-- FILTER BAR -->
-    <div class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-4">
-                <!-- Tahun Ajaran -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
-                    <select name="tahun_ajaran" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        <option value="2026/2027" selected>2026/2027</option>
-                        <option value="2025/2026">2025/2026</option>
-                    </select>
-                </div>
+@if(session('success'))
+    <div class="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 px-5 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-sm font-heading">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+@endif
 
-                <!-- Semester -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
-                    <select name="semester_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        @foreach($semesterList as $sm)
-                            <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Kelas -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Kelas</label>
-                    <select name="kelas_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        @foreach($kelasList as $k)
-                            <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Mata Pelajaran -->
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Mata Pelajaran</label>
-                    <select name="mapel_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                        @foreach($mapelList as $m)
-                            <option value="{{ $m->id_mapel }}" {{ $selectedMapelId == $m->id_mapel ? 'selected' : '' }}>{{ $m->nama_mapel }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Search -->
-                <div class="pt-4 flex-1 min-w-[220px]">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-edu-orange text-xs"></i>
-                        <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, atau kelas siswa......" class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
-                    </div>
-                </div>
+<!-- FILTER BAR (FORM MURNI GET - TIDAK MENYIMPAN DATA SAAT GANTI FILTER) -->
+<form id="filterForm" method="GET" action="{{ route($rolePrefix . '.nilai') }}" class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Tahun Ajaran -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
+                <select name="tahun_ajaran" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <option value="2026/2027" selected>2026/2027</option>
+                    <option value="2025/2026">2025/2026</option>
+                </select>
             </div>
 
-            <!-- Simpan Semua -->
-            <div class="pt-4">
-                <button type="submit" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    <span>Simpan Semua</span>
-                </button>
+            <!-- Semester -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
+                <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @foreach($semesterList as $sm)
+                        <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Kelas -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Kelas
+                    @if($isWali)
+                        <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
+                    @endif
+                </label>
+                <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @foreach($kelasList as $k)
+                        <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Mata Pelajaran -->
+            <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Mata Pelajaran
+                    @if($isGuru)
+                        <span class="text-[10px] text-edu-orange font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Ampuan</span>
+                    @endif
+                </label>
+                <select name="mapel_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @forelse($mapelList as $m)
+                        <option value="{{ $m->id_mapel }}" {{ $selectedMapelId == $m->id_mapel ? 'selected' : '' }}>{{ $m->nama_mapel }}</option>
+                    @empty
+                        <option value="">Belum ada mapel diampu</option>
+                    @endforelse
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="pt-4 flex-1 min-w-[220px]">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-edu-orange text-xs"></i>
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, atau kelas siswa......" class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
+                </div>
             </div>
         </div>
+
+        <!-- Simpan Semua Button (Mentarget form input nilai) -->
+        <div class="pt-4">
+            <button type="submit" form="formInputNilai" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Simpan Semua</span>
+            </button>
+        </div>
     </div>
+</form>
+
+<!-- FORM SIMPAN NILAI (POST) -->
+<form id="formInputNilai" action="{{ route($rolePrefix . '.nilai.store') }}" method="POST">
+    @csrf
+    <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
+    <input type="hidden" name="mapel_id" value="{{ $selectedMapelId }}">
+    <input type="hidden" name="kelas_id" value="{{ $selectedKelasId }}">
 
     <!-- EXCEL SPREADSHEET TABLE -->
     <div class="bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden w-full max-w-full">
@@ -83,7 +117,7 @@
                         <th colspan="8" class="p-2 border border-black">Nilai Sumatif (TP)</th>
                         <th rowspan="2" class="p-3 w-14 border border-black">NS</th>
                         <th rowspan="2" class="p-3 w-14 border border-black">SAS</th>
-                        <th rowspan="2" class="p-3 w-16 border border-black">Nilai Rata-Rata</th>
+                        <th rowspan="2" class="p-3 w-16 border border-black">Nilai Akhir</th>
                         <th rowspan="2" class="p-3 min-w-[210px] border border-black">Aksi Capaian</th>
                         <th rowspan="2" class="p-3 w-28 border border-black">Status</th>
                     </tr>
@@ -173,7 +207,7 @@
     </div>
 </form>
 
-<!-- MODAL INPUT CAPAIAN KOMPETENSI (MATCHING Nilai Input Capaian.png) -->
+<!-- MODAL INPUT CAPAIAN KOMPETENSI -->
 <div id="modalCapaian" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-edu-darkblue rounded-3xl p-8 max-w-xl w-full shadow-2xl border border-blue-400/30 text-white font-heading">
         <h3 id="modalCapaianTitle" class="text-2xl font-black text-center mb-6">Capaian Kompetensi 1</h3>
@@ -231,7 +265,7 @@
         const form = document.getElementById('formCapaian');
         const formData = new FormData(form);
 
-        fetch("{{ route('guru.capaian.store') }}", {
+        fetch("{{ route($rolePrefix . '.capaian.store') }}", {
             method: 'POST',
             body: formData,
             headers: {
