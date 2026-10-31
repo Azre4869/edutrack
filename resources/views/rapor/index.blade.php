@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Rapor')
-@section('page_title', 'Rapor')
-@section('page_subtitle', 'Dashboard > Rapor')
+@section('title', $isWali ? 'Rapor Siswa' : 'Monitoring Kelengkapan Rapor')
+@section('page_title', $isWali ? 'Rapor Siswa' : 'Monitoring Rapor')
+@section('page_subtitle', $isWali ? 'Dashboard > Rapor' : 'Dashboard > Monitoring Rapor')
 
 @section('content')
 @php
@@ -74,7 +74,9 @@
                             <th class="p-3 text-center font-semibold w-12 border border-black">L/P</th>
                             <th class="p-3 text-center font-semibold w-20 border border-black">Kelas</th>
                             <th class="p-3 text-center font-semibold w-32 border border-black">Status Rapor</th>
+                            @if($isWali)
                             <th class="p-3 text-center font-semibold min-w-[160px] border border-black">Aksi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black bg-white font-body" id="raporTableBody">
@@ -95,28 +97,28 @@
                                     <span class="status-badge bg-red-100 text-red-600 text-[11px] font-bold px-3 py-1 rounded-full">Belum Lengkap</span>
                                 @endif
                             </td>
+                            @if($isWali)
                             <td class="p-2.5 text-center border border-black">
                                 <div class="flex items-center justify-center gap-1.5 font-heading">
                                     <a href="{{ route($rolePrefix . '.rapor.show', $s->id_siswa) }}" title="Lihat Rapor"
                                         class="w-7 h-7 rounded-lg bg-blue-100 text-edu-blue flex items-center justify-center hover:bg-blue-200 transition">
                                         <i class="fas fa-eye text-xs"></i>
                                     </a>
-                                    @if($isWali)
                                     <a href="{{ route('wali.rapor.cetak', $s->id_siswa) }}" title="Cetak Rapor" target="_blank"
                                         class="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center hover:bg-gray-200 transition">
                                         <i class="fas fa-print text-xs"></i>
                                     </a>
-                                    @endif
                                     <button type="button" onclick="toggleStatusRapor(this)" title="Toggle Status Kelengkapan"
                                         class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-sm transition cursor-pointer">
                                         <i class="fas fa-check text-xs"></i>
                                     </button>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-gray-500 border border-black">Tidak ada data siswa untuk kelas ini.</td>
+                            <td colspan="{{ $isWali ? 7 : 6 }}" class="p-8 text-center text-gray-500 border border-black">Tidak ada data siswa untuk kelas ini.</td>
                         </tr>
                         @endforelse
                     </tbody>

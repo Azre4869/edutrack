@@ -65,9 +65,13 @@ class RaporController extends Controller
 
     public function show($id)
     {
+        $user = auth()->user();
+        if ($user && $user->role === 'Operator') {
+            abort(403, 'Akses ditolak: Cetak dan detail rapor merupakan hak eksklusif Wali Kelas.');
+        }
+
         $siswa = Siswa::with(['kelas.waliKelas', 'nilai.mataPelajaran', 'nilai.capaian', 'prestasi', 'nilaiEkstrakurikuler.ekstrakurikuler'])->findOrFail($id);
 
-        $user = auth()->user();
         if ($user && $user->isWaliKelas()) {
             $kelasBinaan = $user->getKelasBinaan();
             if ($kelasBinaan && $siswa->id_kelas !== $kelasBinaan->id_kelas) {

@@ -158,7 +158,7 @@
 
                     <a href="{{ route('operator.rapor') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('operator.rapor*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-book-bookmark w-6 text-center mr-2 {{ request()->routeIs('operator.rapor*') ? 'text-white' : 'text-edu-orange' }}"></i>
-                        <span>Rapor</span>
+                        <span>Monitoring Rapor</span>
                     </a>
 
                     <!-- Submenu Early Warning (Operator) -->

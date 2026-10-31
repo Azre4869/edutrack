@@ -73,9 +73,8 @@ Route::middleware(['web'])->group(function () {
         Route::get('/presensi-ekskul', [PresensiController::class, 'presensiEkskul'])->name('presensi-ekskul');
         Route::post('/presensi-ekskul', [PresensiController::class, 'storePresensiEkskul'])->name('presensi-ekskul.store');
 
-        // Rapor, Early Warning, Laporan, Notifikasi
+        // Rapor (Monitoring), Early Warning, Laporan, Notifikasi
         Route::get('/rapor', [RaporController::class, 'index'])->name('rapor');
-        Route::get('/rapor/{id}', [RaporController::class, 'show'])->name('rapor.show');
         Route::get('/early-warning', [EarlyWarningController::class, 'index'])->name('early-warning');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
