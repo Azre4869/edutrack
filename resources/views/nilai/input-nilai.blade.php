@@ -136,13 +136,22 @@
                     @forelse($siswaList as $idx => $s)
                         @php
                             $rowNilai = $nilaiMap[$s->id_siswa] ?? null;
-                            $score = $rowNilai ? round($rowNilai->nilai_akhir) : ($idx === 0 ? 90 : ($idx === 1 ? 68 : 85));
                             $hasCapaian1 = $rowNilai && $rowNilai->capaian && !empty($rowNilai->capaian->deskripsi_1);
                             $hasCapaian2 = $rowNilai && $rowNilai->capaian && !empty($rowNilai->capaian->deskripsi_2);
                             $isComplete = $hasCapaian1 && $hasCapaian2;
                             $isPartial = ($hasCapaian1 || $hasCapaian2) && !$isComplete;
+
+                            // Nilai TP1-TP8 dari database
+                            $tpValues = [];
+                            for($t = 1; $t <= 8; $t++) {
+                                $col = 'tp' . $t;
+                                $tpValues[$t] = $rowNilai && !is_null($rowNilai->$col) ? (float)$rowNilai->$col : '';
+                            }
+                            $nsValue = $rowNilai && !is_null($rowNilai->ns) ? (float)$rowNilai->ns : '';
+                            $sasValue = $rowNilai && !is_null($rowNilai->sas) ? (float)$rowNilai->sas : '';
+                            $naValue = $rowNilai && !is_null($rowNilai->nilai_akhir) ? (float)$rowNilai->nilai_akhir : '';
                         @endphp
-                        <tr class="hover:bg-blue-50/40 transition">
+                        <tr class="hover:bg-blue-50/40 transition row-siswa" data-siswa-id="{{ $s->id_siswa }}">
                             <td class="p-2.5 text-center font-semibold border border-black">{{ $idx + 1 }}.</td>
                             <td class="p-2.5 text-center border border-black font-medium">{{ $s->nis }}</td>
                             <td class="p-2.5 font-bold text-gray-900 border border-black">{{ $s->nama }}</td>
@@ -151,29 +160,50 @@
                             <!-- TP1 - TP8 inputs -->
                             @for($tp = 1; $tp <= 8; $tp++)
                                 <td class="p-1 text-center border border-black">
-                                    <input type="number" min="0" max="100" value="{{ $score }}" class="w-10 text-center py-1 bg-transparent rounded font-medium focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
+                                    <input type="number" step="0.01" min="0" max="100" 
+                                        name="nilai[{{ $s->id_siswa }}][tp{{ $tp }}]" 
+                                        value="{{ $tpValues[$tp] }}" 
+                                        placeholder="-"
+                                        oninput="calculateRow(this)"
+                                        class="tp-input w-11 text-center py-1 bg-transparent rounded font-medium focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
                                 </td>
                             @endfor
 
-                            <!-- NS -->
-                            <td class="p-2 text-center font-bold text-gray-800 border border-black">{{ $score }}</td>
+                            <!-- NS (Rata-rata dari semua TP terisi) -->
+                            <td class="p-1 text-center font-bold text-gray-800 border border-black">
+                                <input type="number" step="0.01" min="0" max="100" readonly
+                                    name="nilai[{{ $s->id_siswa }}][ns]" 
+                                    value="{{ $nsValue }}" 
+                                    placeholder="-"
+                                    class="ns-input w-12 text-center py-1 bg-gray-50/80 rounded font-bold text-gray-800 border-0 focus:outline-none">
+                            </td>
 
-                            <!-- SAS -->
-                            <td class="p-2 text-center font-bold text-gray-800 border border-black">{{ $score }}</td>
+                            <!-- SAS (Sumatif Akhir Semester) -->
+                            <td class="p-1 text-center font-bold text-gray-800 border border-black">
+                                <input type="number" step="0.01" min="0" max="100" 
+                                    name="nilai[{{ $s->id_siswa }}][sas]" 
+                                    value="{{ $sasValue }}" 
+                                    placeholder="-"
+                                    oninput="calculateRow(this)"
+                                    class="sas-input w-12 text-center py-1 bg-transparent rounded font-bold focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
+                            </td>
 
-                            <!-- Nilai Rata-rata -->
-                            <td class="p-2 text-center font-black text-edu-blue border border-black">
-                                <input type="hidden" name="nilai[{{ $s->id_siswa }}][nilai_akhir]" value="{{ $score }}">
-                                {{ $score }}
+                            <!-- Nilai Akhir (Rata-rata NS dan SAS) -->
+                            <td class="p-1 text-center font-black text-edu-blue border border-black">
+                                <input type="number" step="0.01" min="0" max="100" readonly
+                                    name="nilai[{{ $s->id_siswa }}][nilai_akhir]" 
+                                    value="{{ $naValue }}" 
+                                    placeholder="-"
+                                    class="na-input w-14 text-center py-1 bg-blue-50/80 rounded font-black text-edu-blue border-0 focus:outline-none">
                             </td>
 
                             <!-- Aksi Capaian Buttons -->
                             <td class="p-2 text-center border border-black">
                                 <div class="flex items-center justify-center space-x-1.5 font-heading">
-                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 1)" class="px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian1 || $idx === 0 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
+                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 1)" class="px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian1 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
                                         Kompetensi 1
                                     </button>
-                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 2)" class="px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian2 || $idx === 0 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
+                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 2)" class="px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian2 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
                                         Kompetensi 2
                                     </button>
                                 </div>
@@ -181,11 +211,11 @@
 
                             <!-- Status Badge -->
                             <td class="p-2 text-center border border-black">
-                                @if($isComplete || $idx === 0)
+                                @if($isComplete)
                                     <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">
                                         Lengkap
                                     </span>
-                                @elseif($isPartial || $idx === 1)
+                                @elseif($isPartial)
                                     <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700">
                                         Belum Lengkap
                                     </span>
@@ -237,6 +267,53 @@
 </div>
 
 <script>
+    // Kalkulasi real-time per baris sesuai rumus Kurikulum Merdeka SMP
+    function calculateRow(inputElement) {
+        const row = inputElement.closest('tr.row-siswa');
+        if (!row) return;
+
+        // 1. Ambil nilai TP1 - TP8 yang terisi
+        const tpInputs = row.querySelectorAll('.tp-input');
+        let tpSum = 0;
+        let tpCount = 0;
+
+        tpInputs.forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && input.value.trim() !== '') {
+                tpSum += val;
+                tpCount++;
+            }
+        });
+
+        // 2. Hitung NS (Nilai Sumatif - rata-rata dari semua TP terisi)
+        const nsInput = row.querySelector('.ns-input');
+        let nsVal = null;
+        if (tpCount > 0) {
+            nsVal = Math.round((tpSum / tpCount) * 100) / 100;
+            nsInput.value = nsVal;
+        } else {
+            nsInput.value = '';
+        }
+
+        // 3. Ambil SAS (Sumatif Akhir Semester)
+        const sasInput = row.querySelector('.sas-input');
+        const sasRaw = parseFloat(sasInput.value);
+        const sasVal = (!isNaN(sasRaw) && sasInput.value.trim() !== '') ? sasRaw : null;
+
+        // 4. Hitung Nilai Akhir (Rata-rata NS dan SAS)
+        const naInput = row.querySelector('.na-input');
+        if (nsVal !== null && sasVal !== null) {
+            const na = Math.round(((nsVal + sasVal) / 2) * 100) / 100;
+            naInput.value = na;
+        } else if (nsVal !== null) {
+            naInput.value = nsVal;
+        } else if (sasVal !== null) {
+            naInput.value = sasVal;
+        } else {
+            naInput.value = '';
+        }
+    }
+
     function openModalCapaian(siswaId, siswaNama, nomor) {
         document.getElementById('capaian_siswa_id').value = siswaId;
         document.getElementById('capaian_nomor').value = nomor;

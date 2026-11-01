@@ -97,7 +97,35 @@ class NilaiController extends Controller
         }
 
         foreach ($nilaiData as $siswaId => $item) {
-            $nilaiAkhir = $item['nilai_akhir'] ?? $item['rata_rata'] ?? 85.00;
+            $tp1 = isset($item['tp1']) && $item['tp1'] !== '' ? (float)$item['tp1'] : null;
+            $tp2 = isset($item['tp2']) && $item['tp2'] !== '' ? (float)$item['tp2'] : null;
+            $tp3 = isset($item['tp3']) && $item['tp3'] !== '' ? (float)$item['tp3'] : null;
+            $tp4 = isset($item['tp4']) && $item['tp4'] !== '' ? (float)$item['tp4'] : null;
+            $tp5 = isset($item['tp5']) && $item['tp5'] !== '' ? (float)$item['tp5'] : null;
+            $tp6 = isset($item['tp6']) && $item['tp6'] !== '' ? (float)$item['tp6'] : null;
+            $tp7 = isset($item['tp7']) && $item['tp7'] !== '' ? (float)$item['tp7'] : null;
+            $tp8 = isset($item['tp8']) && $item['tp8'] !== '' ? (float)$item['tp8'] : null;
+
+            // Hitung NS (Nilai Sumatif - rata-rata TP yang terisi) jika tidak dikirim dari form
+            $tps = array_filter([$tp1, $tp2, $tp3, $tp4, $tp5, $tp6, $tp7, $tp8], fn($v) => !is_null($v));
+            $calculatedNs = count($tps) > 0 ? round(array_sum($tps) / count($tps), 2) : null;
+            $ns = isset($item['ns']) && $item['ns'] !== '' ? (float)$item['ns'] : $calculatedNs;
+
+            // SAS (Sumatif Akhir Semester)
+            $sas = isset($item['sas']) && $item['sas'] !== '' ? (float)$item['sas'] : null;
+
+            // Nilai Akhir: rata-rata NS dan SAS (atau NS saja jika SAS belum ada)
+            if (isset($item['nilai_akhir']) && $item['nilai_akhir'] !== '') {
+                $nilaiAkhir = (float)$item['nilai_akhir'];
+            } elseif (!is_null($ns) && !is_null($sas)) {
+                $nilaiAkhir = round(($ns + $sas) / 2, 2);
+            } elseif (!is_null($ns)) {
+                $nilaiAkhir = $ns;
+            } elseif (!is_null($sas)) {
+                $nilaiAkhir = $sas;
+            } else {
+                $nilaiAkhir = 85.00; // default jika benar-benar kosong
+            }
 
             Nilai::updateOrCreate(
                 [
@@ -106,6 +134,16 @@ class NilaiController extends Controller
                     'id_semester' => $semesterId,
                 ],
                 [
+                    'tp1' => $tp1,
+                    'tp2' => $tp2,
+                    'tp3' => $tp3,
+                    'tp4' => $tp4,
+                    'tp5' => $tp5,
+                    'tp6' => $tp6,
+                    'tp7' => $tp7,
+                    'tp8' => $tp8,
+                    'ns' => $ns,
+                    'sas' => $sas,
                     'nilai_akhir' => $nilaiAkhir,
                 ]
             );
