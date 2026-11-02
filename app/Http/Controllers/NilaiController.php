@@ -114,17 +114,28 @@ class NilaiController extends Controller
             // SAS (Sumatif Akhir Semester)
             $sas = isset($item['sas']) && $item['sas'] !== '' ? (float)$item['sas'] : null;
 
-            // Nilai Akhir: rata-rata NS dan SAS (atau NS saja jika SAS belum ada)
+            // Hitung Nilai Akhir: HANYA jika NS dan SAS keduanya ada
+            $nilaiAkhir = null;
             if (isset($item['nilai_akhir']) && $item['nilai_akhir'] !== '') {
                 $nilaiAkhir = (float)$item['nilai_akhir'];
             } elseif (!is_null($ns) && !is_null($sas)) {
                 $nilaiAkhir = round(($ns + $sas) / 2, 2);
-            } elseif (!is_null($ns)) {
-                $nilaiAkhir = $ns;
-            } elseif (!is_null($sas)) {
-                $nilaiAkhir = $sas;
-            } else {
-                $nilaiAkhir = 85.00; // default jika benar-benar kosong
+            }
+
+            $hasScore = count($tps) > 0 || !is_null($sas);
+
+            $existing = Nilai::where('id_siswa', $siswaId)
+                ->where('id_mapel', $mapelId)
+                ->where('id_semester', $semesterId)
+                ->first();
+
+            // Jika siswa tidak punya nilai sama sekali
+            if (!$hasScore && (is_null($nilaiAkhir) || $nilaiAkhir == 0)) {
+                // Jika ada data dummy/kosong tanpa capaian, bersihkan dari database
+                if ($existing && (!$existing->capaian || (empty($existing->capaian->deskripsi_1) && empty($existing->capaian->deskripsi_2)))) {
+                    $existing->delete();
+                }
+                continue;
             }
 
             Nilai::updateOrCreate(
@@ -144,7 +155,7 @@ class NilaiController extends Controller
                     'tp8' => $tp8,
                     'ns' => $ns,
                     'sas' => $sas,
-                    'nilai_akhir' => $nilaiAkhir,
+                    'nilai_akhir' => $nilaiAkhir ?? 0.00,
                 ]
             );
         }
@@ -165,11 +176,19 @@ class NilaiController extends Controller
             ->where('id_semester', $semesterId)
             ->first();
 
+        $deskripsi1 = $nilai && $nilai->capaian ? $nilai->capaian->deskripsi_1 : '';
+        $deskripsi2 = $nilai && $nilai->capaian ? $nilai->capaian->deskripsi_2 : '';
+
+        // Abaikan teks default palsu yang pernah ter-generate oleh bug sebelumnya
+        if ($deskripsi2 === 'Menunjukkan penguasaan materi sesuai tujuan pembelajaran.') {
+            $deskripsi2 = '';
+        }
+
         return response()->json([
             'status' => 'success',
             'id_nilai' => $nilai ? $nilai->id_nilai : null,
-            'deskripsi_1' => $nilai && $nilai->capaian ? $nilai->capaian->deskripsi_1 : '',
-            'deskripsi_2' => $nilai && $nilai->capaian ? $nilai->capaian->deskripsi_2 : '',
+            'deskripsi_1' => $deskripsi1,
+            'deskripsi_2' => $deskripsi2,
         ]);
     }
 
@@ -188,7 +207,7 @@ class NilaiController extends Controller
             'mapel_id' => 'required|exists:mata_pelajaran,id_mapel',
             'semester_id' => 'required',
             'nomor' => 'required|in:1,2',
-            'deskripsi' => 'required|string',
+            'deskripsi' => 'nullable|string',
         ]);
 
         // Kumpulkan data TP, NS, SAS jika dikirim bersamaan dari baris tabel saat ini
@@ -219,13 +238,10 @@ class NilaiController extends Controller
         }
 
         // Pastikan nilai_akhir tidak null agar tidak melanggar DB constraint
-        if (is_null($nilai->nilai_akhir)) {
+        // Nilai akhir HANYA dihitung jika NS dan SAS keduanya sudah terisi
+        if (is_null($nilai->nilai_akhir) || $nilai->nilai_akhir == 85.00) {
             if (isset($tpData['ns']) && isset($tpData['sas'])) {
                 $nilai->nilai_akhir = round(($tpData['ns'] + $tpData['sas']) / 2, 2);
-            } elseif (isset($tpData['ns'])) {
-                $nilai->nilai_akhir = $tpData['ns'];
-            } elseif (isset($tpData['sas'])) {
-                $nilai->nilai_akhir = $tpData['sas'];
             } else {
                 $nilai->nilai_akhir = 0.00;
             }
@@ -233,13 +249,14 @@ class NilaiController extends Controller
         $nilai->save();
 
         $capaian = CapaianKompetensi::firstOrNew(['id_nilai' => $nilai->id_nilai]);
+        $deskripsi = $request->input('deskripsi', '') ?? '';
         if ($request->nomor == 1) {
-            $capaian->deskripsi_1 = $request->deskripsi;
+            $capaian->deskripsi_1 = $deskripsi;
             if (is_null($capaian->deskripsi_2)) {
                 $capaian->deskripsi_2 = '';
             }
         } else {
-            $capaian->deskripsi_2 = $request->deskripsi;
+            $capaian->deskripsi_2 = $deskripsi;
             if (is_null($capaian->deskripsi_1)) {
                 $capaian->deskripsi_1 = '';
             }

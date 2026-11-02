@@ -136,21 +136,49 @@
                     @forelse($siswaList as $idx => $s)
                         @php
                             $rowNilai = $nilaiMap[$s->id_siswa] ?? null;
-                            $hasCapaian1 = $rowNilai && $rowNilai->capaian && !empty(trim($rowNilai->capaian->deskripsi_1));
-                            $hasCapaian2 = $rowNilai && $rowNilai->capaian && !empty(trim($rowNilai->capaian->deskripsi_2));
-                            $hasNilai = $rowNilai && !is_null($rowNilai->nilai_akhir) && $rowNilai->nilai_akhir > 0;
-                            $isComplete = $hasNilai && $hasCapaian1 && $hasCapaian2;
-                            $isPartial = ($hasNilai || $hasCapaian1 || $hasCapaian2) && !$isComplete;
 
                             // Nilai TP1-TP8 dari database
                             $tpValues = [];
+                            $allTpFilled = true;
+                            $hasAnyTp = false;
                             for($t = 1; $t <= 8; $t++) {
                                 $col = 'tp' . $t;
-                                $tpValues[$t] = $rowNilai && !is_null($rowNilai->$col) ? (float)$rowNilai->$col : '';
+                                $val = $rowNilai && !is_null($rowNilai->$col) ? (float)$rowNilai->$col : '';
+                                $tpValues[$t] = $val;
+                                if ($val !== '') {
+                                    $hasAnyTp = true;
+                                } else {
+                                    $allTpFilled = false;
+                                }
                             }
                             $nsValue = $rowNilai && !is_null($rowNilai->ns) ? (float)$rowNilai->ns : '';
                             $sasValue = $rowNilai && !is_null($rowNilai->sas) ? (float)$rowNilai->sas : '';
-                            $naValue = $rowNilai && !is_null($rowNilai->nilai_akhir) ? (float)$rowNilai->nilai_akhir : '';
+
+                            // Nilai Akhir hanya valid jika ada skor riil (bukan 0 atau default ghost 85 tanpa TP/SAS)
+                            $hasScore = $hasAnyTp || ($sasValue !== '');
+                            $naValue = '';
+                            if ($hasScore && $rowNilai && !is_null($rowNilai->nilai_akhir) && $rowNilai->nilai_akhir > 0) {
+                                if (!($rowNilai->nilai_akhir == 85.00 && !$hasAnyTp && $sasValue === '')) {
+                                    $naValue = (float)$rowNilai->nilai_akhir;
+                                }
+                            }
+
+                            // Capaian Kompetensi (filter teks dummy lama)
+                            $dummyText = 'Menunjukkan penguasaan materi sesuai tujuan pembelajaran.';
+                            $c1Text = $rowNilai && $rowNilai->capaian ? trim($rowNilai->capaian->deskripsi_1) : '';
+                            $c2Text = $rowNilai && $rowNilai->capaian ? trim($rowNilai->capaian->deskripsi_2) : '';
+
+                            $hasCapaian1 = !empty($c1Text);
+                            $hasCapaian2 = !empty($c2Text) && ($c2Text !== $dummyText);
+
+                            // Komponen kelengkapan:
+                            $hasSas = ($sasValue !== '');
+                            $hasNa = ($naValue !== '');
+
+                            // Lengkap jika SEMUA TP (TP1 s/d TP8) terisi, SAS terisi, Nilai Akhir ada, Capaian 1 ada, Capaian 2 ada
+                            $isComplete = $allTpFilled && $hasSas && $hasNa && $hasCapaian1 && $hasCapaian2;
+                            $hasAny = $hasAnyTp || $hasSas || $hasNa || $hasCapaian1 || $hasCapaian2;
+                            $isPartial = $hasAny && !$isComplete;
                         @endphp
                         <tr class="hover:bg-blue-50/40 transition row-siswa" 
                             data-siswa-id="{{ $s->id_siswa }}"
@@ -169,6 +197,7 @@
                                         value="{{ $tpValues[$tp] }}" 
                                         placeholder="-"
                                         oninput="calculateRow(this)"
+                                        onchange="calculateRow(this)"
                                         class="tp-input w-11 text-center py-1 bg-transparent rounded font-medium focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
                                 </td>
                             @endfor
@@ -189,6 +218,7 @@
                                     value="{{ $sasValue }}" 
                                     placeholder="-"
                                     oninput="calculateRow(this)"
+                                    onchange="calculateRow(this)"
                                     class="sas-input w-12 text-center py-1 bg-transparent rounded font-bold focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
                             </td>
 
@@ -255,7 +285,7 @@
             <input type="hidden" id="capaian_nomor" name="nomor" value="1">
 
             <div class="mb-6">
-                <textarea id="capaian_deskripsi" name="deskripsi" rows="8" placeholder="Text" required class="w-full p-4 rounded-2xl bg-white text-gray-900 font-body text-sm border-0 focus:ring-4 focus:ring-orange-400 focus:outline-none shadow-inner"></textarea>
+                <textarea id="capaian_deskripsi" name="deskripsi" rows="8" placeholder="Text" class="w-full p-4 rounded-2xl bg-white text-gray-900 font-body text-sm border-0 focus:ring-4 focus:ring-orange-400 focus:outline-none shadow-inner"></textarea>
             </div>
 
             <div class="flex items-center justify-between">
@@ -295,15 +325,37 @@
         if (!row) return;
         const hasC1 = row.getAttribute('data-has-capaian1') === '1';
         const hasC2 = row.getAttribute('data-has-capaian2') === '1';
+
+        // Cek TP1 - TP8: SEMUA harus terisi agar dianggap lengkap
+        const tpInputs = row.querySelectorAll('.tp-input');
+        let allTpFilled = true;
+        let hasAnyTp = false;
+
+        tpInputs.forEach(input => {
+            const val = input.value.trim();
+            if (val !== '' && !isNaN(parseFloat(val))) {
+                hasAnyTp = true;
+            } else {
+                allTpFilled = false;
+            }
+        });
+
+        const sasInput = row.querySelector('.sas-input');
+        const hasSas = sasInput && sasInput.value.trim() !== '' && !isNaN(parseFloat(sasInput.value));
+
         const naInput = row.querySelector('.na-input');
-        const naVal = naInput && naInput.value.trim() !== '' && parseFloat(naInput.value) > 0;
+        const hasNa = naInput && naInput.value.trim() !== '' && !isNaN(parseFloat(naInput.value)) && parseFloat(naInput.value) > 0;
+
+        // Lengkap HANYA jika SEMUA TP (TP1 s/d TP8) terisi, SAS terisi, NA terhitung, Capaian 1 terisi, DAN Capaian 2 terisi
+        const isComplete = allTpFilled && hasSas && hasNa && hasC1 && hasC2;
+        const hasAny = hasAnyTp || hasSas || hasNa || hasC1 || hasC2;
 
         const statusCell = row.querySelector('.status-cell');
         if (!statusCell) return;
 
-        if (hasC1 && hasC2 && naVal) {
+        if (isComplete) {
             statusCell.innerHTML = '<span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">Lengkap</span>';
-        } else if (hasC1 || hasC2 || naVal) {
+        } else if (hasAny) {
             statusCell.innerHTML = '<span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700">Belum Lengkap</span>';
         } else {
             statusCell.innerHTML = '<span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-red-100 text-red-700">Belum Diisi</span>';
@@ -343,15 +395,11 @@
         const sasRaw = parseFloat(sasInput.value);
         const sasVal = (!isNaN(sasRaw) && sasInput.value.trim() !== '') ? sasRaw : null;
 
-        // 4. Hitung Nilai Akhir (Rata-rata NS dan SAS)
+        // 4. Hitung Nilai Akhir (Rata-rata NS dan SAS) - HANYA JIKA NS DAN SAS KEDUANYA SUDAH TERISI
         const naInput = row.querySelector('.na-input');
         if (nsVal !== null && sasVal !== null) {
             const na = Math.round(((nsVal + sasVal) / 2) * 100) / 100;
             naInput.value = na;
-        } else if (nsVal !== null) {
-            naInput.value = nsVal;
-        } else if (sasVal !== null) {
-            naInput.value = sasVal;
         } else {
             naInput.value = '';
         }
@@ -374,7 +422,11 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    document.getElementById('capaian_deskripsi').value = nomor === 1 ? (data.deskripsi_1 || '') : (data.deskripsi_2 || '');
+                    let desc = nomor === 1 ? (data.deskripsi_1 || '') : (data.deskripsi_2 || '');
+                    if (nomor === 2 && desc === 'Menunjukkan penguasaan materi sesuai tujuan pembelajaran.') {
+                        desc = '';
+                    }
+                    document.getElementById('capaian_deskripsi').value = desc;
                 }
             })
             .catch(err => console.log(err));
