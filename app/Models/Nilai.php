@@ -14,6 +14,16 @@ class Nilai extends Model
         'id_siswa',
         'id_mapel',
         'id_semester',
+        'tp1',
+        'tp2',
+        'tp3',
+        'tp4',
+        'tp5',
+        'tp6',
+        'tp7',
+        'tp8',
+        'ns',
+        'sas',
         'nilai_akhir',
     ];
 
