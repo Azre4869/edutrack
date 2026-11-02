@@ -136,10 +136,11 @@
                     @forelse($siswaList as $idx => $s)
                         @php
                             $rowNilai = $nilaiMap[$s->id_siswa] ?? null;
-                            $hasCapaian1 = $rowNilai && $rowNilai->capaian && !empty($rowNilai->capaian->deskripsi_1);
-                            $hasCapaian2 = $rowNilai && $rowNilai->capaian && !empty($rowNilai->capaian->deskripsi_2);
-                            $isComplete = $hasCapaian1 && $hasCapaian2;
-                            $isPartial = ($hasCapaian1 || $hasCapaian2) && !$isComplete;
+                            $hasCapaian1 = $rowNilai && $rowNilai->capaian && !empty(trim($rowNilai->capaian->deskripsi_1));
+                            $hasCapaian2 = $rowNilai && $rowNilai->capaian && !empty(trim($rowNilai->capaian->deskripsi_2));
+                            $hasNilai = $rowNilai && !is_null($rowNilai->nilai_akhir) && $rowNilai->nilai_akhir > 0;
+                            $isComplete = $hasNilai && $hasCapaian1 && $hasCapaian2;
+                            $isPartial = ($hasNilai || $hasCapaian1 || $hasCapaian2) && !$isComplete;
 
                             // Nilai TP1-TP8 dari database
                             $tpValues = [];
@@ -151,7 +152,10 @@
                             $sasValue = $rowNilai && !is_null($rowNilai->sas) ? (float)$rowNilai->sas : '';
                             $naValue = $rowNilai && !is_null($rowNilai->nilai_akhir) ? (float)$rowNilai->nilai_akhir : '';
                         @endphp
-                        <tr class="hover:bg-blue-50/40 transition row-siswa" data-siswa-id="{{ $s->id_siswa }}">
+                        <tr class="hover:bg-blue-50/40 transition row-siswa" 
+                            data-siswa-id="{{ $s->id_siswa }}"
+                            data-has-capaian1="{{ $hasCapaian1 ? '1' : '0' }}"
+                            data-has-capaian2="{{ $hasCapaian2 ? '1' : '0' }}">
                             <td class="p-2.5 text-center font-semibold border border-black">{{ $idx + 1 }}.</td>
                             <td class="p-2.5 text-center border border-black font-medium">{{ $s->nis }}</td>
                             <td class="p-2.5 font-bold text-gray-900 border border-black">{{ $s->nama }}</td>
@@ -200,17 +204,17 @@
                             <!-- Aksi Capaian Buttons -->
                             <td class="p-2 text-center border border-black">
                                 <div class="flex items-center justify-center space-x-1.5 font-heading">
-                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 1)" class="px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian1 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
+                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 1)" class="btn-capaian-1 px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian1 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
                                         Kompetensi 1
                                     </button>
-                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 2)" class="px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian2 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
+                                    <button type="button" onclick="openModalCapaian({{ $s->id_siswa }}, '{{ addslashes($s->nama) }}', 2)" class="btn-capaian-2 px-2.5 py-1 rounded text-[11px] font-bold transition {{ $hasCapaian2 ? 'bg-edu-blue text-white hover:bg-blue-700' : 'bg-red-500 text-white hover:bg-red-600' }}">
                                         Kompetensi 2
                                     </button>
                                 </div>
                             </td>
 
                             <!-- Status Badge -->
-                            <td class="p-2 text-center border border-black">
+                            <td class="p-2 text-center border border-black status-cell">
                                 @if($isComplete)
                                     <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">
                                         Lengkap
@@ -258,7 +262,7 @@
                 <button type="button" onclick="closeModalCapaian()" class="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition">
                     Kembali
                 </button>
-                <button type="button" onclick="saveCapaian()" class="px-8 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md transition">
+                <button type="button" id="btnSubmitCapaian" onclick="saveCapaian()" class="px-8 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md transition">
                     Simpan
                 </button>
             </div>
@@ -266,7 +270,46 @@
     </div>
 </div>
 
+<!-- TOAST NOTIFICATION -->
+<div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 font-heading text-xs">
+    <i class="fa-solid fa-circle-check text-base"></i>
+    <span id="toastMessage">Pesan berhasil</span>
+</div>
+
 <script>
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toastNotification');
+        const toastMsg = document.getElementById('toastMessage');
+        if (!toast || !toastMsg) return;
+
+        toastMsg.innerText = message;
+        toast.className = `fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto ${isSuccess ? 'bg-emerald-600' : 'bg-red-600'} text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 font-heading text-xs`;
+
+        setTimeout(() => {
+            toast.className = 'fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 font-heading text-xs';
+        }, 3000);
+    }
+
+    // Update status badge di baris siswa
+    function updateRowStatus(row) {
+        if (!row) return;
+        const hasC1 = row.getAttribute('data-has-capaian1') === '1';
+        const hasC2 = row.getAttribute('data-has-capaian2') === '1';
+        const naInput = row.querySelector('.na-input');
+        const naVal = naInput && naInput.value.trim() !== '' && parseFloat(naInput.value) > 0;
+
+        const statusCell = row.querySelector('.status-cell');
+        if (!statusCell) return;
+
+        if (hasC1 && hasC2 && naVal) {
+            statusCell.innerHTML = '<span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">Lengkap</span>';
+        } else if (hasC1 || hasC2 || naVal) {
+            statusCell.innerHTML = '<span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700">Belum Lengkap</span>';
+        } else {
+            statusCell.innerHTML = '<span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-red-100 text-red-700">Belum Diisi</span>';
+        }
+    }
+
     // Kalkulasi real-time per baris sesuai rumus Kurikulum Merdeka SMP
     function calculateRow(inputElement) {
         const row = inputElement.closest('tr.row-siswa');
@@ -312,6 +355,9 @@
         } else {
             naInput.value = '';
         }
+
+        // 5. Perbarui tampilan badge status
+        updateRowStatus(row);
     }
 
     function openModalCapaian(siswaId, siswaNama, nomor) {
@@ -321,12 +367,14 @@
         document.getElementById('modalCapaianSubtitle').innerText = 'Siswa: ' + siswaNama;
         document.getElementById('capaian_deskripsi').value = '';
 
+        const url = "{{ route($rolePrefix . '.capaian.detail') }}?siswa_id=" + siswaId + "&mapel_id={{ $selectedMapelId }}&semester_id={{ $selectedSemesterId }}";
+
         // Fetch existing via AJAX
-        fetch(`/guru/capaian/detail?siswa_id=${siswaId}&mapel_id={{ $selectedMapelId }}&semester_id={{ $selectedSemesterId }}`)
+        fetch(url)
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    document.getElementById('capaian_deskripsi').value = nomor === 1 ? data.deskripsi_1 : data.deskripsi_2;
+                    document.getElementById('capaian_deskripsi').value = nomor === 1 ? (data.deskripsi_1 || '') : (data.deskripsi_2 || '');
                 }
             })
             .catch(err => console.log(err));
@@ -341,23 +389,79 @@
     function saveCapaian() {
         const form = document.getElementById('formCapaian');
         const formData = new FormData(form);
+        const siswaId = document.getElementById('capaian_siswa_id').value;
+        const nomor = document.getElementById('capaian_nomor').value;
+        const row = document.querySelector(`tr.row-siswa[data-siswa-id="${siswaId}"]`);
+
+        // Lampirkan juga nilai baris tabel jika sedang diisi agar tersimpan bersama
+        if (row) {
+            row.querySelectorAll('.tp-input').forEach((input, index) => {
+                if (input.value !== '') {
+                    formData.append(`tp${index + 1}`, input.value);
+                }
+            });
+            const nsInput = row.querySelector('.ns-input');
+            if (nsInput && nsInput.value !== '') formData.append('ns', nsInput.value);
+            const sasInput = row.querySelector('.sas-input');
+            if (sasInput && sasInput.value !== '') formData.append('sas', sasInput.value);
+            const naInput = row.querySelector('.na-input');
+            if (naInput && naInput.value !== '') formData.append('nilai_akhir', naInput.value);
+        }
+
+        const saveBtn = document.getElementById('btnSubmitCapaian');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Menyimpan...';
+        }
 
         fetch("{{ route($rolePrefix . '.capaian.store') }}", {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             }
         })
         .then(res => res.json())
         .then(data => {
-            alert(data.message || 'Capaian kompetensi berhasil disimpan.');
-            closeModalCapaian();
-            location.reload();
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Simpan';
+            }
+
+            if (data.status === 'success') {
+                closeModalCapaian();
+
+                // Update status capaian di baris siswa
+                if (row) {
+                    const deskripsi = document.getElementById('capaian_deskripsi').value.trim();
+                    const isFilled = deskripsi !== '';
+                    row.setAttribute(`data-has-capaian${nomor}`, isFilled ? '1' : '0');
+
+                    const btn = row.querySelector(`.btn-capaian-${nomor}`);
+                    if (btn) {
+                        if (isFilled) {
+                            btn.className = `btn-capaian-${nomor} px-2.5 py-1 rounded text-[11px] font-bold transition bg-edu-blue text-white hover:bg-blue-700`;
+                        } else {
+                            btn.className = `btn-capaian-${nomor} px-2.5 py-1 rounded text-[11px] font-bold transition bg-red-500 text-white hover:bg-red-600`;
+                        }
+                    }
+
+                    updateRowStatus(row);
+                }
+
+                showToast(data.message || 'Capaian kompetensi berhasil disimpan.', true);
+            } else {
+                alert(data.message || 'Gagal menyimpan capaian kompetensi.');
+            }
         })
         .catch(err => {
-            alert('Berhasil menyimpan capaian kompetensi.');
-            closeModalCapaian();
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Simpan';
+            }
+            console.error(err);
+            showToast('Terjadi kesalahan saat menyimpan.', false);
         });
     }
 </script>

@@ -191,34 +191,67 @@ class NilaiController extends Controller
             'deskripsi' => 'required|string',
         ]);
 
-        $nilai = Nilai::firstOrCreate(
-            [
-                'id_siswa' => $request->siswa_id,
-                'id_mapel' => $request->mapel_id,
-                'id_semester' => $request->semester_id,
-            ],
-            [
-                'nilai_akhir' => 85.00,
-            ]
-        );
+        // Kumpulkan data TP, NS, SAS jika dikirim bersamaan dari baris tabel saat ini
+        $tpData = [];
+        for ($i = 1; $i <= 8; $i++) {
+            if ($request->has("tp{$i}") && $request->input("tp{$i}") !== '') {
+                $tpData["tp{$i}"] = (float)$request->input("tp{$i}");
+            }
+        }
+        if ($request->has('ns') && $request->input('ns') !== '') {
+            $tpData['ns'] = (float)$request->input('ns');
+        }
+        if ($request->has('sas') && $request->input('sas') !== '') {
+            $tpData['sas'] = (float)$request->input('sas');
+        }
+        if ($request->has('nilai_akhir') && $request->input('nilai_akhir') !== '') {
+            $tpData['nilai_akhir'] = (float)$request->input('nilai_akhir');
+        }
+
+        $nilai = Nilai::firstOrNew([
+            'id_siswa' => $request->siswa_id,
+            'id_mapel' => $request->mapel_id,
+            'id_semester' => $request->semester_id,
+        ]);
+
+        foreach ($tpData as $col => $val) {
+            $nilai->$col = $val;
+        }
+
+        // Pastikan nilai_akhir tidak null agar tidak melanggar DB constraint
+        if (is_null($nilai->nilai_akhir)) {
+            if (isset($tpData['ns']) && isset($tpData['sas'])) {
+                $nilai->nilai_akhir = round(($tpData['ns'] + $tpData['sas']) / 2, 2);
+            } elseif (isset($tpData['ns'])) {
+                $nilai->nilai_akhir = $tpData['ns'];
+            } elseif (isset($tpData['sas'])) {
+                $nilai->nilai_akhir = $tpData['sas'];
+            } else {
+                $nilai->nilai_akhir = 0.00;
+            }
+        }
+        $nilai->save();
 
         $capaian = CapaianKompetensi::firstOrNew(['id_nilai' => $nilai->id_nilai]);
         if ($request->nomor == 1) {
             $capaian->deskripsi_1 = $request->deskripsi;
-            if (empty($capaian->deskripsi_2)) {
-                $capaian->deskripsi_2 = 'Menunjukkan penguasaan materi sesuai tujuan pembelajaran.';
+            if (is_null($capaian->deskripsi_2)) {
+                $capaian->deskripsi_2 = '';
             }
         } else {
             $capaian->deskripsi_2 = $request->deskripsi;
-            if (empty($capaian->deskripsi_1)) {
-                $capaian->deskripsi_1 = 'Menunjukkan penguasaan materi dengan sangat baik.';
+            if (is_null($capaian->deskripsi_1)) {
+                $capaian->deskripsi_1 = '';
             }
         }
         $capaian->save();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Capaian kompetensi berhasil disimpan.',
+            'message' => 'Capaian kompetensi ' . $request->nomor . ' berhasil disimpan.',
+            'nomor' => (int)$request->nomor,
+            'deskripsi_1' => $capaian->deskripsi_1,
+            'deskripsi_2' => $capaian->deskripsi_2,
         ]);
     }
 

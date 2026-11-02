@@ -65,6 +65,7 @@ Route::middleware(['web'])->group(function () {
         Route::get('/nilai', [NilaiController::class, 'inputNilai'])->name('nilai');
         Route::post('/nilai', [NilaiController::class, 'storeNilai'])->name('nilai.store');
         Route::get('/capaian', [NilaiController::class, 'inputNilai'])->name('capaian');
+        Route::get('/capaian/detail', [NilaiController::class, 'getCapaian'])->name('capaian.detail');
         Route::post('/capaian', [NilaiController::class, 'storeCapaian'])->name('capaian.store');
 
         // Presensi
