@@ -15,7 +15,7 @@ return new class extends Migration
         // 1. GURU
         Schema::create('guru', function (Blueprint $table) {
             $table->integer('id_guru', true); // Auto increment int(11) primary key
-            $table->string('nip', 30);
+            $table->string('nip', 30)->unique();
             $table->string('nama_guru', 100);
             $table->enum('jenis_guru', ['Guru Tetap', 'Guru Honorer'])->default('Guru Tetap')->nullable();
             $table->string('jabatan', 100)->default('Guru Mata Pelajaran')->nullable();
@@ -86,7 +86,7 @@ return new class extends Migration
         // 7. SISWA
         Schema::create('siswa', function (Blueprint $table) {
             $table->integer('id_siswa', true);
-            $table->string('nis', 30);
+            $table->string('nis', 30)->unique();
             $table->string('nama', 100);
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->string('tempat_lahir', 50)->nullable();
@@ -233,6 +233,8 @@ return new class extends Migration
             $table->decimal('sas', 5, 2)->nullable();
             $table->decimal('nilai_akhir', 5, 2);
 
+            $table->unique(['id_siswa', 'id_mapel', 'id_semester'], 'uq_nilai_siswa_mapel_semester');
+
             $table->foreign('id_siswa', 'fk_nilai_siswa')
                 ->references('id_siswa')->on('siswa')
                 ->cascadeOnDelete()
@@ -252,7 +254,7 @@ return new class extends Migration
         // 15. CAPAIAN KOMPETENSI
         Schema::create('capaian_kompetensi', function (Blueprint $table) {
             $table->integer('id_capaian', true);
-            $table->integer('id_nilai');
+            $table->integer('id_nilai')->unique();
             $table->text('deskripsi_1');
             $table->text('deskripsi_2');
 
@@ -342,6 +344,8 @@ return new class extends Migration
             $table->date('tanggal');
             $table->enum('status', ['Hadir', 'Izin', 'Sakit', 'Alpha']);
 
+            $table->unique(['id_siswa', 'id_mapel', 'id_semester', 'tanggal'], 'uq_absensi_siswa_mapel_tanggal');
+
             $table->foreign('id_siswa', 'fk_absensi_siswa')
                 ->references('id_siswa')->on('siswa')
                 ->cascadeOnDelete()
@@ -357,6 +361,82 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
+
+        // 20. VIEW PELAPORAN RESMI
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_detail_absensi`");
+        \Illuminate\Support\Facades\DB::statement("
+            CREATE VIEW `vw_detail_absensi` AS 
+            SELECT a.tanggal, s.nis, s.nama AS nama_siswa, mp.nama_mapel, sm.nama_semester, a.status 
+            FROM absensi a 
+            JOIN siswa s ON a.id_siswa = s.id_siswa 
+            JOIN mata_pelajaran mp ON a.id_mapel = mp.id_mapel 
+            JOIN semester sm ON a.id_semester = sm.id_semester
+        ");
+
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_guru_mapel`");
+        \Illuminate\Support\Facades\DB::statement("
+            CREATE VIEW `vw_guru_mapel` AS 
+            SELECT g.nip, g.nama_guru, mp.nama_mapel 
+            FROM mata_pelajaran mp 
+            JOIN guru g ON mp.id_guru = g.id_guru
+        ");
+
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_siswa_kelas`");
+        \Illuminate\Support\Facades\DB::statement("
+            CREATE VIEW `vw_siswa_kelas` AS 
+            SELECT s.nis, s.nama AS nama_siswa, s.jenis_kelamin, k.nama_kelas, k.tingkat, k.tahun_ajaran 
+            FROM siswa s 
+            JOIN kelas k ON s.id_kelas = k.id_kelas
+        ");
+
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_transkrip_nilai`");
+        \Illuminate\Support\Facades\DB::statement("
+            CREATE VIEW `vw_transkrip_nilai` AS 
+            SELECT s.nis, s.nama AS nama_siswa, mp.nama_mapel, sm.nama_semester, sm.tahun_ajaran, n.nilai_akhir 
+            FROM nilai n 
+            JOIN siswa s ON n.id_siswa = s.id_siswa 
+            JOIN mata_pelajaran mp ON n.id_mapel = mp.id_mapel 
+            JOIN semester sm ON n.id_semester = sm.id_semester
+        ");
+
+        // 21. STORED PROCEDURES
+        \Illuminate\Support\Facades\DB::unprepared("DROP PROCEDURE IF EXISTS `get_nilai_siswa`");
+        \Illuminate\Support\Facades\DB::unprepared("
+            CREATE PROCEDURE `get_nilai_siswa` (IN `p_nis` VARCHAR(30))
+            BEGIN
+                SELECT s.nis, s.nama, mp.nama_mapel, n.nilai_akhir
+                FROM nilai n
+                JOIN mata_pelajaran mp ON n.id_mapel = mp.id_mapel
+                JOIN siswa s ON n.id_siswa = s.id_siswa
+                WHERE s.nis = p_nis;
+            END
+        ");
+
+        \Illuminate\Support\Facades\DB::unprepared("DROP PROCEDURE IF EXISTS `rata_nilai`");
+        \Illuminate\Support\Facades\DB::unprepared("
+            CREATE PROCEDURE `rata_nilai` (IN `p_nis` VARCHAR(30))
+            BEGIN
+                SELECT s.nis, s.nama, AVG(n.nilai_akhir) AS rata_rata
+                FROM nilai n
+                JOIN siswa s ON n.id_siswa = s.id_siswa
+                WHERE s.nis = p_nis;
+            END
+        ");
+
+        \Illuminate\Support\Facades\DB::unprepared("DROP PROCEDURE IF EXISTS `rekap_presensi`");
+        \Illuminate\Support\Facades\DB::unprepared("
+            CREATE PROCEDURE `rekap_presensi` (IN `p_nis` VARCHAR(30))
+            BEGIN
+                SELECT s.nis, s.nama,
+                    COUNT(CASE WHEN a.status = 'Hadir' THEN 1 END) AS hadir,
+                    COUNT(CASE WHEN a.status = 'Izin' THEN 1 END) AS izin,
+                    COUNT(CASE WHEN a.status = 'Sakit' THEN 1 END) AS sakit,
+                    COUNT(CASE WHEN a.status = 'Alpha' THEN 1 END) AS alpha
+                FROM absensi a
+                JOIN siswa s ON a.id_siswa = s.id_siswa
+                WHERE s.nis = p_nis;
+            END
+        ");
     }
 
     /**
@@ -364,6 +444,14 @@ return new class extends Migration
      */
     public function down(): void
     {
+        \Illuminate\Support\Facades\DB::unprepared("DROP PROCEDURE IF EXISTS `rekap_presensi`");
+        \Illuminate\Support\Facades\DB::unprepared("DROP PROCEDURE IF EXISTS `rata_nilai`");
+        \Illuminate\Support\Facades\DB::unprepared("DROP PROCEDURE IF EXISTS `get_nilai_siswa`");
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_transkrip_nilai`");
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_siswa_kelas`");
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_guru_mapel`");
+        \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_detail_absensi`");
+
         Schema::dropIfExists('absensi');
         Schema::dropIfExists('notifikasi');
         Schema::dropIfExists('nilai_harian');
