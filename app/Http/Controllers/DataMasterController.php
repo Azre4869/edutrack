@@ -289,23 +289,32 @@ class DataMasterController extends Controller
         $search = $request->query('search');
         $perPage = $request->query('per_page', 50);
 
-        $query = Ekstrakurikuler::query();
+        $query = Ekstrakurikuler::with('guru');
         if ($search) {
             $query->where('nama_ekskul', 'like', "%{$search}%");
         }
 
         $ekskul = $query->paginate($perPage)->withQueryString();
+        $guruList = Guru::orderBy('nama_guru')->get();
 
-        return view('master.ekskul', compact('ekskul', 'search', 'perPage'));
+        return view('master.ekskul', compact('ekskul', 'guruList', 'search', 'perPage'));
     }
 
     public function storeEkskul(Request $request)
     {
         $request->validate([
             'nama_ekskul' => 'required|string|max:100',
+            'id_guru' => 'nullable|exists:guru,id_guru',
+            'jadwal' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Aktif,Nonaktif',
         ]);
 
-        Ekstrakurikuler::create($request->all());
+        Ekstrakurikuler::create([
+            'nama_ekskul' => $request->nama_ekskul,
+            'id_guru' => $request->id_guru ?: null,
+            'jadwal' => $request->jadwal,
+            'status' => $request->status ?: 'Aktif',
+        ]);
 
         return back()->with('success', 'Data ekstrakurikuler berhasil ditambahkan.');
     }
@@ -315,9 +324,17 @@ class DataMasterController extends Controller
         $ekskul = Ekstrakurikuler::findOrFail($id);
         $request->validate([
             'nama_ekskul' => 'required|string|max:100',
+            'id_guru' => 'nullable|exists:guru,id_guru',
+            'jadwal' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Aktif,Nonaktif',
         ]);
 
-        $ekskul->update($request->all());
+        $ekskul->update([
+            'nama_ekskul' => $request->nama_ekskul,
+            'id_guru' => $request->id_guru ?: null,
+            'jadwal' => $request->jadwal,
+            'status' => $request->status ?: 'Aktif',
+        ]);
 
         return back()->with('success', 'Data ekstrakurikuler berhasil diperbarui.');
     }

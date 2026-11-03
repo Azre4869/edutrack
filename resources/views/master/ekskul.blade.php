@@ -82,20 +82,26 @@
                             </span>
                             <span>{{ $e->nama_ekskul }}</span>
                         </td>
-                        <td class="p-2.5 border border-black font-semibold">Agus Supriyanto, S.Pd.</td>
-                        <td class="p-2.5 text-center border border-black">Jumat, 14.30 - 16.30 WIB</td>
+                        <td class="p-2.5 border border-black font-semibold">{{ $e->guru ? $e->guru->nama_guru : 'Belum Ditentukan' }}</td>
+                        <td class="p-2.5 text-center border border-black">{{ $e->jadwal ?: '-' }}</td>
                         <td class="p-2.5 text-center border border-black">
-                            <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">
-                                Aktif
-                            </span>
+                            @if(($e->status ?? 'Aktif') === 'Aktif')
+                                <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">
+                                    Aktif
+                                </span>
+                            @else
+                                <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-gray-100 text-gray-600">
+                                    Nonaktif
+                                </span>
+                            @endif
                         </td>
                         <td class="p-2.5 text-center border border-black">
                             <div class="flex items-center justify-center space-x-1.5">
-                                <button onclick="alert('Detail Ekskul: {{ $e->nama_ekskul }}')" title="Lihat" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="showDetailEkskul('{{ addslashes($e->nama_ekskul) }}', '{{ addslashes($e->guru ? $e->guru->nama_guru : 'Belum Ditentukan') }}', '{{ $e->guru ? $e->guru->nip : '-' }}', '{{ addslashes($e->jadwal ?: '-') }}', '{{ $e->status ?? 'Aktif' }}')" title="Lihat Detail" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 @if(auth()->user()->role === 'Operator')
-                                <button onclick="editEkskul({{ $e->id_ekskul }}, '{{ addslashes($e->nama_ekskul) }}')" title="Edit" class="w-6 h-6 rounded bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="editEkskul({{ $e->id_ekskul }}, '{{ addslashes($e->nama_ekskul) }}', '{{ $e->id_guru }}', '{{ addslashes($e->jadwal ?? '') }}', '{{ $e->status ?? 'Aktif' }}')" title="Edit" class="w-6 h-6 rounded bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <form action="{{ route('operator.ekskul.destroy', $e->id_ekskul) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus ekstrakulikuler ini?')" class="inline">
@@ -128,11 +134,53 @@
     </div>
 </div>
 
+<!-- MODAL DETAIL EKSKUL -->
+<div id="modalDetailEkskul" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-gray-100 font-heading">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-orange-100 text-edu-orange flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-campground"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900" id="detail_nama_ekskul">-</h3>
+                    <p class="text-xs text-gray-500 font-body">Kegiatan Pengembangan Diri</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('modalDetailEkskul').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="mt-5 space-y-3 font-body text-xs">
+            <div class="bg-orange-50/50 p-3.5 rounded-2xl border border-orange-100">
+                <span class="text-xs font-bold text-edu-orange block mb-1">Guru Pembina</span>
+                <p id="detail_guru_nama" class="text-sm font-black text-gray-900">-</p>
+                <p id="detail_guru_nip" class="text-[11px] text-gray-500 mt-0.5">NIP: -</p>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Jadwal Latihan</span>
+                <span id="detail_jadwal" class="font-bold text-gray-800 bg-white px-2.5 py-1 rounded-lg border border-gray-200">-</span>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Status Kegiatan</span>
+                <span id="detail_status" class="font-bold px-2.5 py-1 rounded-lg">-</span>
+            </div>
+        </div>
+
+        <div class="pt-5 flex justify-end">
+            <button type="button" onclick="document.getElementById('modalDetailEkskul').classList.add('hidden')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL TAMBAH EKSKUL -->
 <div id="modalTambahEkskul" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-gray-100 font-heading">
         <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-            <h3 class="text-lg font-black text-gray-900">Tambah Ekstrakulikuler</h3>
+            <h3 class="text-lg font-black text-gray-900">Tambah Ekstrakurikuler</h3>
             <button onclick="document.getElementById('modalTambahEkskul').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
@@ -141,8 +189,31 @@
         <form action="{{ route('operator.ekskul.store') }}" method="POST" class="mt-6 space-y-4">
             @csrf
             <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Nama Kegiatan Ekstrakulikuler *</label>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Nama Kegiatan Ekstrakurikuler *</label>
                 <input type="text" name="nama_ekskul" required placeholder="Contoh: Robotika & Coding" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Guru Pembina</label>
+                <select name="id_guru" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <option value="">-- Pilih Pembina (Opsional) --</option>
+                    @foreach($guruList as $g)
+                        <option value="{{ $g->id_guru }}">{{ $g->nama_guru }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Jadwal Latihan</label>
+                <input type="text" name="jadwal" placeholder="Contoh: Jumat, 14.30 - 16.30 WIB" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Status Kegiatan</label>
+                <select name="status" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <option value="Aktif">Aktif</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                </select>
             </div>
 
             <div class="pt-4 flex justify-end space-x-3">
@@ -150,7 +221,7 @@
                     Batal
                 </button>
                 <button type="submit" class="px-6 py-2.5 bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold rounded-xl shadow-md transition">
-                    Simpan Ekstrakulikuler
+                    Simpan Ekstrakurikuler
                 </button>
             </div>
         </form>
@@ -161,7 +232,7 @@
 <div id="modalEditEkskul" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-gray-100 font-heading">
         <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-            <h3 class="text-lg font-black text-gray-900">Edit Ekstrakulikuler</h3>
+            <h3 class="text-lg font-black text-gray-900">Edit Ekstrakurikuler</h3>
             <button onclick="document.getElementById('modalEditEkskul').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
@@ -171,8 +242,31 @@
             @csrf
             @method('PUT')
             <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Nama Kegiatan Ekstrakulikuler *</label>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Nama Kegiatan Ekstrakurikuler *</label>
                 <input type="text" id="edit_nama_ekskul" name="nama_ekskul" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Guru Pembina</label>
+                <select id="edit_guru_ekskul" name="id_guru" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <option value="">-- Pilih Pembina (Opsional) --</option>
+                    @foreach($guruList as $g)
+                        <option value="{{ $g->id_guru }}">{{ $g->nama_guru }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Jadwal Latihan</label>
+                <input type="text" id="edit_jadwal_ekskul" name="jadwal" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Status Kegiatan</label>
+                <select id="edit_status_ekskul" name="status" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <option value="Aktif">Aktif</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                </select>
             </div>
 
             <div class="pt-4 flex justify-end space-x-3">
@@ -188,8 +282,28 @@
 </div>
 
 <script>
-    function editEkskul(id, nama) {
+    function showDetailEkskul(nama, guru, nip, jadwal, status) {
+        document.getElementById('detail_nama_ekskul').innerText = nama;
+        document.getElementById('detail_guru_nama').innerText = guru;
+        document.getElementById('detail_guru_nip').innerText = nip && nip !== '-' ? 'NIP: ' + nip : 'NIP: -';
+        document.getElementById('detail_jadwal').innerText = jadwal;
+        
+        const statusEl = document.getElementById('detail_status');
+        statusEl.innerText = status;
+        if (status === 'Aktif') {
+            statusEl.className = 'font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700';
+        } else {
+            statusEl.className = 'font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600';
+        }
+
+        document.getElementById('modalDetailEkskul').classList.remove('hidden');
+    }
+
+    function editEkskul(id, nama, idGuru, jadwal, status) {
         document.getElementById('edit_nama_ekskul').value = nama;
+        document.getElementById('edit_guru_ekskul').value = idGuru || '';
+        document.getElementById('edit_jadwal_ekskul').value = jadwal || '';
+        document.getElementById('edit_status_ekskul').value = status || 'Aktif';
         document.getElementById('formEditEkskul').action = '/operator/ekskul/' + id;
         document.getElementById('modalEditEkskul').classList.remove('hidden');
     }

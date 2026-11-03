@@ -2,7 +2,9 @@
 
 @section('title', 'Dashboard Guru Mapel')
 @section('page_title', 'Dashboard')
-@section('page_subtitle', 'Selamat Datang, Ibu Siti Aminah, M.Pd.')
+@section('page_subtitle')
+    Selamat Datang, {{ auth()->user()->guru ? auth()->user()->guru->nama_guru : auth()->user()->username }}
+@endsection
 
 @section('content')
 <!-- 4 STAT CARDS -->

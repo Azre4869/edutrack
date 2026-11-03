@@ -2,7 +2,9 @@
 
 @section('title', 'Dashboard Operator')
 @section('page_title', 'Dashboard')
-@section('page_subtitle', 'Selamat Datang, Admin Operator Website')
+@section('page_subtitle')
+    Selamat Datang, {{ auth()->user()->guru ? auth()->user()->guru->nama_guru : auth()->user()->username }} (Administrator)
+@endsection
 
 @section('content')
 <!-- 4 STAT CARDS -->
