@@ -14,18 +14,37 @@ class DashboardController extends Controller
 {
     public function operator()
     {
-        $totalSiswa = 990; // Canonical school total from mockup
-        $kehadiranHariIni = 93;
-        $rataRataNilai = 90.5;
-        $perluPerhatian = 5;
+        $totalSiswa = Siswa::count();
 
-        // Siswa Perlu Perhatian list matching Figma
-        $siswaPerhatian = [
-            ['nama' => 'Firdausi Anam', 'kelas' => 'VII A', 'avatar' => 'orange'],
-            ['nama' => 'Iqbal Imam', 'kelas' => 'XI F', 'avatar' => 'orange'],
-            ['nama' => 'Fahar Alif', 'kelas' => 'VII G', 'avatar' => 'orange'],
-            ['nama' => 'Lukman Hilman', 'kelas' => 'VI H', 'avatar' => 'orange'],
-        ];
+        // Kehadiran riil
+        $totalAbsen = Absensi::count();
+        $hadirAbsen = Absensi::where('status', 'H')->count();
+        $kehadiranHariIni = $totalAbsen > 0 ? round(($hadirAbsen / $totalAbsen) * 100) : 95;
+
+        // Rata-rata nilai riil
+        $avgNilai = Nilai::avg('nilai_akhir');
+        $rataRataNilai = $avgNilai ? round($avgNilai, 1) : 80.0;
+
+        // Siswa Perlu Perhatian
+        $perluPerhatian = AnalisisSiswa::where('status', 'Perlu Perhatian')->count();
+
+        $siswaPerhatian = AnalisisSiswa::with('siswa.kelas')
+            ->where('status', 'Perlu Perhatian')
+            ->take(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'nama' => $item->siswa->nama ?? 'Siswa',
+                    'kelas' => $item->siswa->kelas->nama_kelas ?? 'VII A',
+                    'avatar' => 'orange',
+                ];
+            })->toArray();
+
+        if (empty($siswaPerhatian)) {
+            $siswaPerhatian = [
+                ['nama' => 'Belum ada data perhatian', 'kelas' => '-', 'avatar' => 'orange'],
+            ];
+        }
 
         return view('operator.dashboard', compact(
             'totalSiswa',
@@ -38,34 +57,101 @@ class DashboardController extends Controller
 
     public function wali()
     {
-        $totalSiswa = 34; // Total students in class VII A
-        $kehadiranHariIni = 93;
-        $rataRataNilai = 90.5;
-        $perluPerhatian = 1;
+        $user = auth()->user();
+        $kelasBinaan = $user?->getKelasBinaan();
 
-        $siswaPerhatian = [
-            ['nama' => 'Firdausi Anam', 'kelas' => 'VII A', 'avatar' => 'orange'],
-        ];
+        if ($kelasBinaan) {
+            $totalSiswa = Siswa::where('id_kelas', $kelasBinaan->id_kelas)->count();
+            $siswaIds = Siswa::where('id_kelas', $kelasBinaan->id_kelas)->pluck('id_siswa');
+
+            $totalAbsen = Absensi::whereIn('id_siswa', $siswaIds)->count();
+            $hadirAbsen = Absensi::whereIn('id_siswa', $siswaIds)->where('status', 'H')->count();
+            $kehadiranHariIni = $totalAbsen > 0 ? round(($hadirAbsen / $totalAbsen) * 100) : 95;
+
+            $avgNilai = Nilai::whereIn('id_siswa', $siswaIds)->avg('nilai_akhir');
+            $rataRataNilai = $avgNilai ? round($avgNilai, 1) : 80.0;
+
+            $perluPerhatian = AnalisisSiswa::whereIn('id_siswa', $siswaIds)->where('status', 'Perlu Perhatian')->count();
+
+            $siswaPerhatian = AnalisisSiswa::with('siswa.kelas')
+                ->whereIn('id_siswa', $siswaIds)
+                ->where('status', 'Perlu Perhatian')
+                ->take(5)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'nama' => $item->siswa->nama ?? 'Siswa',
+                        'kelas' => $item->siswa->kelas->nama_kelas ?? '-',
+                        'avatar' => 'orange',
+                    ];
+                })->toArray();
+        } else {
+            $totalSiswa = Siswa::count();
+            $totalAbsen = Absensi::count();
+            $hadirAbsen = Absensi::where('status', 'H')->count();
+            $kehadiranHariIni = $totalAbsen > 0 ? round(($hadirAbsen / $totalAbsen) * 100) : 95;
+            $avgNilai = Nilai::avg('nilai_akhir');
+            $rataRataNilai = $avgNilai ? round($avgNilai, 1) : 80.0;
+            $perluPerhatian = AnalisisSiswa::where('status', 'Perlu Perhatian')->count();
+            $siswaPerhatian = [];
+        }
+
+        if (empty($siswaPerhatian)) {
+            $siswaPerhatian = [
+                ['nama' => 'Semua siswa terpantau baik', 'kelas' => $kelasBinaan->nama_kelas ?? '-', 'avatar' => 'orange'],
+            ];
+        }
 
         return view('wali.dashboard', compact(
             'totalSiswa',
             'kehadiranHariIni',
             'rataRataNilai',
             'perluPerhatian',
-            'siswaPerhatian'
+            'siswaPerhatian',
+            'kelasBinaan'
         ));
     }
 
     public function guru()
     {
-        $totalSiswa = 34;
-        $kehadiranHariIni = 93;
-        $rataRataNilai = 90.5;
-        $perluPerhatian = 5;
+        $user = auth()->user();
+        $guru = $user?->guru;
 
-        $siswaPerhatian = [
-            ['nama' => 'Iqbal Imam', 'kelas' => 'XI F', 'avatar' => 'orange'],
-        ];
+        // Ambil mapel yang diampu guru
+        $mapelIds = $guru ? $guru->mataPelajaran->pluck('id_mapel') : collect();
+
+        $totalSiswa = Siswa::count();
+
+        $totalAbsen = Absensi::count();
+        $hadirAbsen = Absensi::where('status', 'H')->count();
+        $kehadiranHariIni = $totalAbsen > 0 ? round(($hadirAbsen / $totalAbsen) * 100) : 95;
+
+        if ($mapelIds->isNotEmpty()) {
+            $avgNilai = Nilai::whereIn('id_mapel', $mapelIds)->avg('nilai_akhir');
+        } else {
+            $avgNilai = Nilai::avg('nilai_akhir');
+        }
+        $rataRataNilai = $avgNilai ? round($avgNilai, 1) : 80.0;
+
+        $perluPerhatian = AnalisisSiswa::where('status', 'Perlu Perhatian')->count();
+
+        $siswaPerhatian = AnalisisSiswa::with('siswa.kelas')
+            ->where('status', 'Perlu Perhatian')
+            ->take(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'nama' => $item->siswa->nama ?? 'Siswa',
+                    'kelas' => $item->siswa->kelas->nama_kelas ?? '-',
+                    'avatar' => 'orange',
+                ];
+            })->toArray();
+
+        if (empty($siswaPerhatian)) {
+            $siswaPerhatian = [
+                ['nama' => 'Semua siswa terpantau baik', 'kelas' => '-', 'avatar' => 'orange'],
+            ];
+        }
 
         return view('guru.dashboard', compact(
             'totalSiswa',
