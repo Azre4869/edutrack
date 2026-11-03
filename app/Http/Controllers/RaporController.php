@@ -99,6 +99,16 @@ class RaporController extends Controller
 
     public function show($id, Request $request)
     {
+        return $this->renderRapor($id, $request, false);
+    }
+
+    public function cetak($id, Request $request)
+    {
+        return $this->renderRapor($id, $request, true);
+    }
+
+    private function renderRapor($id, Request $request, bool $mustBeComplete = false)
+    {
         $user = auth()->user();
         if ($user && $user->role === 'Operator') {
             abort(403, 'Akses ditolak: Cetak dan detail rapor merupakan hak eksklusif Wali Kelas.');
@@ -169,6 +179,14 @@ class RaporController extends Controller
         $completedNilai = $siswa->nilai->filter(fn($n) => $this->isNilaiComplete($n))->count();
         $isLengkap = ($completedNilai >= $totalMapel);
 
+        // Server-side gating: Jika perintah cetak diminta tetapi belum lengkap, tolak cetak!
+        if ($mustBeComplete && !$isLengkap) {
+            return redirect()->route('wali.rapor', [
+                'semester_id' => $selectedSemesterId,
+                'id_kelas' => $siswa->id_kelas,
+            ])->with('error', 'Rapor peserta didik ' . $siswa->nama . ' belum lengkap (' . $completedNilai . '/' . $totalMapel . ' mapel terisi). Rapor hanya dapat dicetak setelah semua 12 mapel berstatus lengkap.');
+        }
+
         return view('rapor.cetak', compact(
             'siswa',
             'presensi',
@@ -189,22 +207,33 @@ class RaporController extends Controller
 
     /**
      * Memeriksa apakah baris nilai mapel sudah lengkap
-     * Syarat: TP1 s/d TP8 terisi, SAS terisi, Nilai Akhir > 0, dan Capaian 1 & 2 terisi
+     * Sesuai keputusan: Minimal 1 TP terisi, SAS terisi, Nilai Akhir > 0, dan Capaian Kompetensi terisi
      */
     private function isNilaiComplete($n): bool
     {
         if (!$n) return false;
+
+        // Minimal 1 TP terisi
+        $hasAtLeastOneTp = false;
         for ($i = 1; $i <= 8; $i++) {
             $col = 'tp' . $i;
-            if (is_null($n->$col) || $n->$col === '') return false;
+            if (!is_null($n->$col) && $n->$col !== '') {
+                $hasAtLeastOneTp = true;
+                break;
+            }
         }
+        if (!$hasAtLeastOneTp) return false;
+
+        // SAS terisi
         if (is_null($n->sas) || $n->sas === '') return false;
+
+        // Nilai akhir valid (> 0)
         if (is_null($n->nilai_akhir) || (float)$n->nilai_akhir <= 0) return false;
 
+        // Capaian kompetensi terisi
         $c = $n->capaian;
         if (!$c) return false;
-        if (empty(trim($c->deskripsi_1 ?? ''))) return false;
-        if (empty(trim($c->deskripsi_2 ?? ''))) return false;
+        if (empty(trim($c->deskripsi_1 ?? '')) && empty(trim($c->deskripsi_2 ?? ''))) return false;
 
         return true;
     }

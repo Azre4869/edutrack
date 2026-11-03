@@ -16,7 +16,7 @@ class DataMasterController extends Controller
     {
         $user = auth()->user();
         $search = $request->query('search');
-        $perPage = $request->query('per_page', 21);
+        $perPage = max(5, min(100, (int) $request->query('per_page', 21)));
 
         $query = Siswa::with('kelas');
 
@@ -129,7 +129,7 @@ class DataMasterController extends Controller
     public function guru(Request $request)
     {
         $search = $request->query('search');
-        $perPage = $request->query('per_page', 50);
+        $perPage = max(5, min(100, (int) $request->query('per_page', 50)));
 
         $query = Guru::with('mataPelajaran', 'kelasWali');
         if ($search) {
@@ -191,7 +191,7 @@ class DataMasterController extends Controller
     public function kelas(Request $request)
     {
         $search = $request->query('search');
-        $perPage = $request->query('per_page', 50);
+        $perPage = max(5, min(100, (int) $request->query('per_page', 50)));
 
         $query = Kelas::with('waliKelas')->withCount('siswa');
         if ($search) {
@@ -250,7 +250,7 @@ class DataMasterController extends Controller
     public function mapel(Request $request)
     {
         $search = $request->query('search');
-        $perPage = $request->query('per_page', 50);
+        $perPage = max(5, min(100, (int) $request->query('per_page', 50)));
 
         $query = MataPelajaran::with('guru');
         if ($search) {
@@ -304,7 +304,7 @@ class DataMasterController extends Controller
     public function ekskul(Request $request)
     {
         $search = $request->query('search');
-        $perPage = $request->query('per_page', 50);
+        $perPage = max(5, min(100, (int) $request->query('per_page', 50)));
 
         $query = Ekstrakurikuler::with('guru');
         if ($search) {

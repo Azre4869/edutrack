@@ -1,59 +1,138 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EduTrack — Sistem Informasi Akademik & Early Warning System (EWS)
+SMP Negeri 1 Sampang
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+EduTrack adalah platform tata kelola akademik terintegrasi yang memfasilitasi pencatatan nilai sumatif, capaian kompetensi, presensi kelas & ekstrakurikuler, evaluasi rapor, hingga deteksi dini siswa berisiko (*Early Warning System*) berbasis kriteria objektif.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. **Tata Kelola Data Master (Operator)**
+   - Manajemen terstruktur Siswa, Guru, Kelas, Mata Pelajaran, dan Ekstrakurikuler.
+   - Proteksi integritas data (*Foreign Key RESTRICT Delete*) untuk mencegah kehilangan data historis secara tidak sengaja.
+   - Pembatasan aman paginasi data (`per_page` dibatasi maksimum 100 entri).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+2. **Penilaian & Capaian Kompetensi (Guru Mapel)**
+   - Input nilai TP1–TP8, SAS, serta kalkulasi otomatis Nilai Akhir (NA).
+   - Pengisian deskripsi Capaian Kompetensi yang tercapai maupun yang perlu ditingkatkan secara terpisah per semester dan mapel.
+   - Guard otorisasi ketat: Guru hanya dapat mengisi nilai mapel yang sah diampunya.
 
-## Learning Laravel
+3. **Presensi, Catatan, & Evaluasi Rapor (Wali Kelas)**
+   - Presensi harian kelas dan catatan ekstrakurikuler serta catatan sikap wali kelas.
+   - **Data-Level Access Control (DLAC)**: Wali Kelas hanya berhak mengakses dan memanipulasi siswa di kelas binaannya sendiri.
+   - **Aturan Kelengkapan Cetak Rapor**: Server menolak proses cetak rapor apabila nilai 12 mata pelajaran belum memenuhi standar kelengkapan (minimal 1 TP terisi + SAS terisi + Nilai Akhir > 0 + minimal 1 Capaian Kompetensi terisi).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+4. **Early Warning System (EWS) & Tindak Lanjut**
+   - Analisis otomatis berbasis kriteria riil dari tabel `kriteria_analisis` (Kehadiran Alpha berlebih, Nilai di bawah KKM minimal, dan Penurunan nilai signifikan).
+   - Klasifikasi tingkat risiko: **Tinggi**, **Sedang**, **Kecil**, dan **Normal**.
+   - Perencanaan sesi konseling dan modul pencatatan tindak lanjut yang tersimpan ke database.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+5. **Notifikasi & Laporan Eksekutif**
+   - Notifikasi riil per akun dengan penanda terbaca (*mark as read*).
+   - Laporan rekapitulasi data siswa per tingkat, tren kehadiran, dan daftar 10 siswa dengan nilai terendah berbasis agregasi database riil.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠️ Prasyarat Sistem
 
-### Premium Partners
+- **PHP**: ^8.2 (ekstensi: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`)
+- **Web Server / Database**: MySQL 8.0+ atau MariaDB 10.4+ (misal via XAMPP)
+- **Composer**: ^2.x
+- **Node.js & npm**: Node.js v18+ / v20+
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## 📦 Panduan Instalasi
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Kloning Repositori & Masuk Direktori
+```bash
+git clone <url-repositori-anda>
+cd edutrack
+```
 
-## Code of Conduct
+### 2. Pasang Dependensi Backend (Composer)
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Konfigurasi Environment (`.env`)
+Salin file konfigurasi environment:
+```bash
+cp .env.example .env
+```
+Generate application key:
+```bash
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+Sesuaikan konfigurasi koneksi database MySQL pada file `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=sisfortes
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4. Migrasi & Seeder Database
+Jalankan migrasi skema tabel beserta master data dan data demo:
+```bash
+php artisan migrate --seed
+```
 
-## License
+> **Catatan Seeder**:
+> - `MasterDataSeeder`: Mengisi data pokok sekolah (semester, kriteria analisis EWS, mapel, guru, kelas, dan akun sistem).
+> - `DummyDataSeeder`: Mengisi siswa, presensi harian, nilai sumatif, capaian kompetensi, riwayat ekskul, serta data demo lengkap 12 mapel untuk siswa **Rani Arisanti Najma (id_siswa = 3)** yang siap dicetak rapornya.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 5. Kompilasi Aset Frontend (Vite)
+Aplikasi menggunakan Tailwind CSS terintegrasi Vite (tanpa ketergantungan CDN runtime):
+```bash
+npm install
+npm run build
+```
+*(Untuk mode pengembangan langsung aktif: jalankan `npm run dev`)*
+
+### 6. Menjalankan Server Lokal
+```bash
+php artisan serve
+```
+Akses aplikasi melalui browser di: `http://127.0.0.1:8000`
+
+---
+
+## 👥 Akun Demo & Peran Pengguna
+
+Semua akun demo di bawah ini menggunakan kata sandi standar: **`password`**
+
+| Username | Peran (Role) | Keterangan / Hak Akses |
+| :--- | :--- | :--- |
+| `operator` | **Operator** | Administrator sistem. Memiliki akses penuh ke Data Master, Monitoring Rapor semua kelas, Laporan Eksekutif, dan EWS sekolah. |
+| `walikelas` | **Wali Kelas** | Wali Kelas VII A (Endang Sulistian, S.Pd.). Hanya dapat mengelola siswa kelas VII A, input catatan, presensi ekskul, dan cetak rapor siswa kelasnya. |
+| `gurumapel` | **Guru Mapel** | Guru Pengampu Bahasa Inggris (Siti Aminah, M.Pd.). Hanya berwenang menginput nilai sumatif dan capaian kompetensi untuk mata pelajarannya. |
+
+---
+
+## 🧪 Pengujian Otomatis (Automated Tests)
+
+EduTrack dilengkapi rangkaian unit & feature test komprehensif untuk memastikan keamanan otorisasi, integritas data, aturan bisnis rapor, dan keakuratan kalkulasi riil.
+
+Untuk menjalankan seluruh test suite:
+```bash
+php artisan test
+```
+
+Rincian cakupan pengujian:
+- `AuthorizationTest`: Validasi strict separation peran, blokir manipulasi lintas kelas oleh wali kelas, proteksi guru tanpa mapel, dan pencegahan loop redirect peran tak dikenal.
+- `DataLossGuardsTest`: Validasi penolakan penghapusan kelas berpenghuni (*RESTRICT FK*) dan pembersihan nilai yatim (*ghost grades*).
+- `RaporRulesTest`: Validasi penolakan cetak rapor yang belum lengkap oleh server dan pembersihan kontrol antarmuka palsu.
+- `DashboardRealDataTest`: Validasi keakuratan metrik agregasi seluruh sekolah dan isolasi kelas binaan wali kelas.
+- `NotifikasiRealDataTest`: Validasi isolasi data notifikasi per akun dan fungsi *mark as read*.
+- `LaporanRealDataTest`: Validasi agregasi riil jumlah siswa, guru, rata-rata nilai, dan 10 siswa nilai terendah.
+- `EarlyWarningRealDataTest`: Validasi deteksi otomatis kriteria EWS riil dan penyimpanan rencana tindak lanjut ke database.
+
+---
+
+## 📄 Lisensi
+Proyek EduTrack dikembangkan untuk keperluan akademik SMP Negeri 1 Sampang.
+Hak cipta dilindungi undang-undang.

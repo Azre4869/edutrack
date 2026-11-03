@@ -59,7 +59,12 @@
     <!-- 1. GRAFIK KEHADIRAN (Span 5) -->
     <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-md border border-gray-100 flex flex-col justify-between">
         <div>
-            <h3 class="text-lg font-extrabold text-gray-900 font-heading mb-6">Grafik Kehadiran</h3>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900 font-heading">Grafik Kehadiran</h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                </span>
+            </div>
             <div class="relative h-64 w-full">
                 <canvas id="kehadiranChart"></canvas>
             </div>
@@ -78,7 +83,12 @@
     <!-- 2. PERKEMBANGAN NILAI (Span 4) -->
     <div class="lg:col-span-4 bg-white rounded-3xl p-6 shadow-md border border-gray-100 flex flex-col justify-between">
         <div>
-            <h3 class="text-lg font-extrabold text-gray-900 font-heading mb-4">Perkembangan Nilai</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-extrabold text-gray-900 font-heading">Perkembangan Nilai</h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                </span>
+            </div>
 
             <!-- Donut Chart & Legend -->
             <div class="flex items-center justify-around mb-6">

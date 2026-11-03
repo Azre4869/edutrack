@@ -16,41 +16,8 @@
     <!-- Font Awesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Tailwind CSS CDN with Custom Theme Config -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        edu: {
-                            blue: '#2F5CAB',
-                            darkblue: '#24488A',
-                            lightblue: '#3B6EC9',
-                            bg: '#335EAB',
-                            orange: '#E04F26',
-                            orangeHover: '#CA421B',
-                            lightorange: '#FFF2EE',
-                            gray1: '#333333',
-                            gray2: '#4F4F4F',
-                            gray3: '#828282',
-                            gray4: '#BDBDBD',
-                            gray5: '#E0E0E0',
-                            info: '#2F80ED',
-                            success: '#27AE60',
-                            warning: '#E2B93B',
-                            error: '#EB5757',
-                        }
-                    },
-                    fontFamily: {
-                        heading: ['Montserrat', 'sans-serif'],
-                        body: ['Lora', 'serif'],
-                        sans: ['Montserrat', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Vite Assets (Tailwind CSS) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

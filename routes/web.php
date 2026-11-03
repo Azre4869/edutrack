@@ -91,6 +91,7 @@ Route::middleware(['web'])->group(function () {
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
+        Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
 
     // ==================== WALI KELAS ====================
@@ -113,7 +114,7 @@ Route::middleware(['web'])->group(function () {
 
         // Rapor
         Route::get('/rapor', [RaporController::class, 'index'])->name('rapor');
-        Route::get('/rapor/{id}/cetak', [RaporController::class, 'show'])->name('rapor.cetak');
+        Route::get('/rapor/{id}/cetak', [RaporController::class, 'cetak'])->name('rapor.cetak');
         Route::get('/rapor/{id}', [RaporController::class, 'show'])->name('rapor.show');
 
         // Catatan Sikap & Wali Kelas
@@ -127,6 +128,7 @@ Route::middleware(['web'])->group(function () {
 
         // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
+        Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
 
     // ==================== GURU MAPEL ====================
@@ -147,5 +149,6 @@ Route::middleware(['web'])->group(function () {
 
         // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
+        Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
 });

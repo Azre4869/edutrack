@@ -16,7 +16,7 @@
             </div>
             <div>
                 <p class="text-gray-500 text-sm font-semibold">Total Siswa</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $totalSiswa ?? 990 }}</p>
+                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $totalSiswa }}</p>
             </div>
         </div>
         {{-- Kehadiran --}}
@@ -26,7 +26,7 @@
             </div>
             <div>
                 <p class="text-gray-500 text-sm font-semibold">Kehadiran Hari ini</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $kehadiranPct ?? 93 }}%</p>
+                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $kehadiranPct }}%</p>
             </div>
         </div>
         {{-- Rata-rata Nilai --}}
@@ -36,7 +36,7 @@
             </div>
             <div>
                 <p class="text-gray-500 text-sm font-semibold">Rata-rata Nilai Kelas</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $rataRataNilai ?? 90.5 }}</p>
+                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ number_format($rataRataNilai, 1, ',', '.') }}</p>
             </div>
         </div>
         {{-- Jumlah Guru --}}
@@ -46,7 +46,7 @@
             </div>
             <div>
                 <p class="text-gray-500 text-sm font-semibold">Jumlah Guru</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $jumlahGuru ?? 78 }}</p>
+                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $jumlahGuru }}</p>
             </div>
         </div>
     </div>
@@ -56,7 +56,12 @@
 
         {{-- Rekapitulasi Data Siswa (Donut) --}}
         <div class="bg-white rounded-xl p-6">
-            <h3 class="font-bold text-gray-700 mb-4">Rekapitulasi Data Siswa</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-700">Rekap Data Siswa</h3>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                </span>
+            </div>
             <div class="flex justify-center mb-4">
                 <canvas id="siswaDonutLaporan" width="200" height="200"></canvas>
             </div>
@@ -66,21 +71,21 @@
                         <span class="w-3 h-3 rounded-full bg-edu-blue inline-block"></span>
                         <span class="text-gray-600">Kelas VII</span>
                     </div>
-                    <span class="font-semibold text-gray-700">330 (33%)</span>
+                    <span class="font-semibold text-gray-700">{{ $countVII }} Siswa</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-edu-orange inline-block"></span>
                         <span class="text-gray-600">Kelas VIII</span>
                     </div>
-                    <span class="font-semibold text-gray-700">334 (34%)</span>
+                    <span class="font-semibold text-gray-700">{{ $countVIII }} Siswa</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
                         <span class="text-gray-600">Kelas IX</span>
                     </div>
-                    <span class="font-semibold text-gray-700">326 (33%)</span>
+                    <span class="font-semibold text-gray-700">{{ $countIX }} Siswa</span>
                 </div>
             </div>
         </div>
@@ -88,7 +93,12 @@
         {{-- Tren Kehadiran (Line Chart) --}}
         <div class="bg-white rounded-xl p-6 lg:col-span-2">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-gray-700">Tren Kehadiran Siswa</h3>
+                <div class="flex items-center gap-3">
+                    <h3 class="font-bold text-gray-700">Tren Kehadiran Siswa</h3>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                    </span>
+                </div>
                 <div class="flex items-center gap-4 text-xs text-gray-500">
                     <span class="flex items-center gap-1"><span class="w-4 h-0.5 bg-edu-blue inline-block"></span> Hadir</span>
                     <span class="flex items-center gap-1"><span class="w-4 h-0.5 bg-edu-orange inline-block"></span> Tidak Hadir</span>
@@ -107,7 +117,12 @@
 
         {{-- Bar Chart: Rekap Nilai per Mapel --}}
         <div class="bg-white rounded-xl p-6 lg:col-span-2">
-            <h3 class="font-bold text-gray-700 mb-4">Rekap Nilai Rata-rata per Mata Pelajaran</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-700">Rekap Nilai Rata-rata per Mata Pelajaran</h3>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                </span>
+            </div>
             <canvas id="nilaiBarLaporan" height="160"></canvas>
             <div class="flex items-center justify-center gap-6 mt-3 text-xs text-gray-500">
                 <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-edu-blue inline-block"></span> Kelas VII</span>
@@ -137,25 +152,9 @@
                         <td class="py-1.5 text-right font-semibold text-red-600">{{ is_array($s) ? ($s['nilai'] ?? '') : ($s->rata ?? '') }}</td>
                     </tr>
                     @empty
-                    @foreach([
-                        ['Ahmad Fauzi','VII A','65,2'],
-                        ['Siti Aisyah','VII B','68,7'],
-                        ['Rizky Pratama','VIII A','69,1'],
-                        ['Dewi Lestari','VIII B','70,3'],
-                        ['Bima Sakti','IX A','72,6'],
-                        ['Nabila Putri','IX B','73,1'],
-                        ['Fahri Ramadhan','VII A','74,5'],
-                        ['Putri Handayani','VIII C','75,8'],
-                        ['Agus Setiawan','IX A','76,2'],
-                        ['Laila Sari','IX B','78,7'],
-                    ] as $idx => $row)
-                    <tr class="border-b border-gray-50 hover:bg-gray-50">
-                        <td class="py-1.5">{{ $idx+1 }}</td>
-                        <td class="py-1.5">{{ $row[0] }}</td>
-                        <td class="py-1.5">{{ $row[1] }}</td>
-                        <td class="py-1.5 text-right font-semibold text-red-600">{{ $row[2] }}</td>
+                    <tr>
+                        <td colspan="4" class="py-4 text-center text-gray-400">Belum ada data nilai tersimpan.</td>
                     </tr>
-                    @endforeach
                     @endforelse
                 </tbody>
             </table>

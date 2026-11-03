@@ -13,27 +13,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        edu: {
-                            blue: '#2F5CAB',
-                            orange: '#E04F26',
-                            orangeHover: '#CA421B',
-                        }
-                    },
-                    fontFamily: {
-                        heading: ['Montserrat', 'sans-serif'],
-                        body: ['Lora', 'serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Vite Assets (Tailwind CSS) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen relative flex items-center justify-center bg-cover bg-center font-heading" style="background-image: url('{{ asset('images/login-bg.png') }}');">
 

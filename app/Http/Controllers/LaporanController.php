@@ -2,36 +2,61 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absensi;
+use App\Models\Guru;
+use App\Models\Kelas;
+use App\Models\Nilai;
+use App\Models\Siswa;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
     public function index()
     {
-        $totalSiswa = 990;
-        $kehadiranPct = 93;
-        $rataRataNilai = 90.5;
-        $jumlahGuru = 78;
+        $totalSiswa = Siswa::count();
+        $jumlahGuru = Guru::count();
 
-        $siswaTerendah = [
-            ['no' => 1, 'nama' => 'Ahmad Fauzi', 'kelas' => 'VII A', 'nilai' => '65,2'],
-            ['no' => 2, 'nama' => 'Siti Aisyah', 'kelas' => 'VII B', 'nilai' => '68,7'],
-            ['no' => 3, 'nama' => 'Rizky Pratama', 'kelas' => 'VIII A', 'nilai' => '69,1'],
-            ['no' => 4, 'nama' => 'Dewi Lestari', 'kelas' => 'VIII B', 'nilai' => '70,3'],
-            ['no' => 5, 'nama' => 'Bima Sakti', 'kelas' => 'IX A', 'nilai' => '72,6'],
-            ['no' => 6, 'nama' => 'Nabila Putri', 'kelas' => 'IX B', 'nilai' => '73,1'],
-            ['no' => 7, 'nama' => 'Fahri Ramadhan', 'kelas' => 'VII A', 'nilai' => '74,5'],
-            ['no' => 8, 'nama' => 'Putri Handayani', 'kelas' => 'VIII C', 'nilai' => '75,8'],
-            ['no' => 9, 'nama' => 'Agus Setiawan', 'kelas' => 'IX A', 'nilai' => '76,2'],
-            ['no' => 10, 'nama' => 'Laila Sari', 'kelas' => 'IX B', 'nilai' => '78,7'],
-        ];
+        // Kehadiran riil
+        $totalAbsen = Absensi::count();
+        $hadirAbsen = Absensi::where('status', 'H')->count();
+        $kehadiranPct = $totalAbsen > 0 ? round(($hadirAbsen / $totalAbsen) * 100) : 95;
+
+        // Rata-rata nilai riil
+        $avgNilai = Nilai::avg('nilai_akhir');
+        $rataRataNilai = $avgNilai ? round($avgNilai, 1) : 0.0;
+
+        // 10 Siswa dengan nilai terendah dari database
+        $siswaTerendahQuery = Nilai::select('id_siswa', DB::raw('ROUND(AVG(nilai_akhir), 1) as rata'))
+            ->groupBy('id_siswa')
+            ->orderBy('rata', 'asc')
+            ->with(['siswa.kelas'])
+            ->take(10)
+            ->get();
+
+        $siswaTerendah = $siswaTerendahQuery->map(function ($item, $index) {
+            return [
+                'no' => $index + 1,
+                'nama' => $item->siswa->nama ?? 'Siswa',
+                'kelas' => $item->siswa->kelas->nama_kelas ?? '-',
+                'nilai' => number_format($item->rata, 1, ',', '.'),
+            ];
+        })->toArray();
+
+        // Rekapitulasi siswa per tingkat (VII, VIII, IX)
+        $countVII = Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', 'VII'))->count();
+        $countVIII = Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', 'VIII'))->count();
+        $countIX = Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', 'IX'))->count();
 
         return view('laporan.index', compact(
             'totalSiswa',
             'kehadiranPct',
             'rataRataNilai',
             'jumlahGuru',
-            'siswaTerendah'
+            'siswaTerendah',
+            'countVII',
+            'countVIII',
+            'countIX'
         ));
     }
 }
