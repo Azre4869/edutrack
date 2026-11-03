@@ -25,9 +25,8 @@ Route::get('/', function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::any('/logout', [AuthController::class, 'logout'])->name('logout');
-Route::get('/quick-login/{role}', [AuthController::class, 'quickLogin'])->name('quick-login');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Authenticated Routes
 Route::middleware(['web'])->group(function () {

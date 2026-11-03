@@ -82,25 +82,26 @@ class MasterDataSeeder extends Seeder
         }
 
         // 6. USERS DEFAULT
+        $seedPassword = Hash::make(env('SEED_PASSWORD', 'changeme'));
         $usersData = [
             [
                 'id_user' => 1,
                 'username' => 'operator',
-                'password' => Hash::make('password'),
+                'password' => $seedPassword,
                 'role' => 'Operator',
                 'id_guru' => null,
             ],
             [
                 'id_user' => 2,
                 'username' => 'walikelas',
-                'password' => Hash::make('password'),
+                'password' => $seedPassword,
                 'role' => 'Wali Kelas',
                 'id_guru' => 1, // Endang Sulistian, S.Pd. (Wali Kelas VII A)
             ],
             [
                 'id_user' => 3,
                 'username' => 'gurumapel',
-                'password' => Hash::make('password'),
+                'password' => $seedPassword,
                 'role' => 'Guru Mapel',
                 'id_guru' => 2, // Siti Aminah, M.Pd. (Pengampu Bahasa Inggris)
             ],
