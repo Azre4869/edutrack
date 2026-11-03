@@ -17,17 +17,14 @@ class CatatanController extends Controller
 
         // Data-Level Access Control
         if ($user && $user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
+            $defaultKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
             $kelasList = Kelas::orderBy('nama_kelas')->get();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
-        }
-
-        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
-        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
         $selectedSemesterId = $request->query('semester_id', 2);
@@ -60,10 +57,22 @@ class CatatanController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if ($user && $user->isWaliKelas()) {
+            $user->requireKelasBinaan();
+        }
+
         $semesterId = $request->input('semester_id', 2);
         $catatanEntries = $request->input('catatan', []);
 
         foreach ($catatanEntries as $siswaId => $data) {
+            $siswa = Siswa::find($siswaId);
+            if (!$siswa) continue;
+
+            if ($user && !$user->canAccessSiswa($siswa)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mengubah catatan siswa di luar kelas binaan.');
+            }
+
             $spiritual = trim($data['sikap_spiritual'] ?? '');
             $sosial    = trim($data['sikap_sosial'] ?? '');
             $wali      = trim($data['catatan_wali'] ?? '');
