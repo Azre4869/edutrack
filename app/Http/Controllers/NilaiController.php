@@ -27,9 +27,9 @@ class NilaiController extends Controller
             $defaultMapelId = $mapelList->first()->id_mapel ?? null;
         } elseif ($user->isWaliKelas()) {
             // Wali Kelas hanya melihat kelas binaannya
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
             $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
             $defaultMapelId = $mapelList->first()->id_mapel ?? null;
         } else {
             // Operator: akses penuh
@@ -47,8 +47,8 @@ class NilaiController extends Controller
             if (!$mapelList->contains('id_mapel', $selectedMapelId)) {
                 $selectedMapelId = $mapelList->first()->id_mapel;
             }
-        } elseif ($user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        } elseif ($user->isWaliKelas()) {
+            $selectedKelasId = $user->requireKelasBinaan()->id_kelas;
         }
 
         $search = $request->query('search');
@@ -86,17 +86,25 @@ class NilaiController extends Controller
     {
         $user = auth()->user();
         $semesterId = $request->input('semester_id', 2);
-        $mapelId = $request->input('mapel_id', 3);
+        $mapelId = (int)$request->input('mapel_id', 3);
         $nilaiData = $request->input('nilai', []);
 
-        if ($user->isGuruMapel()) {
-            $mapelAmpuan = $user->getMataPelajaranAmpuan();
-            if ($mapelAmpuan->isNotEmpty() && !$mapelAmpuan->contains('id_mapel', $mapelId)) {
-                abort(403, 'Akses ditolak: Anda hanya dapat menyimpan nilai untuk mata pelajaran yang Anda ampu.');
-            }
+        if ($user && !$user->canAccessMapel($mapelId)) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk menyimpan nilai pada mata pelajaran ini.');
+        }
+
+        if ($user && $user->isWaliKelas()) {
+            $user->requireKelasBinaan();
         }
 
         foreach ($nilaiData as $siswaId => $item) {
+            $siswa = Siswa::find($siswaId);
+            if (!$siswa) continue;
+
+            if ($user && !$user->canAccessSiswa($siswa)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa di luar kelas binaan.');
+            }
+
             $tp1 = isset($item['tp1']) && $item['tp1'] !== '' ? (float)$item['tp1'] : null;
             $tp2 = isset($item['tp2']) && $item['tp2'] !== '' ? (float)$item['tp2'] : null;
             $tp3 = isset($item['tp3']) && $item['tp3'] !== '' ? (float)$item['tp3'] : null;
@@ -195,11 +203,10 @@ class NilaiController extends Controller
     public function storeCapaian(Request $request)
     {
         $user = auth()->user();
-        if ($user->isGuruMapel()) {
-            $mapelAmpuan = $user->getMataPelajaranAmpuan();
-            if ($mapelAmpuan->isNotEmpty() && !$mapelAmpuan->contains('id_mapel', $request->mapel_id)) {
-                return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak mengampu mata pelajaran ini.'], 403);
-            }
+        $mapelId = (int)$request->mapel_id;
+
+        if ($user && !$user->canAccessMapel($mapelId)) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk mata pelajaran ini.'], 403);
         }
 
         $request->validate([
@@ -209,6 +216,11 @@ class NilaiController extends Controller
             'nomor' => 'required|in:1,2',
             'deskripsi' => 'nullable|string',
         ]);
+
+        $siswa = Siswa::findOrFail($request->siswa_id);
+        if ($user && !$user->canAccessSiswa($siswa)) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.'], 403);
+        }
 
         // Kumpulkan data TP, NS, SAS jika dikirim bersamaan dari baris tabel saat ini
         $tpData = [];
@@ -281,19 +293,17 @@ class NilaiController extends Controller
         // --- Data-Level Access Control ---
         if ($user->isWaliKelas()) {
             // Wali Kelas hanya melihat kelas binaannya
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
+            $defaultKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
             // Operator: akses penuh
             $kelasList = Kelas::orderBy('nama_kelas')->get();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
-        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
-        }
         $selectedSemesterId = $request->query('semester_id', 2);
         $search = $request->query('search');
 
@@ -324,10 +334,22 @@ class NilaiController extends Controller
 
     public function storePrestasi(Request $request)
     {
+        $user = auth()->user();
+        if ($user && $user->isWaliKelas()) {
+            $user->requireKelasBinaan();
+        }
+
         $semesterId = $request->input('semester_id', 2);
         $prestasiData = $request->input('prestasi', []);
 
         foreach ($prestasiData as $siswaId => $data) {
+            $siswa = Siswa::find($siswaId);
+            if (!$siswa) continue;
+
+            if ($user && !$user->canAccessSiswa($siswa)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mencatat prestasi siswa ini.');
+            }
+
             if (!empty($data['nama_prestasi'])) {
                 Prestasi::updateOrCreate(
                     [
