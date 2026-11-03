@@ -1,0 +1,119 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\AnalisisSiswa;
+use App\Models\Siswa;
+use App\Models\TindakLanjut;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class TindakLanjutTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->artisan('migrate');
+        $this->seed(\Database\Seeders\MasterDataSeeder::class);
+    }
+
+    /**
+     * Test operator dapat menyimpan tindak lanjut konseling.
+     */
+    public function test_operator_can_store_tindak_lanjut(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+        $siswa = Siswa::first();
+
+        $response = $this->actingAs($operator)->post(route('operator.tindak-lanjut.store'), [
+            'id_siswa'         => $siswa->id_siswa,
+            'tanggal_sesi'     => '2026-11-10',
+            'waktu_sesi'       => '10:00',
+            'jenis_konseling'  => 'Akademik',
+            'penanggung_jawab' => 'Guru Konselor',
+            'tanggal_evaluasi' => '2026-11-24',
+            'catatan'          => 'Catatan konseling operator.',
+        ]);
+
+        $response->assertRedirect(route('operator.early-warning'));
+        $this->assertDatabaseHas('tindak_lanjut', [
+            'id_user' => $operator->id_user,
+            'tanggal' => '2026-11-10',
+            'jenis_konseling' => 'Akademik',
+        ]);
+    }
+
+    /**
+     * Test siswa B tidak tertaut ke id_analisis milik siswa A.
+     */
+    public function test_siswa_b_not_linked_to_analisis_siswa_a(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+
+        // Buat Siswa A dan analisisnya
+        $siswaA = Siswa::create([
+            'nis'          => 'SISWA_A',
+            'nama'         => 'Siswa A',
+            'jenis_kelamin' => 'L',
+            'id_kelas'     => 1,
+            'status_siswa' => 'Aktif',
+        ]);
+
+        $analisisA = AnalisisSiswa::create([
+            'id_siswa'         => $siswaA->id_siswa,
+            'id_semester'      => 1,
+            'tanggal_analisis' => '2026-10-01',
+            'status'           => 'Perlu Perhatian',
+            'ringkasan'        => 'Analisis Siswa A',
+        ]);
+
+        // Buat Siswa B
+        $siswaB = Siswa::create([
+            'nis'          => 'SISWA_B',
+            'nama'         => 'Siswa B',
+            'jenis_kelamin' => 'P',
+            'id_kelas'     => 1,
+            'status_siswa' => 'Aktif',
+        ]);
+
+        // Simpan tindak lanjut untuk Siswa B
+        $response = $this->actingAs($operator)->post(route('operator.tindak-lanjut.store'), [
+            'id_siswa'         => $siswaB->id_siswa,
+            'tanggal_sesi'     => '2026-11-12',
+            'waktu_sesi'       => '09:00',
+            'jenis_konseling'  => 'Kehadiran',
+            'penanggung_jawab' => 'Guru BK',
+            'tanggal_evaluasi' => '2026-11-26',
+        ]);
+
+        $response->assertRedirect(route('operator.early-warning'));
+
+        // Ambil tindak lanjut yang baru dibuat
+        $tindakLanjutB = TindakLanjut::where('tanggal', '2026-11-12')->first();
+
+        $this->assertNotNull($tindakLanjutB);
+        // Pastikan id_analisis B BUKAN id_analisis A
+        $this->assertNotEquals($analisisA->id_analisis, $tindakLanjutB->id_analisis);
+        // Pastikan id_analisis B tertaut ke Siswa B
+        $this->assertEquals($siswaB->id_siswa, $tindakLanjutB->analisisSiswa->id_siswa);
+    }
+
+    /**
+     * Test pencarian kosong di Early Warning tidak menyebabkan error 500.
+     */
+    public function test_empty_search_in_early_warning_handled_gracefully(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+
+        // Cari dengan keyword yang dipastikan tidak ada
+        $response = $this->actingAs($operator)->get(route('operator.early-warning', [
+            'search' => 'NAMA_TIDAK_MUNGKIN_ADA_XYZ123',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Tidak Ada Siswa Terpilih');
+    }
+}

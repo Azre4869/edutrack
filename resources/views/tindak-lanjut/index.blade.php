@@ -48,7 +48,10 @@
     </div>
 
     {{-- Main Form Area --}}
-    <form action="{{ route('wali.tindak-lanjut.store') }}" method="POST">
+    @php
+        $rolePrefix = $rolePrefix ?? (auth()->user() && auth()->user()->isOperator() ? 'operator' : 'wali');
+    @endphp
+    <form action="{{ route($rolePrefix . '.tindak-lanjut.store') }}" method="POST">
         @csrf
         <input type="hidden" name="id_siswa" value="{{ $siswa->id_siswa ?? '' }}">
 
@@ -228,7 +231,7 @@
 
         {{-- Bottom Action Bar --}}
         <div class="bg-white rounded-xl mt-4 px-6 py-4 flex items-center justify-between">
-            <a href="{{ route('wali.early-warning') }}" class="flex items-center gap-2 text-edu-blue font-semibold text-sm hover:underline">
+            <a href="{{ route($rolePrefix . '.early-warning') }}" class="flex items-center gap-2 text-edu-blue font-semibold text-sm hover:underline">
                 <i class="fas fa-arrow-left"></i> Kembali ke Early Warning
             </a>
             <div class="text-center">

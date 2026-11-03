@@ -14,8 +14,15 @@ class TindakLanjut extends Model
         'id_analisis',
         'id_user',
         'tanggal',
+        'waktu',
+        'jenis_konseling',
+        'peserta_diundang',
+        'tempat_media',
         'tindakan',
+        'catatan_konseling',
+        'rencana_dukungan',
         'status',
+        'tanggal_evaluasi',
     ];
 
     public function analisisSiswa()

@@ -142,7 +142,7 @@
                 <tbody class="divide-y divide-black bg-white font-body">
                     @forelse($siswaEarlyWarning as $idx => $sw)
                         @php
-                            $isSelected = $sw['id_siswa'] == $selectedSiswa['id_siswa'];
+                            $isSelected = $selectedSiswa && $sw['id_siswa'] == ($selectedSiswa['id_siswa'] ?? null);
                         @endphp
                         <tr class="transition cursor-pointer {{ $isSelected ? 'bg-orange-50/70 font-semibold' : 'hover:bg-blue-50/40' }}" onclick="window.location.href='?selected_id={{ $sw['id_siswa'] }}'">
                             <td class="p-2.5 text-center font-semibold border border-black">{{ $idx + 1 }}.</td>
@@ -184,6 +184,7 @@
 
     <!-- RIGHT SIDE PANEL: DETAIL SISWA (SPAN 4) -->
     <div class="lg:col-span-4 bg-white rounded-3xl p-6 shadow-xl border border-gray-200 flex flex-col justify-between">
+        @if($selectedSiswa)
         <div>
             <!-- Header Detail Siswa -->
             <div class="flex items-center justify-between pb-4 border-b border-gray-100">
@@ -295,6 +296,13 @@
                 <i class="fa-solid fa-arrow-right text-xs"></i>
             </a>
         </div>
+        @else
+        <div class="flex flex-col items-center justify-center h-full py-16 text-center text-gray-400">
+            <i class="fa-solid fa-user-slash text-4xl mb-3 text-gray-300"></i>
+            <p class="font-bold text-sm text-gray-700">Tidak Ada Siswa Terpilih</p>
+            <p class="text-xs text-gray-400 mt-1 max-w-xs">Data siswa tidak ditemukan untuk kata kunci pencarian tersebut.</p>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

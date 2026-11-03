@@ -111,18 +111,28 @@ class EarlyWarningController extends Controller
             ],
         ];
 
-        // Filter if search query exists
+        // Filter if search query exists with re-indexed array_values
         if ($search) {
-            $siswaEarlyWarning = array_filter($siswaEarlyWarning, function ($item) use ($search) {
+            $siswaEarlyWarning = array_values(array_filter($siswaEarlyWarning, function ($item) use ($search) {
                 return stripos($item['nama'], $search) !== false ||
                        stripos($item['nis'], $search) !== false ||
                        stripos($item['kelas'], $search) !== false;
-            });
+            }));
+        } else {
+            $siswaEarlyWarning = array_values($siswaEarlyWarning);
         }
 
-        // Active selected student for side panel (default to Firdausi Anam)
-        $selectedId = $request->query('selected_id', 1);
-        $selectedSiswa = collect($siswaEarlyWarning)->firstWhere('id_siswa', $selectedId) ?? $siswaEarlyWarning[0];
+        // Active selected student for side panel with proper null handling when empty
+        $selectedId = $request->query('selected_id');
+        $selectedSiswa = null;
+        if (!empty($siswaEarlyWarning)) {
+            if ($selectedId) {
+                $selectedSiswa = collect($siswaEarlyWarning)->firstWhere('id_siswa', $selectedId);
+            }
+            if (!$selectedSiswa) {
+                $selectedSiswa = $siswaEarlyWarning[0];
+            }
+        }
 
         return view('early-warning.index', compact(
             'kelasList',
