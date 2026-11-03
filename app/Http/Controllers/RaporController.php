@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guru;
+use App\Models\Absensi;
 use App\Models\Kelas;
 use App\Models\Semester;
 use App\Models\Siswa;
@@ -17,17 +18,14 @@ class RaporController extends Controller
 
         // Data-Level Access Control
         if ($user && $user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
+            $defaultKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
             $kelasList = Kelas::orderBy('nama_kelas')->get();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
-        }
-
-        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
-        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
         $selectedSemesterId = $request->query('semester_id', 2);
@@ -128,15 +126,22 @@ class RaporController extends Controller
 
         $catatan = $siswa->catatanWali->first();
 
-        if ($user && $user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            if ($kelasBinaan && $siswa->id_kelas !== $kelasBinaan->id_kelas) {
-                abort(403, 'Akses ditolak: Anda hanya berhak mengakses rapor siswa di kelas binaan Anda.');
-            }
+        if ($user && !$user->canAccessSiswa($siswa)) {
+            abort(403, 'Akses ditolak: Anda hanya berhak mengakses rapor siswa di kelas binaan Anda.');
         }
 
-        $rekap = \Illuminate\Support\Facades\DB::select('CALL rekap_presensi(?)', [$siswa->nis]);
-        $presensi = !empty($rekap) ? $rekap[0] : null;
+        // Rekap presensi per semester menggunakan Eloquent (tanpa stored procedure)
+        $absensiRekap = Absensi::where('id_siswa', $siswa->id_siswa)
+            ->where('id_semester', $selectedSemesterId)
+            ->selectRaw("
+                SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) AS hadir,
+                SUM(CASE WHEN status = 'Izin'  THEN 1 ELSE 0 END) AS izin,
+                SUM(CASE WHEN status = 'Sakit' THEN 1 ELSE 0 END) AS sakit,
+                SUM(CASE WHEN status = 'Alpha' THEN 1 ELSE 0 END) AS alpha
+            ")
+            ->first();
+
+        $presensi = $absensiRekap;
 
         // Semester aktif
         $semesterObj = Semester::find($selectedSemesterId);
