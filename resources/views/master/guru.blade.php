@@ -86,7 +86,7 @@
                         </td>
                         <td class="p-2.5 text-center border border-black">
                             <div class="flex items-center justify-center space-x-1.5">
-                                <button onclick="alert('Detail Guru: {{ $g->nama_guru }} (NIP: {{ $g->nip }})')" title="Lihat" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="showDetailGuru('{{ $g->nip }}', '{{ addslashes($g->nama_guru) }}', '{{ addslashes($g->mataPelajaran->pluck('nama_mapel')->join(', ') ?: 'Guru Kelas') }}', '{{ addslashes($g->kelasWali ? 'Wali Kelas ' . $g->kelasWali->nama_kelas : 'Guru Mata Pelajaran') }}', 'Aktif')" title="Lihat Detail" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 @if(auth()->user()->role === 'Operator')
@@ -193,7 +193,56 @@
     </div>
 </div>
 
+<!-- MODAL DETAIL GURU -->
+<div id="modalDetailGuru" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-gray-100 font-heading">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-edu-blue flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900" id="detail_guru_nama_text">-</h3>
+                    <p class="text-xs text-gray-500 font-body" id="detail_guru_nip_text">NIP: -</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('modalDetailGuru').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="mt-5 space-y-3 font-body text-xs">
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                <span class="text-gray-500 font-medium block mb-1">Mata Pelajaran yang Diampu</span>
+                <p id="detail_guru_mapel_text" class="font-bold text-gray-900">-</p>
+            </div>
+            <div class="bg-blue-50/50 p-3.5 rounded-2xl border border-blue-100 flex justify-between items-center">
+                <span class="text-edu-blue font-bold">Penugasan / Jabatan</span>
+                <span id="detail_guru_jabatan_text" class="font-bold text-gray-800 bg-white px-2.5 py-1 rounded-lg border border-blue-200">-</span>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Status Kepegawaian</span>
+                <span class="font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">Aktif Mengajar</span>
+            </div>
+        </div>
+
+        <div class="pt-5 flex justify-end">
+            <button type="button" onclick="document.getElementById('modalDetailGuru').classList.add('hidden')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+    function showDetailGuru(nip, nama, mapel, jabatan, status) {
+        document.getElementById('detail_guru_nama_text').innerText = nama;
+        document.getElementById('detail_guru_nip_text').innerText = 'NIP: ' + nip;
+        document.getElementById('detail_guru_mapel_text').innerText = mapel;
+        document.getElementById('detail_guru_jabatan_text').innerText = jabatan;
+        document.getElementById('modalDetailGuru').classList.remove('hidden');
+    }
+
     function editGuru(id, nip, nama) {
         document.getElementById('edit_guru_nip').value = nip;
         document.getElementById('edit_guru_nama').value = nama;

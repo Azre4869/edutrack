@@ -75,7 +75,7 @@
                         <td class="p-2.5 text-center font-bold text-edu-orange border border-black">{{ $k->siswa_count }}</td>
                         <td class="p-2.5 text-center border border-black">
                             <div class="flex items-center justify-center space-x-1.5">
-                                <button onclick="alert('Detail Rombel {{ $k->nama_kelas }}')" title="Lihat" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="showDetailKelas('{{ addslashes($k->nama_kelas) }}', {{ $k->tingkat }}, '{{ $k->tahun_ajaran }}', '{{ addslashes($k->waliKelas ? $k->waliKelas->nama_guru : 'Belum Ditentukan') }}', '{{ $k->waliKelas ? $k->waliKelas->nip : '-' }}', {{ $k->siswa_count }})" title="Lihat Detail" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 @if(auth()->user()->role === 'Operator')
@@ -219,7 +219,58 @@
     </div>
 </div>
 
+<!-- MODAL DETAIL KELAS -->
+<div id="modalDetailKelas" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-gray-100 font-heading">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-edu-blue flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-chalkboard"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900" id="detail_nama_kelas">-</h3>
+                    <p class="text-xs text-gray-500 font-body" id="detail_tingkat_ta">-</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('modalDetailKelas').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="mt-5 space-y-3 font-body text-xs">
+            <div class="bg-blue-50/50 p-3.5 rounded-2xl border border-blue-100">
+                <span class="text-xs font-bold text-edu-blue block mb-1">Wali Kelas</span>
+                <p id="detail_wali_nama" class="text-sm font-black text-gray-900">-</p>
+                <p id="detail_wali_nip" class="text-[11px] text-gray-500 mt-0.5">NIP: -</p>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Jumlah Peserta Didik</span>
+                <span id="detail_jumlah_siswa" class="font-bold text-edu-orange bg-white px-3 py-1 rounded-lg border border-gray-200">- Siswa</span>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Status Rombel</span>
+                <span class="font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">Aktif Berjalan</span>
+            </div>
+        </div>
+
+        <div class="pt-5 flex justify-end">
+            <button type="button" onclick="document.getElementById('modalDetailKelas').classList.add('hidden')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+    function showDetailKelas(nama, tingkat, ta, waliNama, waliNip, siswaCount) {
+        document.getElementById('detail_nama_kelas').innerText = 'Kelas ' + nama;
+        document.getElementById('detail_tingkat_ta').innerText = 'Tingkat ' + tingkat + ' • Tahun Ajaran ' + ta;
+        document.getElementById('detail_wali_nama').innerText = waliNama;
+        document.getElementById('detail_wali_nip').innerText = waliNip && waliNip !== '-' ? 'NIP: ' + waliNip : 'NIP: -';
+        document.getElementById('detail_jumlah_siswa').innerText = siswaCount + ' Siswa';
+        document.getElementById('modalDetailKelas').classList.remove('hidden');
+    }
+
     function editKelas(id, nama, tingkat, ta, waliId) {
         document.getElementById('edit_nama_kelas').value = nama;
         document.getElementById('edit_tingkat').value = tingkat;
