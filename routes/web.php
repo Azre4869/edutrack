@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CatatanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\EarlyWarningController;
@@ -73,6 +74,11 @@ Route::middleware(['web'])->group(function () {
         Route::post('/presensi-kelas', [PresensiController::class, 'storePresensiKelas'])->name('presensi-kelas.store');
         Route::get('/presensi-ekskul', [PresensiController::class, 'presensiEkskul'])->name('presensi-ekskul');
         Route::post('/presensi-ekskul', [PresensiController::class, 'storePresensiEkskul'])->name('presensi-ekskul.store');
+        Route::post('/presensi-ekskul/deskripsi', [PresensiController::class, 'storeDeskripsiAjax'])->name('presensi-ekskul.deskripsi');
+
+        // Catatan Sikap & Wali Kelas
+        Route::get('/catatan', [CatatanController::class, 'index'])->name('catatan');
+        Route::post('/catatan', [CatatanController::class, 'store'])->name('catatan.store');
 
         // Rapor (Monitoring), Early Warning, Laporan, Notifikasi
         Route::get('/rapor', [RaporController::class, 'index'])->name('rapor');
@@ -99,11 +105,16 @@ Route::middleware(['web'])->group(function () {
         Route::post('/presensi-kelas', [PresensiController::class, 'storePresensiKelas'])->name('presensi-kelas.store');
         Route::get('/presensi-ekskul', [PresensiController::class, 'presensiEkskul'])->name('presensi-ekskul');
         Route::post('/presensi-ekskul', [PresensiController::class, 'storePresensiEkskul'])->name('presensi-ekskul.store');
+        Route::post('/presensi-ekskul/deskripsi', [PresensiController::class, 'storeDeskripsiAjax'])->name('presensi-ekskul.deskripsi');
 
         // Rapor
         Route::get('/rapor', [RaporController::class, 'index'])->name('rapor');
         Route::get('/rapor/{id}/cetak', [RaporController::class, 'show'])->name('rapor.cetak');
         Route::get('/rapor/{id}', [RaporController::class, 'show'])->name('rapor.show');
+
+        // Catatan Sikap & Wali Kelas
+        Route::get('/catatan', [CatatanController::class, 'index'])->name('catatan');
+        Route::post('/catatan', [CatatanController::class, 'store'])->name('catatan.store');
 
         // Early Warning & Tindak Lanjut
         Route::get('/early-warning', [EarlyWarningController::class, 'index'])->name('early-warning');

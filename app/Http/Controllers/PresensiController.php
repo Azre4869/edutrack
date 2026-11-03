@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absensi;
+use App\Models\CatatanWali;
 use App\Models\Ekstrakurikuler;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
@@ -138,6 +139,11 @@ class PresensiController extends Controller
             ->get()
             ->groupBy('id_siswa');
 
+        $catatanMap = CatatanWali::whereIn('id_siswa', $siswaList->pluck('id_siswa'))
+            ->where('id_semester', $selectedSemesterId)
+            ->get()
+            ->keyBy('id_siswa');
+
         return view('presensi.ekskul', compact(
             'kelasList',
             'semesterList',
@@ -146,7 +152,8 @@ class PresensiController extends Controller
             'selectedSemesterId',
             'search',
             'siswaList',
-            'nilaiEkskul'
+            'nilaiEkskul',
+            'catatanMap'
         ));
     }
 
@@ -154,29 +161,115 @@ class PresensiController extends Controller
     {
         $semesterId = $request->input('semester_id', 2);
         $ekskulEntries = $request->input('ekskul', []);
+        $catatanEntries = $request->input('catatan', []);
 
         foreach ($ekskulEntries as $siswaId => $items) {
             // Dukung format single array atau multi-ekskul (Ekskul 1, 2, 3)
             if (isset($items['id_ekskul'])) {
                 $items = [$items];
             }
+
+            $submittedEkskulIds = [];
+
             foreach ($items as $data) {
                 if (!empty($data['id_ekskul'])) {
+                    $idEk = (int)$data['id_ekskul'];
+                    $submittedEkskulIds[] = $idEk;
+                    $predikat = $data['predikat'] ?? 'Baik';
+
+                    // Buatkan deskripsi standar jika guru tidak mengisi modal khusus
+                    $deskripsi = trim($data['deskripsi'] ?? '');
+                    if ($deskripsi === '') {
+                        if ($predikat === 'Sangat Baik') {
+                            $deskripsi = 'Sangat aktif, berdisiplin tinggi, dan menunjukkan antusiasme luar biasa dalam setiap kegiatan.';
+                        } elseif ($predikat === 'Baik') {
+                            $deskripsi = 'Aktif mengikuti kegiatan secara konsisten dan mampu bekerja sama dengan baik.';
+                        } else {
+                            $deskripsi = 'Cukup aktif dalam kegiatan, perlu lebih ditingkatkan kedisiplinan dan kehadiran.';
+                        }
+                    }
+
                     NilaiEkstrakurikuler::updateOrCreate(
                         [
                             'id_siswa' => $siswaId,
-                            'id_ekskul' => $data['id_ekskul'],
+                            'id_ekskul' => $idEk,
                             'id_semester' => $semesterId,
                         ],
                         [
-                            'predikat' => $data['predikat'] ?? 'Baik',
-                            'deskripsi' => $data['deskripsi'] ?? 'Aktif mengikuti kegiatan ekstrakurikuler.',
+                            'predikat' => $predikat,
+                            'deskripsi' => $deskripsi,
                         ]
                     );
                 }
             }
+
+            // Hapus ekskul yang sebelumnya tersimpan namun diubah menjadi kosong / "-- Pilih --"
+            NilaiEkstrakurikuler::where('id_siswa', $siswaId)
+                ->where('id_semester', $semesterId)
+                ->whereNotIn('id_ekskul', $submittedEkskulIds)
+                ->delete();
         }
 
-        return back()->with('success', 'Data presensi dan penilaian ekstrakurikuler berhasil disimpan.');
+        // Simpan kolom Keterangan / Catatan Tambahan Siswa
+        foreach ($catatanEntries as $siswaId => $note) {
+            $note = trim($note ?? '');
+            if ($note !== '') {
+                CatatanWali::updateOrCreate(
+                    [
+                        'id_siswa' => $siswaId,
+                        'id_semester' => $semesterId,
+                    ],
+                    [
+                        'catatan_wali' => $note,
+                    ]
+                );
+            }
+        }
+
+        return back()->with('success', 'Data presensi, penilaian ekstrakurikuler, dan catatan siswa berhasil disimpan.');
+    }
+
+    public function storeDeskripsiAjax(Request $request)
+    {
+        $request->validate([
+            'siswa_id'    => 'required|exists:siswa,id_siswa',
+            'id_ekskul'   => 'required|exists:ekstrakurikuler,id_ekskul',
+            'semester_id' => 'required',
+            'predikat'    => 'required|string',
+            'deskripsi'   => 'nullable|string',
+        ]);
+
+        $predikat = $request->input('predikat', 'Baik');
+        $deskripsi = trim($request->input('deskripsi', ''));
+
+        if ($deskripsi === '') {
+            if ($predikat === 'Sangat Baik') {
+                $deskripsi = 'Sangat aktif, berdisiplin tinggi, dan menunjukkan antusiasme luar biasa dalam setiap kegiatan.';
+            } elseif ($predikat === 'Baik') {
+                $deskripsi = 'Aktif mengikuti kegiatan secara konsisten dan mampu bekerja sama dengan baik.';
+            } else {
+                $deskripsi = 'Cukup aktif dalam kegiatan, perlu lebih ditingkatkan kedisiplinan dan kehadiran.';
+            }
+        }
+
+        NilaiEkstrakurikuler::updateOrCreate(
+            [
+                'id_siswa'    => $request->siswa_id,
+                'id_ekskul'   => $request->id_ekskul,
+                'id_semester' => $request->semester_id,
+            ],
+            [
+                'predikat'  => $predikat,
+                'deskripsi' => $deskripsi,
+            ]
+        );
+
+        return response()->json([
+            'status'    => 'success',
+            'message'   => 'Deskripsi ekstrakurikuler berhasil disimpan ke database.',
+            'predikat'  => $predikat,
+            'deskripsi' => $deskripsi,
+            'id_ekskul' => (int)$request->id_ekskul,
+        ]);
     }
 }
