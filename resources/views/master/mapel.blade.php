@@ -73,11 +73,11 @@
                         <td class="p-2.5 text-center border border-black">VII, VIII, IX</td>
                         <td class="p-2.5 text-center border border-black">
                             <div class="flex items-center justify-center space-x-1.5">
-                                <button onclick="alert('Detail Mapel: {{ $m->nama_mapel }}')" title="Lihat" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="showDetailMapel('MP-{{ str_pad($m->id_mapel, 3, '0', STR_PAD_LEFT) }}', '{{ addslashes($m->nama_mapel) }}', '{{ addslashes($m->guru ? $m->guru->nama_guru : 'Belum Ditentukan') }}', '{{ $m->guru ? $m->guru->nip : '-' }}', '{{ $m->tingkat ?? 'VII, VIII, IX' }}', '{{ $m->kategori ?? 'Muatan Nasional' }}')" title="Lihat Detail" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 @if(auth()->user()->role === 'Operator')
-                                <button onclick="editMapel({{ $m->id_mapel }}, '{{ addslashes($m->nama_mapel) }}', {{ $m->id_guru }})" title="Edit" class="w-6 h-6 rounded bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="editMapel({{ $m->id_mapel }}, '{{ addslashes($m->nama_mapel) }}', {{ $m->id_guru ?? 'null' }})" title="Edit" class="w-6 h-6 rounded bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <form action="{{ route('operator.mapel.destroy', $m->id_mapel) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mapel ini?')" class="inline">
@@ -148,6 +148,48 @@
     </div>
 </div>
 
+<!-- MODAL DETAIL MAPEL -->
+<div id="modalDetailMapel" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-gray-100 font-heading">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-edu-blue flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900" id="detail_nama_mapel">-</h3>
+                    <p class="text-xs text-gray-500 font-body" id="detail_kode_mapel">-</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('modalDetailMapel').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="mt-5 space-y-3 font-body text-xs">
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Kategori Kurikulum</span>
+                <span id="detail_kategori" class="font-bold text-gray-800 bg-white px-2.5 py-1 rounded-lg border border-gray-200">-</span>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Tingkat Kelas</span>
+                <span id="detail_tingkat" class="font-bold text-gray-800 bg-white px-2.5 py-1 rounded-lg border border-gray-200">-</span>
+            </div>
+            <div class="bg-blue-50/50 p-3.5 rounded-2xl border border-blue-100">
+                <span class="text-xs font-bold text-edu-blue block mb-1">Guru Pengampu Utama</span>
+                <p id="detail_guru_nama" class="text-sm font-black text-gray-900">-</p>
+                <p id="detail_guru_nip" class="text-[11px] text-gray-500 mt-0.5">NIP: -</p>
+            </div>
+        </div>
+
+        <div class="pt-5 flex justify-end">
+            <button type="button" onclick="document.getElementById('modalDetailMapel').classList.add('hidden')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL EDIT MAPEL -->
 <div id="modalEditMapel" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-gray-100 font-heading">
@@ -188,9 +230,19 @@
 </div>
 
 <script>
+    function showDetailMapel(kode, nama, guru, nip, tingkat, kategori) {
+        document.getElementById('detail_kode_mapel').innerText = kode;
+        document.getElementById('detail_nama_mapel').innerText = nama;
+        document.getElementById('detail_kategori').innerText = kategori;
+        document.getElementById('detail_tingkat').innerText = tingkat;
+        document.getElementById('detail_guru_nama').innerText = guru;
+        document.getElementById('detail_guru_nip').innerText = nip && nip !== '-' ? 'NIP: ' + nip : 'NIP: -';
+        document.getElementById('modalDetailMapel').classList.remove('hidden');
+    }
+
     function editMapel(id, nama, guruId) {
         document.getElementById('edit_nama_mapel').value = nama;
-        document.getElementById('edit_guru_mapel').value = guruId;
+        document.getElementById('edit_guru_mapel').value = guruId || '';
         document.getElementById('formEditMapel').action = '/operator/mapel/' + id;
         document.getElementById('modalEditMapel').classList.remove('hidden');
     }
