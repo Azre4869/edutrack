@@ -83,6 +83,21 @@ return new class extends Migration
                 ->cascadeOnUpdate();
         });
 
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
+        });
+
         // 7. SISWA
         Schema::create('siswa', function (Blueprint $table) {
             $table->integer('id_siswa', true);
@@ -231,7 +246,7 @@ return new class extends Migration
             $table->decimal('tp8', 5, 2)->nullable();
             $table->decimal('ns', 5, 2)->nullable();
             $table->decimal('sas', 5, 2)->nullable();
-            $table->decimal('nilai_akhir', 5, 2);
+            $table->decimal('nilai_akhir', 5, 2)->nullable();
 
             $table->unique(['id_siswa', 'id_mapel', 'id_semester'], 'uq_nilai_siswa_mapel_semester');
 
@@ -255,8 +270,8 @@ return new class extends Migration
         Schema::create('capaian_kompetensi', function (Blueprint $table) {
             $table->integer('id_capaian', true);
             $table->integer('id_nilai')->unique();
-            $table->text('deskripsi_1');
-            $table->text('deskripsi_2');
+            $table->text('deskripsi_1')->nullable();
+            $table->text('deskripsi_2')->nullable();
 
             $table->foreign('id_nilai', 'fk_capaian_nilai')
                 ->references('id_nilai')->on('nilai')
@@ -465,6 +480,8 @@ return new class extends Migration
         Schema::dropIfExists('analisis_log');
         Schema::dropIfExists('kriteria_analisis');
         Schema::dropIfExists('siswa');
+        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('users');
         Schema::dropIfExists('ekstrakurikuler');
         Schema::dropIfExists('mata_pelajaran');

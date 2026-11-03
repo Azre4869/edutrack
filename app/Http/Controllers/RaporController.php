@@ -47,8 +47,10 @@ class RaporController extends Controller
         $lengkapCount = 27;
         $belumLengkapCount = 5;
         $persentaseLengkap = 84;
+        $isWali = $user && $user->isWaliKelas();
 
         return view('rapor.index', compact(
+            'isWali',
             'kelasList',
             'semesterList',
             'selectedKelasId',

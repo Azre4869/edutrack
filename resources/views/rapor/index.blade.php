@@ -1,3 +1,9 @@
+@php
+    $user = auth()->user();
+    $rolePrefix = ($user->role ?? '') === 'Operator' ? 'operator' : 'wali';
+    $isWali = $isWali ?? ($user ? $user->isWaliKelas() : false);
+@endphp
+
 @extends('layouts.app')
 
 @section('title', $isWali ? 'Rapor Siswa' : 'Monitoring Kelengkapan Rapor')
@@ -5,11 +11,6 @@
 @section('page_subtitle', $isWali ? 'Dashboard > Rapor' : 'Dashboard > Monitoring Rapor')
 
 @section('content')
-@php
-    $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'wali';
-    $isWali = auth()->user()->isWaliKelas();
-@endphp
-
 <div class="space-y-4">
 
     {{-- Filter Bar (Murni GET) --}}
