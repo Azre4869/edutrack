@@ -46,7 +46,12 @@ class RoleMiddleware
                 return redirect()->route('guru.dashboard')->with('error', 'Akses dibatasi: Anda login sebagai Guru Mapel dan hanya dapat mengakses modul Guru Mapel.');
             }
 
-            return redirect()->route('login')->with('error', 'Role Anda tidak memiliki izin untuk halaman tersebut.');
+            // Role tak dikenal / tidak valid memicu logout, bukan redirect berputar
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('error', 'Role Anda tidak valid atau tidak memiliki izin.');
         }
 
         return $next($request);

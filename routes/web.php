@@ -19,7 +19,12 @@ Route::get('/', function () {
         $role = auth()->user()->role;
         if ($role === 'Operator') return redirect()->route('operator.dashboard');
         if ($role === 'Wali Kelas') return redirect()->route('wali.dashboard');
-        return redirect()->route('guru.dashboard');
+        if ($role === 'Guru Mapel') return redirect()->route('guru.dashboard');
+
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect()->route('login')->withErrors(['username' => 'Role akun Anda tidak valid atau tidak dikenal.']);
     }
     return redirect()->route('login');
 });

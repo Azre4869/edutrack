@@ -54,6 +54,13 @@ class AuthController extends Controller
         } elseif ($user->role === 'Guru Mapel') {
             return redirect()->route('guru.dashboard');
         }
-        return redirect()->route('operator.dashboard');
+
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('login')->withErrors([
+            'username' => 'Role akun Anda tidak valid atau tidak dikenal.',
+        ]);
     }
 }
