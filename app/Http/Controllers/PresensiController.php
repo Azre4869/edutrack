@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePresensiRequest;
 use App\Models\Absensi;
 use App\Models\CatatanWali;
 use App\Models\Ekstrakurikuler;
@@ -64,19 +65,20 @@ class PresensiController extends Controller
         ));
     }
 
-    public function storePresensiKelas(Request $request)
+    public function storePresensiKelas(StorePresensiRequest $request)
     {
+        $validated = $request->validated();
         $user = auth()->user();
         if ($user && $user->isWaliKelas()) {
             $user->requireKelasBinaan();
         }
 
-        $tanggal = $request->input('tanggal', now()->toDateString());
-        $semesterId = $request->input('semester_id', 2);
-        $statusList = $request->input('status', []); // [id_siswa => 'Hadir'|'Sakit'|'Izin'|'Alpha']
+        $tanggal = $validated['tanggal'];
+        $semesterId = $validated['semester_id'];
+        $statusList = $validated['status'] ?? [];
         
         $firstMapel = MataPelajaran::first();
-        $mapelId = $request->input('mapel_id', $firstMapel->id_mapel ?? 1);
+        $mapelId = $validated['mapel_id'] ?? ($firstMapel->id_mapel ?? 1);
 
         foreach ($statusList as $siswaId => $status) {
             $siswa = Siswa::find($siswaId);
