@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCatatanRequest;
 use App\Models\CatatanWali;
 use App\Models\Kelas;
 use App\Models\Semester;
@@ -55,15 +56,16 @@ class CatatanController extends Controller
         ));
     }
 
-    public function store(Request $request)
+    public function store(StoreCatatanRequest $request)
     {
+        $validated = $request->validated();
         $user = auth()->user();
         if ($user && $user->isWaliKelas()) {
             $user->requireKelasBinaan();
         }
 
-        $semesterId = $request->input('semester_id', 2);
-        $catatanEntries = $request->input('catatan', []);
+        $semesterId = $validated['semester_id'];
+        $catatanEntries = $validated['catatan'] ?? [];
 
         foreach ($catatanEntries as $siswaId => $data) {
             $siswa = Siswa::find($siswaId);
