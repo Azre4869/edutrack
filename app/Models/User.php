@@ -76,7 +76,7 @@ class User extends Authenticatable
 
     /**
      * Mengembalikan koleksi MataPelajaran yang diampu oleh user (khusus Guru Mapel).
-     * Returns empty collection jika user bukan Guru Mapel.
+     * Returns empty collection jika user bukan Guru Mapel atau tidak punya guru terkait.
      */
     public function getMataPelajaranAmpuan(): \Illuminate\Database\Eloquent\Collection
     {
@@ -86,5 +86,41 @@ class User extends Authenticatable
         return $this->guru
             ? $this->guru->mataPelajaran()->orderBy('nama_mapel')->get()
             : \App\Models\MataPelajaran::whereNull('id_mapel')->get();
+    }
+
+    /**
+     * Cek apakah wali kelas ini punya kelas binaan.
+     * Lempar 403 jika tidak — digunakan oleh controller sebelum memuat data.
+     */
+    public function requireKelasBinaan(): \App\Models\Kelas
+    {
+        $kelas = $this->getKelasBinaan();
+        if (!$kelas) {
+            abort(403, 'Akses ditolak: Anda belum ditugaskan sebagai wali kelas manapun. Hubungi Operator.');
+        }
+        return $kelas;
+    }
+
+    /**
+     * Apakah user boleh mengakses (baca/tulis) data siswa ini?
+     */
+    public function canAccessSiswa(Siswa $siswa): bool
+    {
+        if ($this->isOperator()) {
+            return true;
+        }
+        return (new \App\Policies\SiswaPolicy())->accessSiswa($this, $siswa);
+    }
+
+    /**
+     * Apakah user boleh menulis nilai / capaian untuk mapel ini?
+     */
+    public function canAccessMapel(int|MataPelajaran $mapel): bool
+    {
+        if ($this->isOperator()) {
+            return true;
+        }
+        $mapelId = is_numeric($mapel) ? (int)$mapel : $mapel->id_mapel;
+        return (new \App\Policies\SiswaPolicy())->accessMapel($this, $mapelId);
     }
 }
