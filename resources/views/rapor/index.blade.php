@@ -83,7 +83,8 @@
                     <tbody class="divide-y divide-black bg-white font-body" id="raporTableBody">
                         @forelse($siswaList as $index => $s)
                         @php
-                            $isRowLengkap = ($index % 5 !== 4);
+                            $isRowLengkap = $s->is_rapor_lengkap ?? false;
+                            $statusRapor  = $s->status_rapor ?? 'Belum Diisi';
                         @endphp
                         <tr class="hover:bg-blue-50/40 transition">
                             <td class="p-2.5 text-center text-gray-600 border border-black font-semibold">{{ $index + 1 }}.</td>
@@ -92,21 +93,26 @@
                             <td class="p-2.5 text-center text-gray-600 border border-black">{{ $s->jenis_kelamin }}</td>
                             <td class="p-2.5 text-center text-gray-600 border border-black">{{ $s->kelas->nama_kelas ?? '-' }}</td>
                             <td class="p-2.5 text-center border border-black">
-                                @if($isRowLengkap)
+                                @if($statusRapor === 'Lengkap')
                                     <span class="status-badge bg-emerald-100 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full">Lengkap</span>
+                                @elseif($statusRapor === 'Belum Lengkap')
+                                    <span class="status-badge bg-amber-100 text-amber-700 text-[11px] font-bold px-3 py-1 rounded-full">Belum Lengkap</span>
                                 @else
-                                    <span class="status-badge bg-red-100 text-red-600 text-[11px] font-bold px-3 py-1 rounded-full">Belum Lengkap</span>
+                                    <span class="status-badge bg-gray-100 text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full">Belum Diisi</span>
                                 @endif
                             </td>
                             @if($isWali)
                             <td class="p-2.5 text-center border border-black">
                                 <div class="flex items-center justify-center gap-1.5 font-heading">
-                                    <a href="{{ route($rolePrefix . '.rapor.show', $s->id_siswa) }}" title="Lihat Rapor"
+                                    <a href="{{ route($rolePrefix . '.rapor.show', ['id' => $s->id_siswa, 'semester_id' => $selectedSemesterId]) }}" title="Lihat Rapor"
                                         class="w-7 h-7 rounded-lg bg-blue-100 text-edu-blue flex items-center justify-center hover:bg-blue-200 transition">
                                         <i class="fas fa-eye text-xs"></i>
                                     </a>
-                                    <a href="{{ route('wali.rapor.cetak', $s->id_siswa) }}" title="Cetak Rapor" target="_blank"
-                                        class="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center hover:bg-gray-200 transition">
+                                    <a href="{{ route('wali.rapor.cetak', ['id' => $s->id_siswa, 'semester_id' => $selectedSemesterId]) }}"
+                                        title="{{ $isRowLengkap ? 'Cetak Rapor' : 'Rapor belum bisa dicetak karena nilai belum lengkap' }}"
+                                        target="{{ $isRowLengkap ? '_blank' : '_self' }}"
+                                        onclick="{{ $isRowLengkap ? '' : 'return false;' }}"
+                                        class="btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm {{ $isRowLengkap ? 'bg-gray-800 text-white hover:bg-black' : 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-60' }}">
                                         <i class="fas fa-print text-xs"></i>
                                     </a>
                                     <button type="button" onclick="toggleStatusRapor(this)" title="Toggle Status Kelengkapan"
@@ -144,14 +150,14 @@
                             <span class="w-3 h-3 rounded-full bg-edu-blue inline-block"></span>
                             <span class="text-gray-700">Lengkap</span>
                         </div>
-                        <span id="textLengkapCount" class="text-edu-blue font-bold">27 Siswa</span>
+                        <span id="textLengkapCount" class="text-edu-blue font-bold">{{ $lengkapCount }} Siswa</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="w-3 h-3 rounded-full bg-gray-300 inline-block"></span>
                             <span class="text-gray-700">Belum Lengkap</span>
                         </div>
-                        <span id="textBelumLengkapCount" class="text-gray-500 font-bold">5 Siswa</span>
+                        <span id="textBelumLengkapCount" class="text-gray-500 font-bold">{{ $belumLengkapCount }} Siswa</span>
                     </div>
                 </div>
             </div>
@@ -210,12 +216,26 @@ function toggleStatusRapor(btn) {
     const badge = tr.querySelector('.status-badge');
     if (!badge) return;
 
+    const printLink = tr.querySelector('.btn-print-action');
+
     if (badge.innerText.trim() === 'Lengkap') {
         badge.innerText = 'Belum Lengkap';
-        badge.className = 'status-badge bg-red-100 text-red-600 text-[11px] font-bold px-3 py-1 rounded-full';
+        badge.className = 'status-badge bg-amber-100 text-amber-700 text-[11px] font-bold px-3 py-1 rounded-full';
+        if (printLink) {
+            printLink.className = 'btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm bg-gray-200 text-gray-400 cursor-not-allowed opacity-60';
+            printLink.setAttribute('title', 'Rapor belum bisa dicetak karena nilai belum lengkap');
+            printLink.target = '_self';
+            printLink.onclick = function() { return false; };
+        }
     } else {
         badge.innerText = 'Lengkap';
         badge.className = 'status-badge bg-emerald-100 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full';
+        if (printLink) {
+            printLink.className = 'btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm bg-gray-800 text-white hover:bg-black';
+            printLink.setAttribute('title', 'Cetak Rapor');
+            printLink.target = '_blank';
+            printLink.onclick = null;
+        }
     }
 
     updateChartAndCounts();
@@ -232,12 +252,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (b.innerText.trim() === 'Lengkap') initLengkap++;
         else initBelum++;
     });
-    if (initLengkap === 0 && initBelum === 0) {
-        initLengkap = 27;
-        initBelum = 5;
-    }
-    const total = initLengkap + initBelum;
-    const initialPct = Math.round((initLengkap / total) * 100);
+    const total = (initLengkap + initBelum) > 0 ? (initLengkap + initBelum) : 1;
+    const initialPct = (initLengkap + initBelum) > 0 ? Math.round((initLengkap / total) * 100) : 0;
 
     const centerPlugin = {
         id: 'centerText',

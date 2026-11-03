@@ -51,12 +51,18 @@ class MasterDataSeeder extends Seeder
 
         // 4. MATA PELAJARAN
         $mapelData = [
-            ['id_mapel' => 1, 'kode_mapel' => null, 'nama_mapel' => 'Matematika', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 3],
-            ['id_mapel' => 2, 'kode_mapel' => null, 'nama_mapel' => 'Bahasa Indonesia', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 1],
-            ['id_mapel' => 3, 'kode_mapel' => null, 'nama_mapel' => 'Bahasa Inggris', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 2],
-            ['id_mapel' => 4, 'kode_mapel' => null, 'nama_mapel' => 'Ilmu Pengetahuan Alam (IPA)', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 4],
-            ['id_mapel' => 5, 'kode_mapel' => null, 'nama_mapel' => 'Ilmu Pengetahuan Sosial (IPS)', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 5],
-            ['id_mapel' => 6, 'kode_mapel' => null, 'nama_mapel' => 'Pendidikan Kewarganegaraan (PKn)', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 6],
+            ['id_mapel' => 1, 'kode_mapel' => 'MTK', 'nama_mapel' => 'Matematika', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 3],
+            ['id_mapel' => 2, 'kode_mapel' => 'BIND', 'nama_mapel' => 'Bahasa Indonesia', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 1],
+            ['id_mapel' => 3, 'kode_mapel' => 'BING', 'nama_mapel' => 'Bahasa Inggris', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 2],
+            ['id_mapel' => 4, 'kode_mapel' => 'IPA', 'nama_mapel' => 'Ilmu Pengetahuan Alam (IPA)', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 4],
+            ['id_mapel' => 5, 'kode_mapel' => 'IPS', 'nama_mapel' => 'Ilmu Pengetahuan Sosial (IPS)', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 5],
+            ['id_mapel' => 6, 'kode_mapel' => 'PPKN', 'nama_mapel' => 'Pendidikan Pancasila', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => 6],
+            ['id_mapel' => 7, 'kode_mapel' => 'PAI', 'nama_mapel' => 'Pendidikan Agama dan Budi Pekerti', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => null],
+            ['id_mapel' => 8, 'kode_mapel' => 'PJOK', 'nama_mapel' => 'Pendidikan Jasmani, Olahraga, dan Kesehatan', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => null],
+            ['id_mapel' => 9, 'kode_mapel' => 'INF', 'nama_mapel' => 'Informatika', 'kategori' => 'Muatan Nasional', 'tingkat' => 'VII, VIII, IX', 'id_guru' => null],
+            ['id_mapel' => 10, 'kode_mapel' => 'PKY', 'nama_mapel' => 'Prakarya', 'kategori' => 'Pilihan/Mulok', 'tingkat' => 'VII, VIII, IX', 'id_guru' => null],
+            ['id_mapel' => 11, 'kode_mapel' => 'SB', 'nama_mapel' => 'Seni Budaya', 'kategori' => 'Pilihan/Mulok', 'tingkat' => 'VII, VIII, IX', 'id_guru' => null],
+            ['id_mapel' => 12, 'kode_mapel' => 'BDR', 'nama_mapel' => 'Bahasa Madura', 'kategori' => 'Muatan Lokal', 'tingkat' => 'VII, VIII, IX', 'id_guru' => null],
         ];
         foreach ($mapelData as $m) {
             DB::table('mata_pelajaran')->updateOrInsert(['id_mapel' => $m['id_mapel']], $m);

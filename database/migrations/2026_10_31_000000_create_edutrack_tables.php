@@ -50,11 +50,11 @@ return new class extends Migration
             $table->string('nama_mapel', 100);
             $table->enum('kategori', ['Muatan Nasional', 'Muatan Lokal', 'Pilihan/Mulok'])->default('Muatan Nasional')->nullable();
             $table->string('tingkat', 50)->default('VII, VIII, IX')->nullable();
-            $table->integer('id_guru');
+            $table->integer('id_guru')->nullable();
 
             $table->foreign('id_guru', 'fk_mapel_guru')
                 ->references('id_guru')->on('guru')
-                ->cascadeOnDelete()
+                ->nullOnDelete()
                 ->cascadeOnUpdate();
         });
 
