@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\Semester;
 use App\Models\Siswa;
@@ -150,6 +151,13 @@ class RaporController extends Controller
         // Tanggal rapor
         $tanggalRapor = \Carbon\Carbon::now()->isoFormat('D MMMM Y');
 
+        // Kepala Sekolah (Dinamis dari Master Guru)
+        $kepsek = Guru::where('nip', '19671007 199802 1 001')
+            ->orWhere('nama_guru', 'like', '%Teguh Suparyanto%')
+            ->first();
+        $namaKepsek = $kepsek->nama_guru ?? 'Drs. Teguh Suparyanto, MMPd.';
+        $nipKepsek  = $kepsek->nip ?? '19671007 199802 1 001';
+
         // Status kelengkapan riil siswa
         $totalMapel = \App\Models\MataPelajaran::count() ?: 12;
         $totalNilai = $siswa->nilai->count();
@@ -164,6 +172,8 @@ class RaporController extends Controller
             'tahunAjaran',
             'namaWali',
             'nipWali',
+            'namaKepsek',
+            'nipKepsek',
             'tanggalRapor',
             'isLengkap',
             'completedNilai',
