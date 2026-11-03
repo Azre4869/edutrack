@@ -22,17 +22,14 @@ class PresensiController extends Controller
 
         // Data-Level Access Control
         if ($user && $user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
+            $defaultKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
             $kelasList = Kelas::orderBy('nama_kelas')->get();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
-        }
-
-        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
-        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
         $selectedSemesterId = $request->query('semester_id', 2);
@@ -69,6 +66,11 @@ class PresensiController extends Controller
 
     public function storePresensiKelas(Request $request)
     {
+        $user = auth()->user();
+        if ($user && $user->isWaliKelas()) {
+            $user->requireKelasBinaan();
+        }
+
         $tanggal = $request->input('tanggal', now()->toDateString());
         $semesterId = $request->input('semester_id', 2);
         $statusList = $request->input('status', []); // [id_siswa => 'Hadir'|'Sakit'|'Izin'|'Alpha']
@@ -77,6 +79,13 @@ class PresensiController extends Controller
         $mapelId = $request->input('mapel_id', $firstMapel->id_mapel ?? 1);
 
         foreach ($statusList as $siswaId => $status) {
+            $siswa = Siswa::find($siswaId);
+            if (!$siswa) continue;
+
+            if ($user && !$user->canAccessSiswa($siswa)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mencatat presensi siswa di kelas ini.');
+            }
+
             Absensi::updateOrCreate(
                 [
                     'id_siswa' => $siswaId,
@@ -109,17 +118,14 @@ class PresensiController extends Controller
 
         // Data-Level Access Control
         if ($user && $user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
+            $defaultKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
             $kelasList = Kelas::orderBy('nama_kelas')->get();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
-        }
-
-        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
-        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
         $selectedSemesterId = $request->query('semester_id', 2);
@@ -159,11 +165,23 @@ class PresensiController extends Controller
 
     public function storePresensiEkskul(Request $request)
     {
+        $user = auth()->user();
+        if ($user && $user->isWaliKelas()) {
+            $user->requireKelasBinaan();
+        }
+
         $semesterId = $request->input('semester_id', 2);
         $ekskulEntries = $request->input('ekskul', []);
         $catatanEntries = $request->input('catatan', []);
 
         foreach ($ekskulEntries as $siswaId => $items) {
+            $siswa = Siswa::find($siswaId);
+            if (!$siswa) continue;
+
+            if ($user && !$user->canAccessSiswa($siswa)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa di kelas ini.');
+            }
+
             // Dukung format single array atau multi-ekskul (Ekskul 1, 2, 3)
             if (isset($items['id_ekskul'])) {
                 $items = [$items];
@@ -212,6 +230,13 @@ class PresensiController extends Controller
 
         // Simpan kolom Keterangan / Catatan Tambahan Siswa
         foreach ($catatanEntries as $siswaId => $note) {
+            $siswa = Siswa::find($siswaId);
+            if (!$siswa) continue;
+
+            if ($user && !$user->canAccessSiswa($siswa)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa di kelas ini.');
+            }
+
             $note = trim($note ?? '');
             if ($note !== '') {
                 CatatanWali::updateOrCreate(
@@ -238,6 +263,12 @@ class PresensiController extends Controller
             'predikat'    => 'required|string',
             'deskripsi'   => 'nullable|string',
         ]);
+
+        $user = auth()->user();
+        $siswa = Siswa::findOrFail($request->siswa_id);
+        if ($user && !$user->canAccessSiswa($siswa)) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.'], 403);
+        }
 
         $predikat = $request->input('predikat', 'Baik');
         $deskripsi = trim($request->input('deskripsi', ''));
