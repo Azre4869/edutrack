@@ -761,13 +761,43 @@ body {
         <div style="flex:1;">
             <div class="keputusan">
                 <p style="font-weight:700;margin-bottom:2px;">Keputusan:</p>
-                <p>Berdasarkan pencapaian kompetensi pada semester ke-1 dan ke-2, peserta didik ditetapkan *)</p>
-                <p>naik ke kelas &nbsp;<strong>{{ $kelasNaik }}</strong> ( {{ $kelasNaikTb }} )</p>
-                <p class="strike">tinggal di kelas &nbsp;{{ $kelasNowRom }} ( {{ $kelasNowTb }} )</p>
-                <p class="note">*)Coret yang tidak perlu.</p>
+                @if($selectedSemesterId == 2)
+                    <p>Berdasarkan pencapaian kompetensi pada semester ke-1 dan ke-2, peserta didik ditetapkan *)</p>
+                    @php
+                        $isTinggal = (($catatan->status_kenaikan ?? 'Naik') === 'Tinggal');
+                    @endphp
+                    <p class="{{ $isTinggal ? 'strike' : '' }}">naik ke kelas &nbsp;<strong>{{ $kelasNaik }}</strong> ( {{ $kelasNaikTb }} )</p>
+                    <p class="{{ !$isTinggal ? 'strike' : '' }}">tinggal di kelas &nbsp;{{ $kelasNowRom }} ( {{ $kelasNowTb }} )</p>
+                    <p class="note">*)Coret yang tidak perlu.</p>
+                @else
+                    <p>Berdasarkan pencapaian kompetensi pada semester Gasal (Semester 1), peserta didik berhak melanjutkan kegiatan belajar ke semester Genap.</p>
+                    <p class="note" style="margin-top:4px;">*) Keputusan kenaikan kelas ditetapkan pada akhir tahun pelajaran (Semester Genap).</p>
+                @endif
             </div>
         </div>
 
+    </div>
+
+    {{-- Catatan Sikap & Wali Kelas --}}
+    <div style="margin-bottom:10px;">
+        <div class="sec-label">Catatan Wali Kelas</div>
+        <div style="border:1px solid #111; padding:7px 10px; font-size:10px; min-height:40px; line-height:1.45;">
+            @if(!empty($catatan?->catatan_wali))
+                {{ $catatan->catatan_wali }}
+            @else
+                <span style="font-style:italic;color:#666;">Tingkatkan terus prestasi belajar dan pertahankan kedisiplinan serta akhlak mulia dalam segala aktivitas sekolah.</span>
+            @endif
+            @if(!empty($catatan?->sikap_spiritual) || !empty($catatan?->sikap_sosial))
+                <div style="margin-top:5px;padding-top:4px;border-top:1px dashed #bbb;font-size:9.5px;color:#222;display:flex;gap:16px;">
+                    @if(!empty($catatan?->sikap_spiritual))
+                        <div style="flex:1;"><strong>Sikap Spiritual:</strong> {{ $catatan->sikap_spiritual }}</div>
+                    @endif
+                    @if(!empty($catatan?->sikap_sosial))
+                        <div style="flex:1;"><strong>Sikap Sosial:</strong> {{ $catatan->sikap_sosial }}</div>
+                    @endif
+                </div>
+            @endif
+        </div>
     </div>
 
     {{-- TTD --}}
