@@ -1,0 +1,275 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Absensi;
+use App\Models\CatatanWali;
+use App\Models\Ekstrakurikuler;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
+use App\Models\NilaiEkstrakurikuler;
+use App\Models\Semester;
+use App\Models\Siswa;
+use Illuminate\Http\Request;
+
+class PresensiController extends Controller
+{
+    // ==================== PRESENSI KELAS ====================
+    public function presensiKelas(Request $request)
+    {
+        $user = auth()->user();
+        $semesterList = Semester::orderBy('id_semester')->get();
+
+        // Data-Level Access Control
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->getKelasBinaan();
+            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+        } else {
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+        }
+
+        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
+        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
+            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        }
+
+        $selectedSemesterId = $request->query('semester_id', 2);
+        $selectedTanggal = $request->query('tanggal', now()->toDateString());
+        $search = $request->query('search');
+
+        $query = Siswa::where('id_kelas', $selectedKelasId);
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
+        $siswaList = $query->orderBy('nama')->get();
+
+        // Get existing attendance records for the selected date & semester
+        $absensiMap = Absensi::whereIn('id_siswa', $siswaList->pluck('id_siswa'))
+            ->where('tanggal', $selectedTanggal)
+            ->where('id_semester', $selectedSemesterId)
+            ->get()
+            ->keyBy('id_siswa');
+
+        return view('presensi.kelas', compact(
+            'kelasList',
+            'semesterList',
+            'selectedKelasId',
+            'selectedSemesterId',
+            'selectedTanggal',
+            'search',
+            'siswaList',
+            'absensiMap'
+        ));
+    }
+
+    public function storePresensiKelas(Request $request)
+    {
+        $tanggal = $request->input('tanggal', now()->toDateString());
+        $semesterId = $request->input('semester_id', 2);
+        $statusList = $request->input('status', []); // [id_siswa => 'Hadir'|'Sakit'|'Izin'|'Alpha']
+        
+        $firstMapel = MataPelajaran::first();
+        $mapelId = $request->input('mapel_id', $firstMapel->id_mapel ?? 1);
+
+        foreach ($statusList as $siswaId => $status) {
+            Absensi::updateOrCreate(
+                [
+                    'id_siswa' => $siswaId,
+                    'tanggal' => $tanggal,
+                    'id_semester' => $semesterId,
+                ],
+                [
+                    'id_mapel' => $mapelId,
+                    'status' => $status,
+                ]
+            );
+        }
+
+        $role = auth()->user()->role ?? 'Wali Kelas';
+        $prefix = $role === 'Operator' ? 'operator' : 'wali';
+
+        return redirect()->route($prefix . '.presensi-kelas', [
+            'tanggal' => $tanggal,
+            'kelas_id' => $request->input('kelas_id', 1),
+            'semester_id' => $semesterId,
+        ])->with('success', 'Presensi kelas tanggal ' . date('d/m/Y', strtotime($tanggal)) . ' berhasil disimpan.');
+    }
+
+    // ==================== PRESENSI EKSTRAKURIKULER ====================
+    public function presensiEkskul(Request $request)
+    {
+        $user = auth()->user();
+        $semesterList = Semester::orderBy('id_semester')->get();
+        $ekskulList = Ekstrakurikuler::orderBy('nama_ekskul')->get();
+
+        // Data-Level Access Control
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->getKelasBinaan();
+            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasBinaan->id_kelas ?? ($kelasList->first()->id_kelas ?? 1);
+        } else {
+            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+        }
+
+        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
+        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
+            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
+        }
+
+        $selectedSemesterId = $request->query('semester_id', 2);
+        $search = $request->query('search');
+
+        $query = Siswa::where('id_kelas', $selectedKelasId);
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
+        $siswaList = $query->orderBy('nama')->get();
+
+        $nilaiEkskul = NilaiEkstrakurikuler::whereIn('id_siswa', $siswaList->pluck('id_siswa'))
+            ->where('id_semester', $selectedSemesterId)
+            ->get()
+            ->groupBy('id_siswa');
+
+        $catatanMap = CatatanWali::whereIn('id_siswa', $siswaList->pluck('id_siswa'))
+            ->where('id_semester', $selectedSemesterId)
+            ->get()
+            ->keyBy('id_siswa');
+
+        return view('presensi.ekskul', compact(
+            'kelasList',
+            'semesterList',
+            'ekskulList',
+            'selectedKelasId',
+            'selectedSemesterId',
+            'search',
+            'siswaList',
+            'nilaiEkskul',
+            'catatanMap'
+        ));
+    }
+
+    public function storePresensiEkskul(Request $request)
+    {
+        $semesterId = $request->input('semester_id', 2);
+        $ekskulEntries = $request->input('ekskul', []);
+        $catatanEntries = $request->input('catatan', []);
+
+        foreach ($ekskulEntries as $siswaId => $items) {
+            // Dukung format single array atau multi-ekskul (Ekskul 1, 2, 3)
+            if (isset($items['id_ekskul'])) {
+                $items = [$items];
+            }
+
+            $submittedEkskulIds = [];
+
+            foreach ($items as $data) {
+                if (!empty($data['id_ekskul'])) {
+                    $idEk = (int)$data['id_ekskul'];
+                    $submittedEkskulIds[] = $idEk;
+                    $predikat = $data['predikat'] ?? 'Baik';
+
+                    // Buatkan deskripsi standar jika guru tidak mengisi modal khusus
+                    $deskripsi = trim($data['deskripsi'] ?? '');
+                    if ($deskripsi === '') {
+                        if ($predikat === 'Sangat Baik') {
+                            $deskripsi = 'Sangat aktif, berdisiplin tinggi, dan menunjukkan antusiasme luar biasa dalam setiap kegiatan.';
+                        } elseif ($predikat === 'Baik') {
+                            $deskripsi = 'Aktif mengikuti kegiatan secara konsisten dan mampu bekerja sama dengan baik.';
+                        } else {
+                            $deskripsi = 'Cukup aktif dalam kegiatan, perlu lebih ditingkatkan kedisiplinan dan kehadiran.';
+                        }
+                    }
+
+                    NilaiEkstrakurikuler::updateOrCreate(
+                        [
+                            'id_siswa' => $siswaId,
+                            'id_ekskul' => $idEk,
+                            'id_semester' => $semesterId,
+                        ],
+                        [
+                            'predikat' => $predikat,
+                            'deskripsi' => $deskripsi,
+                        ]
+                    );
+                }
+            }
+
+            // Hapus ekskul yang sebelumnya tersimpan namun diubah menjadi kosong / "-- Pilih --"
+            NilaiEkstrakurikuler::where('id_siswa', $siswaId)
+                ->where('id_semester', $semesterId)
+                ->whereNotIn('id_ekskul', $submittedEkskulIds)
+                ->delete();
+        }
+
+        // Simpan kolom Keterangan / Catatan Tambahan Siswa
+        foreach ($catatanEntries as $siswaId => $note) {
+            $note = trim($note ?? '');
+            if ($note !== '') {
+                CatatanWali::updateOrCreate(
+                    [
+                        'id_siswa' => $siswaId,
+                        'id_semester' => $semesterId,
+                    ],
+                    [
+                        'catatan_wali' => $note,
+                    ]
+                );
+            }
+        }
+
+        return back()->with('success', 'Data presensi, penilaian ekstrakurikuler, dan catatan siswa berhasil disimpan.');
+    }
+
+    public function storeDeskripsiAjax(Request $request)
+    {
+        $request->validate([
+            'siswa_id'    => 'required|exists:siswa,id_siswa',
+            'id_ekskul'   => 'required|exists:ekstrakurikuler,id_ekskul',
+            'semester_id' => 'required',
+            'predikat'    => 'required|string',
+            'deskripsi'   => 'nullable|string',
+        ]);
+
+        $predikat = $request->input('predikat', 'Baik');
+        $deskripsi = trim($request->input('deskripsi', ''));
+
+        if ($deskripsi === '') {
+            if ($predikat === 'Sangat Baik') {
+                $deskripsi = 'Sangat aktif, berdisiplin tinggi, dan menunjukkan antusiasme luar biasa dalam setiap kegiatan.';
+            } elseif ($predikat === 'Baik') {
+                $deskripsi = 'Aktif mengikuti kegiatan secara konsisten dan mampu bekerja sama dengan baik.';
+            } else {
+                $deskripsi = 'Cukup aktif dalam kegiatan, perlu lebih ditingkatkan kedisiplinan dan kehadiran.';
+            }
+        }
+
+        NilaiEkstrakurikuler::updateOrCreate(
+            [
+                'id_siswa'    => $request->siswa_id,
+                'id_ekskul'   => $request->id_ekskul,
+                'id_semester' => $request->semester_id,
+            ],
+            [
+                'predikat'  => $predikat,
+                'deskripsi' => $deskripsi,
+            ]
+        );
+
+        return response()->json([
+            'status'    => 'success',
+            'message'   => 'Deskripsi ekstrakurikuler berhasil disimpan ke database.',
+            'predikat'  => $predikat,
+            'deskripsi' => $deskripsi,
+            'id_ekskul' => (int)$request->id_ekskul,
+        ]);
+    }
+}
