@@ -161,6 +161,11 @@
                         <span>Monitoring Rapor</span>
                     </a>
 
+                    <a href="{{ route('operator.catatan') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('operator.catatan*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-pen-to-square w-6 text-center mr-2 {{ request()->routeIs('operator.catatan*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Catatan & Sikap</span>
+                    </a>
+
                     <!-- Submenu Early Warning (Operator) -->
                     <div>
                         <button onclick="document.getElementById('submenu-ew-op').classList.toggle('hidden')" class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100">
@@ -229,6 +234,12 @@
                     <a href="{{ route('wali.rapor') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('wali.rapor*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-book-bookmark w-6 text-center mr-2 {{ request()->routeIs('wali.rapor*') ? 'text-white' : 'text-edu-orange' }}"></i>
                         <span>Rapor</span>
+                    </a>
+
+                    <!-- Catatan & Sikap -->
+                    <a href="{{ route('wali.catatan') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('wali.catatan*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-pen-to-square w-6 text-center mr-2 {{ request()->routeIs('wali.catatan*') ? 'text-white' : 'text-edu-orange' }}"></i>
+                        <span>Catatan & Sikap</span>
                     </a>
 
                     <!-- Submenu Early Warning -->

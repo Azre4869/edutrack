@@ -120,7 +120,12 @@ class RaporController extends Controller
             'nilaiEkstrakurikuler' => function ($q) use ($selectedSemesterId) {
                 $q->where('id_semester', $selectedSemesterId)->with('ekstrakurikuler');
             },
+            'catatanWali' => function ($q) use ($selectedSemesterId) {
+                $q->where('id_semester', $selectedSemesterId);
+            },
         ])->findOrFail($id);
+
+        $catatan = $siswa->catatanWali->first();
 
         if ($user && $user->isWaliKelas()) {
             $kelasBinaan = $user->getKelasBinaan();
@@ -162,7 +167,8 @@ class RaporController extends Controller
             'tanggalRapor',
             'isLengkap',
             'completedNilai',
-            'totalNilai'
+            'totalNilai',
+            'catatan'
         ));
     }
 

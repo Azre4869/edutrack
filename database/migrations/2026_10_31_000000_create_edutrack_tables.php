@@ -102,6 +102,7 @@ return new class extends Migration
         Schema::create('siswa', function (Blueprint $table) {
             $table->integer('id_siswa', true);
             $table->string('nis', 30)->unique();
+            $table->string('nisn', 30)->nullable();
             $table->string('nama', 100);
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->string('tempat_lahir', 50)->nullable();
@@ -112,6 +113,18 @@ return new class extends Migration
             $table->text('alamat')->nullable();
             $table->string('no_telepon', 20)->nullable();
             $table->string('sekolah_asal', 100)->nullable();
+            $table->string('kelas_diterima', 30)->nullable();
+            $table->date('tanggal_diterima')->nullable();
+            $table->string('nama_ayah', 100)->nullable();
+            $table->string('nama_ibu', 100)->nullable();
+            $table->string('pekerjaan_ayah', 100)->nullable();
+            $table->string('pekerjaan_ibu', 100)->nullable();
+            $table->text('alamat_ortu')->nullable();
+            $table->string('telp_ortu', 30)->nullable();
+            $table->string('nama_wali', 100)->nullable();
+            $table->string('pekerjaan_wali', 100)->nullable();
+            $table->text('alamat_wali')->nullable();
+            $table->string('telp_wali', 30)->nullable();
             $table->enum('status_siswa', ['Aktif', 'Nonaktif'])->default('Aktif')->nullable();
             $table->integer('id_kelas');
 
@@ -377,7 +390,30 @@ return new class extends Migration
                 ->cascadeOnUpdate();
         });
 
-        // 20. VIEW PELAPORAN RESMI
+        // 20. CATATAN WALI KELAS & SIKAP
+        Schema::create('catatan_wali', function (Blueprint $table) {
+            $table->integer('id_catatan', true);
+            $table->integer('id_siswa');
+            $table->integer('id_semester');
+            $table->text('sikap_spiritual')->nullable();
+            $table->text('sikap_sosial')->nullable();
+            $table->text('catatan_wali')->nullable();
+            $table->enum('status_kenaikan', ['Naik', 'Tinggal'])->default('Naik')->nullable();
+
+            $table->unique(['id_siswa', 'id_semester'], 'uq_siswa_semester_catatan');
+
+            $table->foreign('id_siswa', 'fk_cw_siswa')
+                ->references('id_siswa')->on('siswa')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+
+            $table->foreign('id_semester', 'fk_cw_semester')
+                ->references('id_semester')->on('semester')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+        });
+
+        // 21. VIEW PELAPORAN RESMI
         \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_detail_absensi`");
         \Illuminate\Support\Facades\DB::statement("
             CREATE VIEW `vw_detail_absensi` AS 
@@ -467,6 +503,7 @@ return new class extends Migration
         \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_guru_mapel`");
         \Illuminate\Support\Facades\DB::statement("DROP VIEW IF EXISTS `vw_detail_absensi`");
 
+        Schema::dropIfExists('catatan_wali');
         Schema::dropIfExists('absensi');
         Schema::dropIfExists('notifikasi');
         Schema::dropIfExists('nilai_harian');
