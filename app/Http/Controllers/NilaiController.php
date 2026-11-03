@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreNilaiRequest;
 use App\Models\CapaianKompetensi;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
@@ -82,12 +83,13 @@ class NilaiController extends Controller
         ));
     }
 
-    public function storeNilai(Request $request)
+    public function storeNilai(StoreNilaiRequest $request)
     {
+        $validated = $request->validated();
         $user = auth()->user();
-        $semesterId = $request->input('semester_id', 2);
-        $mapelId = (int)$request->input('mapel_id', 3);
-        $nilaiData = $request->input('nilai', []);
+        $semesterId = $validated['semester_id'];
+        $mapelId = (int)$validated['mapel_id'];
+        $nilaiData = $validated['nilai'] ?? [];
 
         if ($user && !$user->canAccessMapel($mapelId)) {
             abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk menyimpan nilai pada mata pelajaran ini.');
@@ -114,21 +116,15 @@ class NilaiController extends Controller
             $tp7 = isset($item['tp7']) && $item['tp7'] !== '' ? (float)$item['tp7'] : null;
             $tp8 = isset($item['tp8']) && $item['tp8'] !== '' ? (float)$item['tp8'] : null;
 
-            // Hitung NS (Nilai Sumatif - rata-rata TP yang terisi) jika tidak dikirim dari form
-            $tps = array_filter([$tp1, $tp2, $tp3, $tp4, $tp5, $tp6, $tp7, $tp8], fn($v) => !is_null($v));
-            $calculatedNs = count($tps) > 0 ? round(array_sum($tps) / count($tps), 2) : null;
-            $ns = isset($item['ns']) && $item['ns'] !== '' ? (float)$item['ns'] : $calculatedNs;
+            // Hitung NS (Nilai Sumatif - rata-rata TP yang terisi) murni di server
+            $tps = array_filter([$tp1, $tp2, $tp3, $tp4, $tp5, $tp6, $tp7, $tp8], fn($v) => !is_null($v) && $v !== '');
+            $ns = count($tps) > 0 ? round(array_sum($tps) / count($tps), 2) : null;
 
             // SAS (Sumatif Akhir Semester)
             $sas = isset($item['sas']) && $item['sas'] !== '' ? (float)$item['sas'] : null;
 
-            // Hitung Nilai Akhir: HANYA jika NS dan SAS keduanya ada
-            $nilaiAkhir = null;
-            if (isset($item['nilai_akhir']) && $item['nilai_akhir'] !== '') {
-                $nilaiAkhir = (float)$item['nilai_akhir'];
-            } elseif (!is_null($ns) && !is_null($sas)) {
-                $nilaiAkhir = round(($ns + $sas) / 2, 2);
-            }
+            // Hitung Nilai Akhir murni di server: HANYA jika NS dan SAS keduanya ada
+            $nilaiAkhir = (!is_null($ns) && !is_null($sas)) ? round(($ns + $sas) / 2, 2) : null;
 
             $hasScore = count($tps) > 0 || !is_null($sas);
 
