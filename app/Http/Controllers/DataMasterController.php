@@ -116,6 +116,10 @@ class DataMasterController extends Controller
     public function destroySiswa($id)
     {
         $siswa = Siswa::findOrFail($id);
+        if ($siswa->nilai()->exists() || $siswa->absensi()->exists() || $siswa->prestasi()->exists() || $siswa->nilaiEkstrakurikuler()->exists()) {
+            return back()->with('error', 'Data siswa tidak dapat dihapus karena masih memiliki riwayat akademik/nilai/absensi.');
+        }
+
         $siswa->delete();
 
         return back()->with('success', 'Data siswa berhasil dihapus.');
@@ -168,6 +172,16 @@ class DataMasterController extends Controller
     public function destroyGuru($id)
     {
         $guru = Guru::findOrFail($id);
+        if ($guru->kelasWali()->exists()) {
+            return back()->with('error', 'Guru tidak dapat dihapus karena masih ditugaskan sebagai wali kelas.');
+        }
+        if ($guru->mataPelajaran()->exists()) {
+            return back()->with('error', 'Guru tidak dapat dihapus karena masih mengampu mata pelajaran.');
+        }
+        if ($guru->user()->exists()) {
+            return back()->with('error', 'Guru tidak dapat dihapus karena masih memiliki akun pengguna terkait.');
+        }
+
         $guru->delete();
 
         return back()->with('success', 'Data guru berhasil dihapus.');
@@ -223,6 +237,10 @@ class DataMasterController extends Controller
     public function destroyKelas($id)
     {
         $kelas = Kelas::findOrFail($id);
+        if ($kelas->siswa()->exists()) {
+            return back()->with('error', 'Kelas tidak dapat dihapus karena masih memiliki data siswa di dalamnya.');
+        }
+
         $kelas->delete();
 
         return back()->with('success', 'Data kelas berhasil dihapus.');
@@ -273,6 +291,10 @@ class DataMasterController extends Controller
     public function destroyMapel($id)
     {
         $mapel = MataPelajaran::findOrFail($id);
+        if ($mapel->nilai()->exists() || \App\Models\NilaiHarian::where('id_mapel', $id)->exists() || \App\Models\Absensi::where('id_mapel', $id)->exists()) {
+            return back()->with('error', 'Mata pelajaran tidak dapat dihapus karena masih memiliki riwayat nilai atau absensi.');
+        }
+
         $mapel->delete();
 
         return back()->with('success', 'Data mata pelajaran berhasil dihapus.');
@@ -337,6 +359,10 @@ class DataMasterController extends Controller
     public function destroyEkskul($id)
     {
         $ekskul = Ekstrakurikuler::findOrFail($id);
+        if ($ekskul->nilaiEkstrakurikuler()->exists()) {
+            return back()->with('error', 'Ekstrakurikuler tidak dapat dihapus karena sudah memiliki data nilai siswa terkait.');
+        }
+
         $ekskul->delete();
 
         return back()->with('success', 'Data ekstrakurikuler berhasil dihapus.');

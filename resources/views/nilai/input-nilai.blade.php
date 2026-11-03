@@ -154,13 +154,11 @@
                             $nsValue = $rowNilai && !is_null($rowNilai->ns) ? (float)$rowNilai->ns : '';
                             $sasValue = $rowNilai && !is_null($rowNilai->sas) ? (float)$rowNilai->sas : '';
 
-                            // Nilai Akhir hanya valid jika ada skor riil (bukan 0 atau default ghost 85 tanpa TP/SAS)
+                            // Nilai Akhir hanya valid jika ada skor riil (bukan 0)
                             $hasScore = $hasAnyTp || ($sasValue !== '');
                             $naValue = '';
                             if ($hasScore && $rowNilai && !is_null($rowNilai->nilai_akhir) && $rowNilai->nilai_akhir > 0) {
-                                if (!($rowNilai->nilai_akhir == 85.00 && !$hasAnyTp && $sasValue === '')) {
-                                    $naValue = (float)$rowNilai->nilai_akhir;
-                                }
+                                $naValue = (float)$rowNilai->nilai_akhir;
                             }
 
                             // Capaian Kompetensi (filter teks dummy lama)

@@ -251,7 +251,7 @@ class NilaiController extends Controller
 
         // Pastikan nilai_akhir tidak null agar tidak melanggar DB constraint
         // Nilai akhir HANYA dihitung jika NS dan SAS keduanya sudah terisi
-        if (is_null($nilai->nilai_akhir) || $nilai->nilai_akhir == 85.00) {
+        if (is_null($nilai->nilai_akhir)) {
             if (isset($tpData['ns']) && isset($tpData['sas'])) {
                 $nilai->nilai_akhir = round(($tpData['ns'] + $tpData['sas']) / 2, 2);
             } else {
