@@ -12,7 +12,15 @@ class Ekstrakurikuler extends Model
 
     protected $fillable = [
         'nama_ekskul',
+        'id_guru',
+        'jadwal',
+        'status',
     ];
+
+    public function guru()
+    {
+        return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
+    }
 
     public function nilaiEkstrakurikuler()
     {
