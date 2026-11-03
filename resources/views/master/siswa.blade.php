@@ -270,7 +270,11 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-700 mb-1">Status dalam Keluarga</label>
-                        <input type="text" name="status_dalam_keluarga" placeholder="Contoh: Anak Kandung" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                        <select name="status_anak" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none bg-white">
+                            <option value="Anak Kandung">Anak Kandung</option>
+                            <option value="Anak Angkat">Anak Angkat</option>
+                            <option value="Anak Tiri">Anak Tiri</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-700 mb-1">Anak Ke-</label>
@@ -396,7 +400,11 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-700 mb-1">Status dalam Keluarga</label>
-                        <input type="text" id="edit_status" name="status_dalam_keluarga" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                        <select id="edit_status" name="status_anak" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none bg-white">
+                            <option value="Anak Kandung">Anak Kandung</option>
+                            <option value="Anak Angkat">Anak Angkat</option>
+                            <option value="Anak Tiri">Anak Tiri</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-700 mb-1">Anak Ke-</label>
@@ -463,7 +471,7 @@
         document.getElementById('dt_jk').textContent = s.jenis_kelamin === 'L' ? 'Laki-laki (L)' : (s.jenis_kelamin === 'P' ? 'Perempuan (P)' : '-');
         document.getElementById('dt_ttl').textContent = `${s.tempat_lahir || '-'}, ${s.tanggal_lahir ? s.tanggal_lahir.substring(0, 10) : '-'}`;
         document.getElementById('dt_agama').textContent = s.agama || '-';
-        document.getElementById('dt_status').textContent = s.status_dalam_keluarga || s.status_keluarga || '-';
+        document.getElementById('dt_status').textContent = s.status_anak || s.status_dalam_keluarga || s.status_keluarga || '-';
         document.getElementById('dt_anak_ke').textContent = s.anak_ke || '-';
         document.getElementById('dt_sekolah_asal').textContent = s.sekolah_asal || '-';
         document.getElementById('dt_kelas_diterima').textContent = s.kelas_diterima || '-';
@@ -492,7 +500,7 @@
         document.getElementById('edit_tempat_lahir').value = s.tempat_lahir || '';
         document.getElementById('edit_tanggal_lahir').value = s.tanggal_lahir ? s.tanggal_lahir.substring(0, 10) : '';
         document.getElementById('edit_agama').value = s.agama || '';
-        document.getElementById('edit_status').value = s.status_dalam_keluarga || s.status_keluarga || '';
+        document.getElementById('edit_status').value = s.status_anak || s.status_dalam_keluarga || s.status_keluarga || 'Anak Kandung';
         document.getElementById('edit_anak_ke').value = s.anak_ke || '';
         document.getElementById('edit_sekolah_asal').value = s.sekolah_asal || '';
         document.getElementById('edit_alamat').value = s.alamat || '';

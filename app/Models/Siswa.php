@@ -49,6 +49,16 @@ class Siswa extends Model
         return $this->attributes['status_anak'] ?? '';
     }
 
+    public function getStatusDalamKeluargaAttribute()
+    {
+        return $this->attributes['status_anak'] ?? '';
+    }
+
+    public function setStatusDalamKeluargaAttribute($value)
+    {
+        $this->attributes['status_anak'] = $value;
+    }
+
     public function getNamaSiswaAttribute()
     {
         return $this->attributes['nama'] ?? ($this->attributes['nama_siswa'] ?? '');
