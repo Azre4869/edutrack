@@ -16,20 +16,18 @@ class EarlyWarningController extends Controller
         $semesterList = Semester::orderBy('id_semester')->get();
 
         // --- Data-Level Access Control ---
-        if ($user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            $kelasList = $kelasBinaan ? collect([$kelasBinaan]) : Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = $kelasBinaan->id_kelas ?? 1;
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->requireKelasBinaan();
+            $kelasList = collect([$kelasBinaan]);
+            $defaultKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
             // Operator: akses penuh
             $kelasList = Kelas::orderBy('nama_kelas')->get();
             $defaultKelasId = 1;
+            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
-        if ($user && $user->isWaliKelas() && $user->getKelasBinaan()) {
-            $selectedKelasId = $user->getKelasBinaan()->id_kelas;
-        }
         $selectedSemesterId = $request->query('semester_id', 2);
         $search = $request->query('search');
 

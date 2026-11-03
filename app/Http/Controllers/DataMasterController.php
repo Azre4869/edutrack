@@ -22,14 +22,9 @@ class DataMasterController extends Controller
 
         // Data-Level Access Control untuk Wali Kelas
         if ($user && $user->isWaliKelas()) {
-            $kelasBinaan = $user->getKelasBinaan();
-            if ($kelasBinaan) {
-                $query->where('id_kelas', $kelasBinaan->id_kelas);
-                $kelasList = collect([$kelasBinaan]);
-            } else {
-                $query->whereRaw('1 = 0');
-                $kelasList = collect();
-            }
+            $kelasBinaan = $user->requireKelasBinaan();
+            $query->where('id_kelas', $kelasBinaan->id_kelas);
+            $kelasList = collect([$kelasBinaan]);
         } else {
             $kelasList = Kelas::orderBy('nama_kelas')->get();
         }
