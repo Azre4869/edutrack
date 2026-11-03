@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreNilaiRequest;
+use App\Http\Requests\StorePrestasiRequest;
 use App\Models\CapaianKompetensi;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
@@ -328,15 +329,16 @@ class NilaiController extends Controller
         ));
     }
 
-    public function storePrestasi(Request $request)
+    public function storePrestasi(StorePrestasiRequest $request)
     {
+        $validated = $request->validated();
         $user = auth()->user();
         if ($user && $user->isWaliKelas()) {
             $user->requireKelasBinaan();
         }
 
-        $semesterId = $request->input('semester_id', 2);
-        $prestasiData = $request->input('prestasi', []);
+        $semesterId = $validated['semester_id'];
+        $prestasiData = $validated['prestasi'] ?? [];
 
         foreach ($prestasiData as $siswaId => $data) {
             $siswa = Siswa::find($siswaId);
@@ -346,18 +348,22 @@ class NilaiController extends Controller
                 abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mencatat prestasi siswa ini.');
             }
 
-            if (!empty($data['nama_prestasi'])) {
+            $namaPrestasi = trim($data['nama_prestasi'] ?? '');
+
+            if (!empty($namaPrestasi)) {
                 Prestasi::updateOrCreate(
                     [
-                        'id_siswa' => $siswaId,
+                        'id_siswa'    => $siswaId,
                         'id_semester' => $semesterId,
-                        'nama_prestasi' => $data['nama_prestasi'],
                     ],
                     [
-                        'jenis' => $data['jenis'] ?? 'Akademik',
-                        'keterangan' => $data['keterangan'] ?? 'Tingkat Kabupaten',
+                        'nama_prestasi' => $namaPrestasi,
+                        'jenis'         => $data['jenis'] ?? 'Akademik',
+                        'keterangan'    => $data['keterangan'] ?? 'Kabupaten',
                     ]
                 );
+            } else {
+                Prestasi::where('id_siswa', $siswaId)->where('id_semester', $semesterId)->delete();
             }
         }
 
