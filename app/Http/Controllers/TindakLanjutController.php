@@ -10,20 +10,83 @@ use Illuminate\Support\Facades\Auth;
 
 class TindakLanjutController extends Controller
 {
-    public function index(Request $request, $siswaId = 1)
+    public function index(Request $request, $siswaId = null)
     {
         $user = auth()->user();
         if ($user && $user->isWaliKelas()) {
             $user->requireKelasBinaan();
         }
 
-        $siswa = Siswa::with('kelas')->find($siswaId) ?? Siswa::first();
+        if ($siswaId) {
+            $siswa = Siswa::with('kelas')->findOrFail($siswaId);
+        } else {
+            if ($user && $user->isWaliKelas()) {
+                $siswa = Siswa::with('kelas')->where('id_kelas', $user->requireKelasBinaan()->id_kelas)->first() ?? Siswa::first();
+            } else {
+                $siswa = Siswa::with('kelas')->first();
+            }
+        }
 
         if ($user && $siswa && !$user->canAccessSiswa($siswa)) {
             abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk melihat tindak lanjut siswa ini.');
         }
 
         $rolePrefix = $user && $user->isOperator() ? 'operator' : 'wali';
+        $semesterId = (int) $request->query('semester_id', 2);
+
+        // Hitung metrik analisis riil siswa (B4 & konsistensi data dengan Early Warning)
+        $nilaiCurrent = \App\Models\Nilai::where('id_siswa', $siswa?->id_siswa)
+            ->where('id_semester', $semesterId)
+            ->whereNotNull('nilai_akhir')
+            ->get();
+        $avgNilai = $nilaiCurrent->isNotEmpty() ? round($nilaiCurrent->avg('nilai_akhir'), 1) : 0.0;
+        $countUnderKkm = $nilaiCurrent->where('nilai_akhir', '<', 75.0)->count();
+
+        // Absensi semester ini
+        $absensiCurrent = \App\Models\Absensi::where('id_siswa', $siswa?->id_siswa)
+            ->where('id_semester', $semesterId)
+            ->get();
+        $totalAbsen = $absensiCurrent->count();
+        $totalHadir = $absensiCurrent->where('status', 'Hadir')->count();
+        $kehadiranPct = $totalAbsen > 0 ? round(($totalHadir / $totalAbsen) * 100) : 100;
+
+        // Semester sebelumnya untuk perbandingan nilai
+        $semesterSebelumnya = \App\Models\Semester::where('id_semester', '<', $semesterId)
+            ->orderBy('id_semester', 'desc')
+            ->first();
+        $prevAvg = null;
+        if ($semesterSebelumnya && $siswa) {
+            $prevAvg = \App\Models\Nilai::where('id_siswa', $siswa->id_siswa)
+                ->where('id_semester', $semesterSebelumnya->id_semester)
+                ->whereNotNull('nilai_akhir')
+                ->avg('nilai_akhir');
+        }
+
+        $perubahanTeks = 'Tidak ada data pembanding';
+        $arahPerubahan = 'none'; // 'turun', 'naik', 'tetap', 'none'
+        if ($prevAvg !== null && $prevAvg > 0 && $avgNilai > 0) {
+            $prevAvg = round($prevAvg, 1);
+            if ($avgNilai < $prevAvg) {
+                $persen = round((($prevAvg - $avgNilai) / $prevAvg) * 100, 1);
+                $perubahanTeks = number_format($persen, 1, ',', '.') . '% dari periode sebelumnya';
+                $arahPerubahan = 'turun';
+            } elseif ($avgNilai > $prevAvg) {
+                $persen = round((($avgNilai - $prevAvg) / $prevAvg) * 100, 1);
+                $perubahanTeks = number_format($persen, 1, ',', '.') . '% dari periode sebelumnya';
+                $arahPerubahan = 'naik';
+            } else {
+                $perubahanTeks = '0% dari periode sebelumnya';
+                $arahPerubahan = 'tetap';
+            }
+        }
+
+        $analisis = (object) [
+            'rata_nilai' => number_format($avgNilai, 1, ',', '.'),
+            'perubahan_teks' => $perubahanTeks,
+            'arah' => $arahPerubahan,
+            'kehadiran_pct' => $kehadiranPct,
+            'di_bawah_kkm' => $countUnderKkm,
+        ];
 
         // Default consultation session details matching mockup
         $counseling = [
@@ -46,7 +109,7 @@ class TindakLanjutController extends Controller
 
         $guruList = \App\Models\Guru::orderBy('nama_guru')->get();
 
-        return view('tindak-lanjut.index', compact('siswa', 'counseling', 'guruList', 'rolePrefix'));
+        return view('tindak-lanjut.index', compact('siswa', 'counseling', 'guruList', 'rolePrefix', 'analisis'));
     }
 
     public function store(Request $request)

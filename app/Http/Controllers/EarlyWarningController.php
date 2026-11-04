@@ -33,10 +33,17 @@ class EarlyWarningController extends Controller
         }
 
         $selectedSemesterId = (int) $request->query('semester_id', 2);
+        $selectedTahunAjaran = $request->query('tahun_ajaran', '2026/2027');
         $search = $request->query('search');
 
         // Ambil kriteria analisis aktif dari database
         $kriteriaList = KriteriaAnalisis::where('aktif', 1)->get()->keyBy('id_kriteria');
+
+        // Cari semester sebelumnya untuk menghitung penurunan nilai (B4)
+        $semesterSebelumnya = Semester::where('id_semester', '<', $selectedSemesterId)
+            ->orderBy('id_semester', 'desc')
+            ->first();
+        $prevSemesterId = $semesterSebelumnya?->id_semester;
 
         // Ambil seluruh siswa di kelas terpilih beserta nilai, absensi, dan ekskul
         $allSiswaKelas = Siswa::where('id_kelas', $selectedKelasId)
@@ -56,6 +63,19 @@ class EarlyWarningController extends Controller
             'Kecil' => 0,
             'Normal' => 0,
         ];
+
+        // Ambil rata-rata nilai semester sebelumnya per siswa dalam satu query (B4)
+        $siswaIds = $allSiswaKelas->pluck('id_siswa')->toArray();
+        $avgNilaiPrevMap = [];
+        if ($prevSemesterId && !empty($siswaIds)) {
+            $avgNilaiPrevMap = Nilai::whereIn('id_siswa', $siswaIds)
+                ->where('id_semester', $prevSemesterId)
+                ->whereNotNull('nilai_akhir')
+                ->selectRaw('id_siswa, AVG(nilai_akhir) as avg_nilai')
+                ->groupBy('id_siswa')
+                ->pluck('avg_nilai', 'id_siswa')
+                ->toArray();
+        }
 
         foreach ($allSiswaKelas as $siswa) {
             $absensi = $siswa->absensi;
@@ -91,11 +111,25 @@ class EarlyWarningController extends Controller
                 $alasan[] = "Di bawah KKM ({$countUnderKkm} mapel: {$mapelNames})";
             }
 
-            // Kriteria 1: Nilai Turun Signifikan (cek jika ada record di analisis_siswa sebelumnya)
-            $existingAnalisis = $siswa->analisisSiswa->first();
-            if ($existingAnalisis && $existingAnalisis->kriteria->contains('id_kriteria', 1)) {
-                $terpicuKriteriaIds[] = 1;
-                $alasan[] = "Rata-rata nilai turun > 10%";
+            // Kriteria 1: Nilai Turun Signifikan (dihitung riil dari perbandingan semester sebelumnya - B4)
+            $ambangTurun = $kriteriaList[1]->nilai_ambang ?? 10.0;
+            $kriteria1Aktif = isset($kriteriaList[1]) && ($kriteriaList[1]->aktif ?? 1);
+            $prevAvg = isset($avgNilaiPrevMap[$siswa->id_siswa]) ? (float)$avgNilaiPrevMap[$siswa->id_siswa] : null;
+
+            $penurunanNilaiText = 'Tidak ada data pembanding';
+            if ($prevAvg !== null && $prevAvg > 0 && $avgNilai > 0) {
+                if ($avgNilai < $prevAvg) {
+                    $selisih = $prevAvg - $avgNilai;
+                    $persenTurun = round(($selisih / $prevAvg) * 100, 1);
+                    $penurunanNilaiText = number_format($persenTurun, 1, ',', '.') . '%';
+
+                    if ($kriteria1Aktif && $persenTurun >= $ambangTurun) {
+                        $terpicuKriteriaIds[] = 1;
+                        $alasan[] = "Rata-rata nilai turun {$penurunanNilaiText}";
+                    }
+                } else {
+                    $penurunanNilaiText = '0%';
+                }
             }
 
             // 4. Tingkat Risiko
@@ -133,7 +167,7 @@ class EarlyWarningController extends Controller
                 'indikator' => $indikator,
                 'tingkat_risiko' => $tingkatRisiko,
                 'rata_nilai' => number_format($avgNilai, 1, ',', '.'),
-                'penurunan_nilai' => in_array(1, $terpicuKriteriaIds) ? '12%' : '0%',
+                'penurunan_nilai' => $penurunanNilaiText,
                 'kehadiran' => $kehadiranPct . '%',
                 'alpha' => $totalAlpha > 0 ? "{$totalAlpha} hari tanpa keterangan" : "Tidak ada alpha",
                 'penurunan_kehadiran' => (100 - $kehadiranPct) . '%',
@@ -201,34 +235,11 @@ class EarlyWarningController extends Controller
         $selectedSiswa = null;
 
         if ($selectedId > 0) {
-            // Cari hanya di dalam kelas yang sedang difilter; jangan tampilkan siswa kelas lain diam-diam
-            $selectedSiswa = collect($processedStudents)->firstWhere('id_siswa', $selectedId);
-        }
-
-        if (!$selectedSiswa) {
-            // Jika selected_id dikirim tapi siswa tidak ada di kelas terfilter, jangan tampilkan siswa lain.
-            // Fallback otomatis (siswa pertama berisiko) hanya berlaku ketika selected_id tidak dikirim.
-            if ($selectedId > 0) {
-                $selectedSiswa = null; // Panel akan menampilkan "Tidak Ada Siswa Terpilih"
-            } else {
-                $selectedSiswa = !empty($siswaEarlyWarning) ? $siswaEarlyWarning[0] : (!empty($processedStudents) ? $processedStudents[0] : [
-                    'id_siswa' => 0,
-                    'nis' => '-',
-                    'nama' => 'Tidak Ada Siswa Terpilih',
-                    'kelas' => '-',
-                    'jenis_peringatan' => '-',
-                    'indikator' => 'Tidak ada siswa yang memenuhi kriteria pencarian.',
-                    'tingkat_risiko' => 'Normal',
-                    'rata_nilai' => '0,0',
-                    'penurunan_nilai' => '0%',
-                    'kehadiran' => '100%',
-                    'alpha' => '-',
-                    'penurunan_kehadiran' => '0%',
-                    'ekskul_status' => '-',
-                    'kkm_info' => '-',
-                    'perilaku' => '-',
-                ]);
-            }
+            // Cari hanya di dalam daftar siswa berisiko yang sesuai filter/pencarian
+            $selectedSiswa = collect($siswaEarlyWarning)->firstWhere('id_siswa', $selectedId);
+        } else {
+            // Fallback otomatis hanya jika ada siswa berisiko yang memenuhi filter/search
+            $selectedSiswa = !empty($siswaEarlyWarning) ? $siswaEarlyWarning[0] : null;
         }
 
         return view('early-warning.index', compact(
@@ -236,6 +247,7 @@ class EarlyWarningController extends Controller
             'semesterList',
             'selectedKelasId',
             'selectedSemesterId',
+            'selectedTahunAjaran',
             'search',
             'stats',
             'siswaEarlyWarning',

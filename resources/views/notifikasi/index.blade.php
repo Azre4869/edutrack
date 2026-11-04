@@ -16,14 +16,6 @@
 @endphp
 
 <div class="space-y-4">
-    @if(session('success'))
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                <span class="text-sm font-semibold">{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
 
     {{-- Stat Cards --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">

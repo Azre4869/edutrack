@@ -71,9 +71,9 @@
             <!-- Tahun Ajaran -->
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
-                <select name="tahun_ajaran" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                    <option value="2026/2027" selected>2026/2027</option>
-                    <option value="2025/2026">2025/2026</option>
+                <select name="tahun_ajaran" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    <option value="2026/2027" {{ ($selectedTahunAjaran ?? '') === '2026/2027' ? 'selected' : '' }}>2026/2027</option>
+                    <option value="2025/2026" {{ ($selectedTahunAjaran ?? '') === '2025/2026' ? 'selected' : '' }}>2025/2026</option>
                 </select>
             </div>
 
@@ -178,7 +178,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-gray-500 border border-black">Tidak ada data peringatan dini.</td>
+                            <td colspan="8" class="p-8 text-center text-gray-500 border border-black">
+                                @if(!empty($search))
+                                    Tidak ada data peringatan dini yang cocok dengan pencarian "{{ $search }}".
+                                @else
+                                    Tidak ada data peringatan dini.
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -225,7 +231,11 @@
                         <i class="fa-solid fa-chart-line text-edu-blue text-xs block mb-1"></i>
                         <span class="text-[10px] text-gray-500 block">Rata-rata Nilai</span>
                         <strong class="text-xs text-gray-900 font-black font-heading">{{ $selectedSiswa['rata_nilai'] }}</strong>
-                        <span class="text-[9px] text-red-500 font-bold block">&darr; {{ $selectedSiswa['penurunan_nilai'] }}</span>
+                        @if(str_contains($selectedSiswa['penurunan_nilai'], '%'))
+                            <span class="text-[9px] text-red-500 font-bold block">&darr; {{ $selectedSiswa['penurunan_nilai'] }}</span>
+                        @else
+                            <span class="text-[9px] text-gray-400 font-medium block">{{ $selectedSiswa['penurunan_nilai'] }}</span>
+                        @endif
                     </div>
                     <div class="p-2.5 rounded-xl bg-blue-50/60 border border-blue-100">
                         <i class="fa-regular fa-calendar-check text-edu-blue text-xs block mb-1"></i>
@@ -250,7 +260,7 @@
                         <i class="fa-solid fa-chart-column text-red-500 mt-0.5 text-xs"></i>
                         <div>
                             <span class="font-bold text-gray-800">Rata-rata Nilai:</span>
-                            <span class="text-gray-600">{{ $selectedSiswa['rata_nilai'] }} (turun {{ $selectedSiswa['penurunan_nilai'] }})</span>
+                            <span class="text-gray-600">{{ $selectedSiswa['rata_nilai'] }} {{ str_contains($selectedSiswa['penurunan_nilai'], '%') ? '(turun ' . $selectedSiswa['penurunan_nilai'] . ')' : '(' . $selectedSiswa['penurunan_nilai'] . ')' }}</span>
                         </div>
                     </div>
                     <div class="flex items-start space-x-2">

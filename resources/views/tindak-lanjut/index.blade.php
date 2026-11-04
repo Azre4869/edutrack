@@ -14,8 +14,8 @@
                 <i class="fas fa-user text-orange-400 text-2xl"></i>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-gray-800 font-montserrat">{{ $siswa->nama_siswa ?? 'Firdausi Anam' }}</h2>
-                <p class="text-gray-500 text-sm">NISN {{ $siswa->nis ?? '16389' }} &nbsp;|&nbsp; {{ $siswa->kelas->nama_kelas ?? 'VII A' }}</p>
+                <h2 class="text-xl font-bold text-gray-800 font-montserrat">{{ $siswa->nama ?? ($siswa->nama_siswa ?? '-') }}</h2>
+                <p class="text-gray-500 text-sm">NISN {{ $siswa->nisn ?? ($siswa->nis ?? '-') }} &nbsp;|&nbsp; {{ $siswa->kelas->nama_kelas ?? '-' }}</p>
                 <span class="inline-flex items-center gap-1 mt-1 text-red-600 text-xs font-semibold">
                     <i class="fas fa-circle-exclamation"></i> Risiko Tinggi
                 </span>
@@ -24,17 +24,25 @@
         <div class="flex flex-1 flex-wrap gap-8 justify-around border-l pl-6">
             <div>
                 <p class="text-gray-400 text-xs">Rata-rata nilai</p>
-                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->rata_nilai ?? '68,2' }}</p>
-                <p class="text-green-600 text-xs"><i class="fas fa-arrow-up"></i> 12% dari periode sebelumnya</p>
+                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->rata_nilai ?? '0,0' }}</p>
+                @if(isset($analisis->arah) && $analisis->arah === 'turun')
+                    <p class="text-red-600 text-xs"><i class="fas fa-arrow-down"></i> {{ $analisis->perubahan_teks }}</p>
+                @elseif(isset($analisis->arah) && $analisis->arah === 'naik')
+                    <p class="text-green-600 text-xs"><i class="fas fa-arrow-up"></i> {{ $analisis->perubahan_teks }}</p>
+                @elseif(isset($analisis->arah) && $analisis->arah === 'tetap')
+                    <p class="text-gray-500 text-xs"><i class="fas fa-minus"></i> {{ $analisis->perubahan_teks }}</p>
+                @else
+                    <p class="text-gray-400 text-xs">{{ $analisis->perubahan_teks ?? 'Tidak ada data pembanding' }}</p>
+                @endif
             </div>
             <div>
                 <p class="text-gray-400 text-xs">Kehadiran</p>
-                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->kehadiran_pct ?? '87' }}%</p>
+                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->kehadiran_pct ?? 100 }}%</p>
                 <p class="text-gray-400 text-xs">Perlu pemantauan kehadiran</p>
             </div>
             <div>
                 <p class="text-gray-400 text-xs">Di bawah KKM</p>
-                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->di_bawah_kkm ?? '3' }} mapel</p>
+                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->di_bawah_kkm ?? 0 }} mapel</p>
                 <p class="text-gray-400 text-xs">Capaian kompetensi</p>
             </div>
             <div class="text-right">

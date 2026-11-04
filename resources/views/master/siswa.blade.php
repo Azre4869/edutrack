@@ -16,18 +16,6 @@
 @endsection
 
 @section('content')
-@if(session('success'))
-    <div class="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 px-5 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-sm font-heading">
-        <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-@endif
-
 <!-- CONTROL / FILTER BAR -->
 <div class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <!-- Dropdown Per Page -->

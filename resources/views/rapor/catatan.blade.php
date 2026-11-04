@@ -11,18 +11,6 @@
     $prefix = $roleName === 'Operator' ? 'operator' : 'wali';
 @endphp
 
-@if(session('success'))
-    <div class="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 px-5 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-sm font-heading">
-        <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-@endif
-
 <!-- FILTER BAR -->
 <form id="filterForm" method="GET" action="{{ route($prefix . '.catatan') }}" class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
     <div class="flex flex-wrap items-center justify-between gap-4">
