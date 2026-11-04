@@ -111,15 +111,49 @@
             </div>
         </div>
 
-        <!-- Reset Filter Button -->
-        <div class="pt-4 flex space-x-2">
-            <a href="{{ url()->current() }}" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition">
+        <!-- Action Buttons -->
+        <div class="pt-4 flex flex-wrap items-center gap-2">
+            @if(!$isWali)
+                <a href="{{ route('operator.early-warning.kriteria') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center space-x-1.5 transition">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Kelola Kriteria</span>
+                </a>
+            @endif
+
+            <button type="submit" form="form-run-ews" onclick="return confirm('Jalankan analisis Early Warning sekarang untuk memperbarui status risiko siswa?')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Jalankan Analisis</span>
+            </button>
+
+            <a href="{{ url()->current() }}" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-md flex items-center space-x-1.5 transition">
                 <i class="fa-solid fa-rotate-right"></i>
-                <span>Reset Filter</span>
+                <span>Reset</span>
             </a>
         </div>
     </form>
+
+    <form id="form-run-ews" action="{{ route($rolePrefix.'.early-warning.run') }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
+        <input type="hidden" name="kelas_id" value="{{ $selectedKelasId }}">
+    </form>
 </div>
+
+@if(isset($lastLog) && $lastLog)
+<div class="mb-6 px-4 py-2.5 bg-blue-50/70 border border-blue-100 rounded-2xl flex flex-wrap items-center justify-between text-xs text-blue-900 font-heading">
+    <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-clock-rotate-left text-edu-blue"></i>
+        <span>
+            <strong>Analisis Terakhir:</strong> {{ \Carbon\Carbon::parse($lastLog->waktu_jalan)->translatedFormat('d M Y, H:i') }}
+            &bull; Pemicu: <span class="font-semibold">{{ $lastLog->pemicu }}</span>
+            &bull; Hasil: {{ $lastLog->jumlah_siswa_diproses }} siswa diproses, <strong>{{ $lastLog->total_berisiko }} berisiko</strong>
+        </span>
+    </div>
+    <span class="text-[10px] px-2.5 py-0.5 rounded-full {{ $lastLog->status === 'Success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }} font-bold">
+        {{ $lastLog->status }}
+    </span>
+</div>
+@endif
 
 <!-- MAIN GRID: TABLE (LEFT) & DETAIL SISWA (RIGHT) -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -11,10 +11,14 @@ class KriteriaAnalisis extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'kode',
         'nama_kriteria',
         'jenis',
         'parameter',
         'nilai_ambang',
+        'bobot',
+        'operator_perbandingan',
+        'satuan',
         'aktif',
     ];
 

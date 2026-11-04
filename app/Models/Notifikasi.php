@@ -13,9 +13,16 @@ class Notifikasi extends Model
     protected $fillable = [
         'id_analisis',
         'id_user',
+        'tipe',
         'pesan',
+        'metadata',
         'sudah_dibaca',
         'tanggal_kirim',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
+        'sudah_dibaca' => 'boolean',
     ];
 
     public function analisisSiswa()

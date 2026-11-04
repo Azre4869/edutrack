@@ -121,9 +121,42 @@ class MasterDataSeeder extends Seeder
 
         // 7. KRITERIA ANALISIS (EWS)
         $kriteriaData = [
-            ['id_kriteria' => 1, 'nama_kriteria' => 'Nilai Turun Signifikan', 'jenis' => 'Nilai', 'parameter' => 'Rata-rata nilai turun > 10%', 'nilai_ambang' => 10.00, 'aktif' => 1],
-            ['id_kriteria' => 2, 'nama_kriteria' => 'Kehadiran Alpha Berlebih', 'jenis' => 'Kehadiran', 'parameter' => '> 5 hari tanpa keterangan', 'nilai_ambang' => 3.00, 'aktif' => 1],
-            ['id_kriteria' => 3, 'nama_kriteria' => 'Di Bawah KKM Minimal', 'jenis' => 'Nilai', 'parameter' => 'Nilai di bawah KKM pada >= 3 mapel', 'nilai_ambang' => 75.00, 'aktif' => 1],
+            [
+                'id_kriteria' => 1,
+                'kode' => 'NILAI_PENURUNAN',
+                'nama_kriteria' => 'Nilai Turun Signifikan',
+                'jenis' => 'Nilai',
+                'parameter' => 'Rata-rata nilai turun >= 10% dibanding semester sebelumnya',
+                'nilai_ambang' => 10.00,
+                'bobot' => 1.00,
+                'operator_perbandingan' => '>=',
+                'satuan' => '%',
+                'aktif' => 1
+            ],
+            [
+                'id_kriteria' => 2,
+                'kode' => 'ABSENSI_ALPHA',
+                'nama_kriteria' => 'Kehadiran Alpha Berlebih',
+                'jenis' => 'Kehadiran',
+                'parameter' => 'Alpha >= 3 hari atau kehadiran < 85%',
+                'nilai_ambang' => 3.00,
+                'bobot' => 1.25,
+                'operator_perbandingan' => '>=',
+                'satuan' => 'hari',
+                'aktif' => 1
+            ],
+            [
+                'id_kriteria' => 3,
+                'kode' => 'NILAI_DIBAWAH_KKM',
+                'nama_kriteria' => 'Di Bawah KKM Minimal',
+                'jenis' => 'Nilai',
+                'parameter' => 'Nilai di bawah KKM 75 pada minimal 1 mata pelajaran',
+                'nilai_ambang' => 75.00,
+                'bobot' => 1.00,
+                'operator_perbandingan' => '<',
+                'satuan' => 'nilai',
+                'aktif' => 1
+            ],
         ];
         foreach ($kriteriaData as $kr) {
             DB::table('kriteria_analisis')->updateOrInsert(['id_kriteria' => $kr['id_kriteria']], $kr);

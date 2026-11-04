@@ -5,6 +5,7 @@ use App\Http\Controllers\CatatanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\EarlyWarningController;
+use App\Http\Controllers\KriteriaAnalisisController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\NotifikasiController;
@@ -87,6 +88,9 @@ Route::middleware(['web'])->group(function () {
         // Rapor (Monitoring), Early Warning, Laporan, Notifikasi
         Route::get('/rapor', [RaporController::class, 'index'])->name('rapor');
         Route::get('/early-warning', [EarlyWarningController::class, 'index'])->name('early-warning');
+        Route::post('/early-warning/run', [EarlyWarningController::class, 'run'])->name('early-warning.run');
+        Route::get('/early-warning/kriteria', [KriteriaAnalisisController::class, 'index'])->name('early-warning.kriteria');
+        Route::put('/early-warning/kriteria/{id}', [KriteriaAnalisisController::class, 'update'])->name('early-warning.kriteria.update');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
@@ -123,6 +127,7 @@ Route::middleware(['web'])->group(function () {
 
         // Early Warning & Tindak Lanjut
         Route::get('/early-warning', [EarlyWarningController::class, 'index'])->name('early-warning');
+        Route::post('/early-warning/run', [EarlyWarningController::class, 'run'])->name('early-warning.run');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
 

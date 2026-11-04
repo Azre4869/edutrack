@@ -16,7 +16,15 @@ class AnalisisSiswa extends Model
         'id_log',
         'tanggal_analisis',
         'status',
+        'tingkat_risiko',
+        'skor_risiko',
         'ringkasan',
+        'data_snapshot',
+    ];
+
+    protected $casts = [
+        'data_snapshot' => 'array',
+        'skor_risiko' => 'float',
     ];
 
     public function siswa()

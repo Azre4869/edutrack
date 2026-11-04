@@ -69,6 +69,8 @@ class DummyDataSeeder extends Seeder
                 'id_log' => 1,
                 'tanggal_analisis' => now()->toDateString(),
                 'status' => 'Perlu Perhatian',
+                'tingkat_risiko' => 'Tinggi',
+                'skor_risiko' => 75.00,
                 'ringkasan' => 'Rata-rata nilai turun > 10%, Masih dibawah KKM pada 3 mapel',
             ],
             [
@@ -78,6 +80,8 @@ class DummyDataSeeder extends Seeder
                 'id_log' => 1,
                 'tanggal_analisis' => now()->toDateString(),
                 'status' => 'Perlu Perhatian',
+                'tingkat_risiko' => 'Tinggi',
+                'skor_risiko' => 80.00,
                 'ringkasan' => '> 5 hari tanpa keterangan',
             ],
             [
@@ -87,6 +91,8 @@ class DummyDataSeeder extends Seeder
                 'id_log' => 1,
                 'tanggal_analisis' => now()->toDateString(),
                 'status' => 'Perlu Perhatian',
+                'tingkat_risiko' => 'Sedang',
+                'skor_risiko' => 60.00,
                 'ringkasan' => 'Kehadiran 84%, Nilai Matematika di bawah KKM',
             ],
             [
@@ -96,6 +102,8 @@ class DummyDataSeeder extends Seeder
                 'id_log' => 1,
                 'tanggal_analisis' => now()->toDateString(),
                 'status' => 'Perlu Perhatian',
+                'tingkat_risiko' => 'Sedang',
+                'skor_risiko' => 50.00,
                 'ringkasan' => 'Kehadiran kurang dari 85%',
             ],
         ];

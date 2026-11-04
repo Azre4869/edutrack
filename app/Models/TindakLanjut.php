@@ -23,6 +23,8 @@ class TindakLanjut extends Model
         'rencana_dukungan',
         'status',
         'tanggal_evaluasi',
+        'hasil_evaluasi',
+        'skor_efektivitas',
     ];
 
     public function analisisSiswa()
