@@ -47,12 +47,12 @@
 
                 <!-- USERNAME FIELD -->
                 <div>
-                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Username" required class="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange focus:border-transparent transition">
+                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Username" required maxlength="50" class="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange focus:border-transparent transition">
                 </div>
 
                 <!-- PASSWORD FIELD -->
                 <div>
-                    <input type="password" id="password" name="password" placeholder="Password" required class="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange focus:border-transparent transition">
+                    <input type="password" id="password" name="password" placeholder="Password" required maxlength="255" class="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange focus:border-transparent transition">
                 </div>
 
             <!-- SHOW PASSWORD & FORGOT PASSWORD -->

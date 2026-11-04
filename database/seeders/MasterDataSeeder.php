@@ -84,9 +84,11 @@ class MasterDataSeeder extends Seeder
         // 6. USERS DEFAULT
         $rawPassword = env('SEED_PASSWORD');
         if (empty($rawPassword)) {
-            if (app()->environment('production')) {
-                throw new \RuntimeException('SEED_PASSWORD environment variable must be set in production!');
+            if (app()->environment('production', 'staging')) {
+                throw new \RuntimeException('FATAL: Variabel lingkungan SEED_PASSWORD wajib diset di lingkungan produksi/staging!');
             }
+            // PERINGATAN KEAMANAN: Pola password default ini mudah ditebak.
+            // DILARANG KERAS dipakai di server publik atau staging yang dapat diakses pihak luar.
             $rawPassword = 'EduTrack' . date('Y') . '!Secure';
         }
         $seedPassword = Hash::make($rawPassword);

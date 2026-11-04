@@ -362,6 +362,15 @@
 
     // Kalkulasi real-time per baris sesuai rumus Kurikulum Merdeka SMP
     function calculateRow(inputElement) {
+        // Cegah pengetikan angka di luar batas 0–100 secara langsung di browser
+        if (inputElement && inputElement.value !== '') {
+            let typed = parseFloat(inputElement.value);
+            if (!isNaN(typed)) {
+                if (typed > 100) inputElement.value = 100;
+                else if (typed < 0) inputElement.value = 0;
+            }
+        }
+
         const row = inputElement.closest('tr.row-siswa');
         if (!row) return;
 
@@ -371,8 +380,9 @@
         let tpCount = 0;
 
         tpInputs.forEach(input => {
-            const val = parseFloat(input.value);
+            let val = parseFloat(input.value);
             if (!isNaN(val) && input.value.trim() !== '') {
+                val = Math.min(100, Math.max(0, val));
                 tpSum += val;
                 tpCount++;
             }
@@ -391,7 +401,7 @@
         // 3. Ambil SAS (Sumatif Akhir Semester)
         const sasInput = row.querySelector('.sas-input');
         const sasRaw = parseFloat(sasInput.value);
-        const sasVal = (!isNaN(sasRaw) && sasInput.value.trim() !== '') ? sasRaw : null;
+        const sasVal = (!isNaN(sasRaw) && sasInput.value.trim() !== '') ? Math.min(100, Math.max(0, sasRaw)) : null;
 
         // 4. Hitung Nilai Akhir (Rata-rata NS dan SAS) - HANYA JIKA NS DAN SAS KEDUANYA SUDAH TERISI
         const naInput = row.querySelector('.na-input');

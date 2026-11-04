@@ -47,6 +47,26 @@ class AuthTest extends TestCase
     }
 
     /**
+     * Test validasi batas maksimum karakter username (50) dan password (255).
+     */
+    public function test_login_validates_max_length_for_username_and_password(): void
+    {
+        $longUsername = str_repeat('a', 51);
+        $response = $this->post('/login', [
+            'username' => $longUsername,
+            'password' => 'SecretPassword123!',
+        ]);
+        $response->assertSessionHasErrors('username');
+
+        $longPassword = str_repeat('b', 256);
+        $response2 = $this->post('/login', [
+            'username' => 'operator',
+            'password' => $longPassword,
+        ]);
+        $response2->assertSessionHasErrors('password');
+    }
+
+    /**
      * Test route quick-login mengembalikan 404 Not Found.
      */
     public function test_quick_login_route_returns_404(): void
