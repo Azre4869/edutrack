@@ -46,7 +46,7 @@ class DataMasterController extends Controller
 
     public function storeSiswa(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nis' => 'required|unique:siswa,nis',
             'nama' => 'required|string|max:100',
             'jenis_kelamin' => 'required|in:L,P',
@@ -59,6 +59,7 @@ class DataMasterController extends Controller
             'status_dalam_keluarga' => 'nullable|string|max:50',
             'anak_ke' => 'nullable|integer',
             'alamat' => 'nullable|string',
+            'no_telepon' => 'nullable|string|max:25',
             'sekolah_asal' => 'nullable|string|max:100',
             'kelas_diterima' => 'nullable|string|max:20',
             'tanggal_diterima' => 'nullable|date',
@@ -74,7 +75,14 @@ class DataMasterController extends Controller
             'telp_wali' => 'nullable|string|max:25',
         ]);
 
-        Siswa::create($request->all());
+        if (empty($validated['status_anak']) && !empty($validated['status_dalam_keluarga'])) {
+            $validated['status_anak'] = $validated['status_dalam_keluarga'];
+        }
+        if (empty($validated['no_telepon']) && !empty($validated['telp_ortu'])) {
+            $validated['no_telepon'] = $validated['telp_ortu'];
+        }
+
+        Siswa::create($validated);
 
         return back()->with('success', 'Data siswa berhasil ditambahkan.');
     }
@@ -82,7 +90,7 @@ class DataMasterController extends Controller
     public function updateSiswa(Request $request, $id)
     {
         $siswa = Siswa::findOrFail($id);
-        $request->validate([
+        $validated = $request->validate([
             'nis' => 'required|unique:siswa,nis,' . $siswa->id_siswa . ',id_siswa',
             'nama' => 'required|string|max:100',
             'jenis_kelamin' => 'required|in:L,P',
@@ -95,6 +103,7 @@ class DataMasterController extends Controller
             'status_dalam_keluarga' => 'nullable|string|max:50',
             'anak_ke' => 'nullable|integer',
             'alamat' => 'nullable|string',
+            'no_telepon' => 'nullable|string|max:25',
             'sekolah_asal' => 'nullable|string|max:100',
             'kelas_diterima' => 'nullable|string|max:20',
             'tanggal_diterima' => 'nullable|date',
@@ -110,7 +119,14 @@ class DataMasterController extends Controller
             'telp_wali' => 'nullable|string|max:25',
         ]);
 
-        $siswa->update($request->all());
+        if (empty($validated['status_anak']) && !empty($validated['status_dalam_keluarga'])) {
+            $validated['status_anak'] = $validated['status_dalam_keluarga'];
+        }
+        if (empty($validated['no_telepon']) && !empty($validated['telp_ortu'])) {
+            $validated['no_telepon'] = $validated['telp_ortu'];
+        }
+
+        $siswa->update($validated);
 
         return back()->with('success', 'Data siswa berhasil diperbarui.');
     }
@@ -118,7 +134,14 @@ class DataMasterController extends Controller
     public function destroySiswa($id)
     {
         $siswa = Siswa::findOrFail($id);
-        if ($siswa->nilai()->exists() || $siswa->absensi()->exists() || $siswa->prestasi()->exists() || $siswa->nilaiEkstrakurikuler()->exists()) {
+        if ($siswa->nilai()->exists() 
+            || $siswa->absensi()->exists() 
+            || $siswa->prestasi()->exists() 
+            || $siswa->nilaiEkstrakurikuler()->exists()
+            || $siswa->catatanWali()->exists()
+            || $siswa->analisisSiswa()->exists()
+            || $siswa->nilaiHarian()->exists()
+        ) {
             return back()->with('error', 'Data siswa tidak dapat dihapus karena masih memiliki riwayat akademik/nilai/absensi.');
         }
 

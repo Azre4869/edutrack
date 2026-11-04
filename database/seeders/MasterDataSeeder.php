@@ -34,7 +34,7 @@ class MasterDataSeeder extends Seeder
             ['id_kelas' => 3, 'nama_kelas' => 'VIII A', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 4],
             ['id_kelas' => 4, 'nama_kelas' => 'VIII G', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 5],
             ['id_kelas' => 5, 'nama_kelas' => 'IX A', 'tingkat' => 9, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 6],
-            ['id_kelas' => 6, 'nama_kelas' => 'XI F', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 2],
+            ['id_kelas' => 6, 'nama_kelas' => 'VIII F', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 2],
         ];
         foreach ($kelasData as $k) {
             DB::table('kelas')->updateOrInsert(['id_kelas' => $k['id_kelas']], $k);
@@ -82,7 +82,14 @@ class MasterDataSeeder extends Seeder
         }
 
         // 6. USERS DEFAULT
-        $seedPassword = Hash::make(env('SEED_PASSWORD', 'changeme'));
+        $rawPassword = env('SEED_PASSWORD');
+        if (empty($rawPassword)) {
+            if (app()->environment('production')) {
+                throw new \RuntimeException('SEED_PASSWORD environment variable must be set in production!');
+            }
+            $rawPassword = 'EduTrack' . date('Y') . '!Secure';
+        }
+        $seedPassword = Hash::make($rawPassword);
         $usersData = [
             [
                 'id_user' => 1,

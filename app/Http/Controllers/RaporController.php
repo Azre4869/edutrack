@@ -29,7 +29,7 @@ class RaporController extends Controller
         }
 
         $selectedSemesterId = $request->query('semester_id', 2);
-        $selectedTanggal = $request->query('tanggal', '2026-10-01');
+        $selectedTanggal = $request->query('tanggal', now()->toDateString());
         $search = $request->query('search');
 
         $query = Siswa::where('id_kelas', $selectedKelasId)
@@ -189,22 +189,26 @@ class RaporController extends Controller
 
     /**
      * Memeriksa apakah baris nilai mapel sudah lengkap
-     * Syarat: TP1 s/d TP8 terisi, SAS terisi, Nilai Akhir > 0, dan Capaian 1 & 2 terisi
+     * Syarat: Minimal 1 TP terisi, SAS terisi, Nilai Akhir > 0, dan Capaian Kompetensi 1 terisi
      */
     private function isNilaiComplete($n): bool
     {
         if (!$n) return false;
+        $hasTp = false;
         for ($i = 1; $i <= 8; $i++) {
             $col = 'tp' . $i;
-            if (is_null($n->$col) || $n->$col === '') return false;
+            if (!is_null($n->$col) && $n->$col !== '') {
+                $hasTp = true;
+                break;
+            }
         }
+        if (!$hasTp) return false;
         if (is_null($n->sas) || $n->sas === '') return false;
         if (is_null($n->nilai_akhir) || (float)$n->nilai_akhir <= 0) return false;
 
         $c = $n->capaian;
         if (!$c) return false;
         if (empty(trim($c->deskripsi_1 ?? ''))) return false;
-        if (empty(trim($c->deskripsi_2 ?? ''))) return false;
 
         return true;
     }

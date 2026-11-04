@@ -16,9 +16,11 @@ class DatabaseSeeder extends Seeder
             MasterDataSeeder::class,
         ]);
 
-        // 2. Jalankan Dummy Data (Simulasi untuk keperluan demo/testing)
-        $this->call([
-            DummyDataSeeder::class,
-        ]);
+        // 2. Jalankan Dummy Data (Hanya untuk keperluan demo/testing di lingkungan non-produksi)
+        if (!app()->environment('production')) {
+            $this->call([
+                DummyDataSeeder::class,
+            ]);
+        }
     }
 }

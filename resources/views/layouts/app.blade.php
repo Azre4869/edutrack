@@ -402,7 +402,7 @@
             <div class="flex items-center space-x-6">
                 <!-- Date in Indonesian -->
                 <div class="text-white text-sm font-semibold font-heading tracking-wider">
-                    Kamis, 1 Oktober 2026
+                    {{ now()->translatedFormat('l, j F Y') }}
                 </div>
 
                 <!-- LOGOUT BUTTON -->

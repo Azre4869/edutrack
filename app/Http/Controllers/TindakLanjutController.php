@@ -51,14 +51,20 @@ class TindakLanjutController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'id_siswa'     => 'required|exists:siswa,id_siswa',
-            'tanggal_sesi' => 'required|date',
-            'waktu_sesi'   => 'required',
+        $data = $request->validate([
+            'id_siswa'         => 'required|exists:siswa,id_siswa',
+            'tanggal_sesi'     => 'required|date',
+            'waktu_sesi'       => 'nullable',
+            'jenis_konseling'  => 'nullable|string|max:100',
+            'peserta'          => 'nullable|string|max:100',
+            'tempat'           => 'nullable|string|max:100',
+            'catatan'          => 'nullable|string|max:2000',
+            'tanggal_evaluasi' => 'nullable|date|after_or_equal:tanggal_sesi',
+            'rencana'          => 'nullable|array',
         ]);
 
         $user = Auth::user();
-        $siswa = Siswa::findOrFail($request->id_siswa);
+        $siswa = Siswa::findOrFail($data['id_siswa']);
 
         if ($user && !$user->canAccessSiswa($siswa)) {
             abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.');
@@ -79,31 +85,21 @@ class TindakLanjutController extends Controller
             ]);
         }
 
-        $jenis = $request->input('jenis_konseling', 'Akademik & kehadiran');
-        $catatan = $request->input('catatan', '');
-        $pj = $request->input('penanggung_jawab', $user->displayName ?? 'Konselor');
-        $evaluasi = $request->input('tanggal_evaluasi');
-
-        $tindakanNarrative = "Sesi konseling ({$jenis}) dijadwalkan pada {$request->tanggal_sesi} pukul {$request->waktu_sesi}. ";
-        $tindakanNarrative .= "Catatan: " . ($catatan ?: 'Konseling direncanakan.') . " ";
-        $tindakanNarrative .= "PJ: {$pj}, Evaluasi: {$evaluasi}.";
-
-        $rencana = $request->input('rencana', []);
-        $rencanaStr = is_array($rencana) ? implode(', ', $rencana) : $rencana;
+        $rencanaStr = !empty($data['rencana']) ? (is_array($data['rencana']) ? implode(', ', $data['rencana']) : $data['rencana']) : null;
 
         TindakLanjut::create([
             'id_analisis'       => $analisis->id_analisis,
-            'id_user'           => $user->id_user ?? Auth::id(),
-            'tanggal'           => $request->tanggal_sesi,
-            'waktu'             => $request->waktu_sesi,
-            'jenis_konseling'   => $jenis,
-            'peserta_diundang'  => $request->input('peserta', 'Siswa & orang tua / wali'),
-            'tempat_media'      => $request->input('tempat', 'Ruang BK'),
-            'tindakan'          => $tindakanNarrative,
-            'catatan_konseling' => $catatan ?: null,
-            'rencana_dukungan'  => $rencanaStr ?: null,
+            'id_user'           => Auth::id(),
+            'tanggal'           => $data['tanggal_sesi'],
+            'waktu'             => $data['waktu_sesi'] ?? null,
+            'jenis_konseling'   => $data['jenis_konseling'] ?? 'Akademik & kehadiran',
+            'peserta_diundang'  => $data['peserta'] ?? 'Siswa & orang tua / wali',
+            'tempat_media'      => $data['tempat'] ?? 'Ruang BK',
+            'tindakan'          => 'Sesi konseling dijadwalkan',
+            'catatan_konseling' => $data['catatan'] ?? null,
+            'rencana_dukungan'  => $rencanaStr,
             'status'            => 'Sedang Diproses',
-            'tanggal_evaluasi'  => $evaluasi ?: null,
+            'tanggal_evaluasi'  => $data['tanggal_evaluasi'] ?? null,
         ]);
 
         $rolePrefix = $user && $user->isOperator() ? 'operator' : 'wali';

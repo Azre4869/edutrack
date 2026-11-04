@@ -90,23 +90,25 @@ class PresensiController extends Controller
 
             Absensi::updateOrCreate(
                 [
-                    'id_siswa' => $siswaId,
-                    'tanggal' => $tanggal,
+                    'id_siswa'    => $siswaId,
+                    'id_mapel'    => $mapelId,
+                    'tanggal'     => $tanggal,
                     'id_semester' => $semesterId,
                 ],
                 [
-                    'id_mapel' => $mapelId,
-                    'status' => $status,
+                    'status'      => $status,
                 ]
             );
         }
 
         $role = auth()->user()->role ?? 'Wali Kelas';
         $prefix = $role === 'Operator' ? 'operator' : 'wali';
+        $lastSiswa = isset($siswa) && $siswa ? $siswa : null;
+        $kelasId = $validated['kelas_id'] ?? ($lastSiswa ? $lastSiswa->id_kelas : ($request->input('kelas_id') ?: 1));
 
         return redirect()->route($prefix . '.presensi-kelas', [
-            'tanggal' => $tanggal,
-            'kelas_id' => $request->input('kelas_id', 1),
+            'tanggal'     => $tanggal,
+            'kelas_id'    => $kelasId,
             'semester_id' => $semesterId,
         ])->with('success', 'Presensi kelas tanggal ' . date('d/m/Y', strtotime($tanggal)) . ' berhasil disimpan.');
     }

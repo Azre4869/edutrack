@@ -99,11 +99,42 @@ class DataLossGuardsTest extends TestCase
 
         $this->assertDatabaseHas('nilai', ['id_nilai' => $ghost->id_nilai]);
 
-        // Test real run: data harus terhapus
+        // Test real run: nilai_akhir harus dikosongkan (null) tanpa menghapus baris
         $this->artisan('grades:clean-ghost')
             ->assertSuccessful()
-            ->expectsOutputToContain('Berhasil membersihkan');
+            ->expectsOutputToContain('Berhasil mengosongkan nilai_akhir');
 
-        $this->assertDatabaseMissing('nilai', ['id_nilai' => $ghost->id_nilai]);
+        $this->assertDatabaseHas('nilai', [
+            'id_nilai' => $ghost->id_nilai,
+            'nilai_akhir' => null,
+        ]);
+    }
+
+    /**
+     * Menghapus siswa yang memiliki analisis atau catatan wali harus ditolak.
+     */
+    public function test_deleting_student_with_analysis_or_notes_is_rejected(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+
+        $siswa = Siswa::create([
+            'nis' => 'TEST_STUDENT_CATATAN',
+            'nama' => 'Siswa Catatan Test',
+            'jenis_kelamin' => 'L',
+            'id_kelas' => 1,
+            'status_siswa' => 'Aktif',
+        ]);
+
+        \App\Models\CatatanWali::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_semester' => 1,
+            'catatan_wali' => 'Perlu pendampingan belajar',
+            'status_kenaikan' => 'Naik',
+        ]);
+
+        $response = $this->actingAs($operator)->delete(route('operator.siswa.destroy', $siswa->id_siswa));
+
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('siswa', ['id_siswa' => $siswa->id_siswa]);
     }
 }

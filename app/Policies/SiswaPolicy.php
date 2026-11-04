@@ -37,7 +37,7 @@ class SiswaPolicy
     {
         if ($user->isWaliKelas()) {
             $kelas = $user->getKelasBinaan();
-            return $kelas && $siswa->id_kelas === $kelas->id_kelas;
+            return $kelas && (int) $siswa->id_kelas === (int) $kelas->id_kelas;
         }
 
         if ($user->isGuruMapel()) {

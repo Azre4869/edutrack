@@ -66,21 +66,21 @@
                         <span class="w-3 h-3 rounded-full bg-edu-blue inline-block"></span>
                         <span class="text-gray-600">Kelas VII</span>
                     </div>
-                    <span class="font-semibold text-gray-700">330 (33%)</span>
+                    <span class="font-semibold text-gray-700">{{ $countVII ?? 330 }} ({{ ($totalSiswa ?? 0) > 0 ? round(($countVII / $totalSiswa) * 100) : 33 }}%)</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-edu-orange inline-block"></span>
                         <span class="text-gray-600">Kelas VIII</span>
                     </div>
-                    <span class="font-semibold text-gray-700">334 (34%)</span>
+                    <span class="font-semibold text-gray-700">{{ $countVIII ?? 334 }} ({{ ($totalSiswa ?? 0) > 0 ? round(($countVIII / $totalSiswa) * 100) : 34 }}%)</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
                         <span class="text-gray-600">Kelas IX</span>
                     </div>
-                    <span class="font-semibold text-gray-700">326 (33%)</span>
+                    <span class="font-semibold text-gray-700">{{ $countIX ?? 326 }} ({{ ($totalSiswa ?? 0) > 0 ? round(($countIX / $totalSiswa) * 100) : 33 }}%)</span>
                 </div>
             </div>
         </div>
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: ['Kelas VII', 'Kelas VIII', 'Kelas IX'],
             datasets: [{
-                data: [330, 334, 326],
+                data: [{{ $countVII ?? 330 }}, {{ $countVIII ?? 334 }}, {{ $countIX ?? 326 }}],
                 backgroundColor: ['#2F5CAB', '#E04F26', '#22C55E'],
                 borderWidth: 0,
                 hoverOffset: 4
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.fillStyle = '#374151';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('990', left + width / 2, top + height / 2 - 8);
+                ctx.fillText('{{ $totalSiswa ?? 990 }}', left + width / 2, top + height / 2 - 8);
                 ctx.font = '12px Lora, serif';
                 ctx.fillStyle = '#9CA3AF';
                 ctx.fillText('Siswa', left + width / 2, top + height / 2 + 14);

@@ -62,7 +62,7 @@ class EarlyWarningController extends Controller
                 'id_siswa' => 2,
                 'nis' => '16390',
                 'nama' => 'Iqbal Maulana',
-                'kelas' => 'XI F',
+                'kelas' => 'VIII F',
                 'jenis_peringatan' => 'Ketidakhadiran',
                 'indikator' => '> 5 hari tanpa keterangan',
                 'tingkat_risiko' => 'Sedang',

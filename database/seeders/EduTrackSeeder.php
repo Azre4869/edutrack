@@ -30,7 +30,7 @@ class EduTrackSeeder extends Seeder
             ['id_kelas' => 3, 'nama_kelas' => 'VIII A', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 4],
             ['id_kelas' => 4, 'nama_kelas' => 'VIII G', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 5],
             ['id_kelas' => 5, 'nama_kelas' => 'IX A', 'tingkat' => 9, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 6],
-            ['id_kelas' => 6, 'nama_kelas' => 'XI F', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 2],
+            ['id_kelas' => 6, 'nama_kelas' => 'VIII F', 'tingkat' => 8, 'tahun_ajaran' => '2026/2027', 'id_wali_kelas' => 2],
         ];
         foreach ($kelasData as $k) {
             DB::table('kelas')->updateOrInsert(['id_kelas' => $k['id_kelas']], $k);

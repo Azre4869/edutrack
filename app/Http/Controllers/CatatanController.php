@@ -80,8 +80,9 @@ class CatatanController extends Controller
             $wali      = trim($data['catatan_wali'] ?? '');
             $kenaikan  = $data['status_kenaikan'] ?? 'Naik';
 
-            // Jika ada minimal satu data terisi atau sudah ada record sebelumnya
-            if ($spiritual !== '' || $sosial !== '' || $wali !== '' || isset($data['status_kenaikan'])) {
+            // Jika ada minimal satu teks terisi atau sudah ada record sebelumnya
+            $hasExisting = CatatanWali::where('id_siswa', $siswaId)->where('id_semester', $semesterId)->exists();
+            if ($spiritual !== '' || $sosial !== '' || $wali !== '' || $hasExisting) {
                 CatatanWali::updateOrCreate(
                     [
                         'id_siswa' => $siswaId,

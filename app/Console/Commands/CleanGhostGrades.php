@@ -12,14 +12,14 @@ class CleanGhostGrades extends Command
      *
      * @var string
      */
-    protected $signature = 'grades:clean-ghost {--dry-run : Jalankan simulasi tanpa menghapus data}';
+    protected $signature = 'grades:clean-ghost {--dry-run : Jalankan simulasi tanpa mengubah data}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Membersihkan baris nilai_akhir = 85.00 palsu yang TP dan SAS-nya kosong';
+    protected $description = 'Mengosongkan nilai_akhir = 85.00 palsu yang TP dan SAS-nya kosong';
 
     /**
      * Execute the console command.
@@ -35,15 +35,13 @@ class CleanGhostGrades extends Command
                 for ($i = 1; $i <= 8; $i++) {
                     $q->where(function ($sub) use ($i) {
                         $sub->whereNull("tp{$i}")
-                            ->orWhere("tp{$i}", '')
-                            ->orWhere("tp{$i}", 0);
+                            ->orWhere("tp{$i}", '');
                     });
                 }
             })
             ->where(function ($q) {
                 $q->whereNull('sas')
-                  ->orWhere('sas', '')
-                  ->orWhere('sas', 0);
+                  ->orWhere('sas', '');
             });
 
         $count = $ghostQuery->count();
@@ -59,15 +57,10 @@ class CleanGhostGrades extends Command
             return self::SUCCESS;
         }
 
-        $ghostQuery->get()->each(function ($nilai) {
-            // Hapus relasi capaian kompetensi jika ada
-            if ($nilai->capaian) {
-                $nilai->capaian->delete();
-            }
-            $nilai->delete();
-        });
+        // Jangan menghapus capaian guru! Set nilai_akhir = null untuk baris palsu ini
+        $ghostQuery->update(['nilai_akhir' => null]);
 
-        $this->info("Berhasil membersihkan {$count} baris nilai_akhir = 85.00 palsu dari database.");
+        $this->info("Berhasil mengosongkan nilai_akhir pada {$count} baris nilai_akhir = 85.00 palsu di database.");
 
         return self::SUCCESS;
     }

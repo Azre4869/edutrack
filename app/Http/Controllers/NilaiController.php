@@ -25,6 +25,9 @@ class NilaiController extends Controller
         if ($user->isGuruMapel()) {
             // Guru Mapel hanya melihat mapel yang diampu
             $mapelList = $user->getMataPelajaranAmpuan();
+            if ($mapelList->isEmpty()) {
+                abort(403, 'Akses ditolak: Anda belum ditugaskan mengampu mata pelajaran apapun.');
+            }
             $kelasList = Kelas::orderBy('nama_kelas')->get(); // Guru bisa mengajar di banyak kelas
             $defaultMapelId = $mapelList->first()->id_mapel ?? null;
         } elseif ($user->isWaliKelas()) {
@@ -42,10 +45,10 @@ class NilaiController extends Controller
 
         $selectedKelasId = $request->query('kelas_id', $kelasList->first()->id_kelas ?? 1);
         $selectedSemesterId = $request->query('semester_id', 2);
-        $selectedMapelId = $request->query('mapel_id', $defaultMapelId);
+        $selectedMapelId = (int)$request->query('mapel_id', $defaultMapelId);
 
         // Proteksi jika user mencoba mengubah ID via URL query string
-        if ($user->isGuruMapel() && $mapelList->isNotEmpty()) {
+        if ($user->isGuruMapel()) {
             if (!$mapelList->contains('id_mapel', $selectedMapelId)) {
                 $selectedMapelId = $mapelList->first()->id_mapel;
             }
@@ -135,7 +138,7 @@ class NilaiController extends Controller
                 ->first();
 
             // Jika siswa tidak punya nilai sama sekali
-            if (!$hasScore && (is_null($nilaiAkhir) || $nilaiAkhir == 0)) {
+            if (!$hasScore && is_null($nilaiAkhir)) {
                 // Jika ada data dummy/kosong tanpa capaian, bersihkan dari database
                 if ($existing && (!$existing->capaian || (empty($existing->capaian->deskripsi_1) && empty($existing->capaian->deskripsi_2)))) {
                     $existing->delete();
@@ -160,7 +163,7 @@ class NilaiController extends Controller
                     'tp8' => $tp8,
                     'ns' => $ns,
                     'sas' => $sas,
-                    'nilai_akhir' => $nilaiAkhir ?? 0.00,
+                    'nilai_akhir' => $nilaiAkhir,
                 ]
             );
         }
@@ -171,9 +174,19 @@ class NilaiController extends Controller
     // ==================== CAPAIAN KOMPETENSI (MODAL & STORE) ====================
     public function getCapaian(Request $request)
     {
-        $siswaId = $request->query('siswa_id');
-        $mapelId = $request->query('mapel_id');
+        $user = auth()->user();
+        $siswaId = (int)$request->query('siswa_id');
+        $mapelId = (int)$request->query('mapel_id');
         $semesterId = $request->query('semester_id', 2);
+
+        if ($user && $mapelId && !$user->canAccessMapel($mapelId)) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk mata pelajaran ini.'], 403);
+        }
+
+        $siswa = Siswa::find($siswaId);
+        if ($user && $siswa && !$user->canAccessSiswa($siswa)) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.'], 403);
+        }
 
         $nilai = Nilai::with('capaian')
             ->where('id_siswa', $siswaId)
@@ -207,11 +220,11 @@ class NilaiController extends Controller
         }
 
         $request->validate([
-            'siswa_id' => 'required|exists:siswa,id_siswa',
-            'mapel_id' => 'required|exists:mata_pelajaran,id_mapel',
-            'semester_id' => 'required',
-            'nomor' => 'required|in:1,2',
-            'deskripsi' => 'nullable|string',
+            'siswa_id'    => 'required|exists:siswa,id_siswa',
+            'mapel_id'    => 'required|exists:mata_pelajaran,id_mapel',
+            'semester_id' => 'required|exists:semester,id_semester',
+            'nomor'       => 'required|in:1,2',
+            'deskripsi'   => 'nullable|string',
         ]);
 
         $siswa = Siswa::findOrFail($request->siswa_id);
@@ -219,42 +232,30 @@ class NilaiController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.'], 403);
         }
 
-        // Kumpulkan data TP, NS, SAS jika dikirim bersamaan dari baris tabel saat ini
-        $tpData = [];
-        for ($i = 1; $i <= 8; $i++) {
-            if ($request->has("tp{$i}") && $request->input("tp{$i}") !== '') {
-                $tpData["tp{$i}"] = (float)$request->input("tp{$i}");
-            }
-        }
-        if ($request->has('ns') && $request->input('ns') !== '') {
-            $tpData['ns'] = (float)$request->input('ns');
-        }
-        if ($request->has('sas') && $request->input('sas') !== '') {
-            $tpData['sas'] = (float)$request->input('sas');
-        }
-        if ($request->has('nilai_akhir') && $request->input('nilai_akhir') !== '') {
-            $tpData['nilai_akhir'] = (float)$request->input('nilai_akhir');
-        }
-
         $nilai = Nilai::firstOrNew([
-            'id_siswa' => $request->siswa_id,
-            'id_mapel' => $request->mapel_id,
+            'id_siswa'    => $request->siswa_id,
+            'id_mapel'    => $request->mapel_id,
             'id_semester' => $request->semester_id,
         ]);
 
-        foreach ($tpData as $col => $val) {
-            $nilai->$col = $val;
-        }
-
-        // Pastikan nilai_akhir tidak null agar tidak melanggar DB constraint
-        // Nilai akhir HANYA dihitung jika NS dan SAS keduanya sudah terisi
-        if (is_null($nilai->nilai_akhir)) {
-            if (isset($tpData['ns']) && isset($tpData['sas'])) {
-                $nilai->nilai_akhir = round(($tpData['ns'] + $tpData['sas']) / 2, 2);
-            } else {
-                $nilai->nilai_akhir = 0.00;
+        // Kumpulkan data TP jika dikirim bersamaan dari baris tabel saat ini
+        $tps = [];
+        for ($i = 1; $i <= 8; $i++) {
+            if ($request->has("tp{$i}") && $request->input("tp{$i}") !== '') {
+                $val = (float)$request->input("tp{$i}");
+                $nilai->{"tp{$i}"} = $val;
+                $tps[] = $val;
+            } elseif (!is_null($nilai->{"tp{$i}"})) {
+                $tps[] = (float)$nilai->{"tp{$i}"};
             }
         }
+
+        $ns = count($tps) > 0 ? round(array_sum($tps) / count($tps), 2) : $nilai->ns;
+        $sas = ($request->has('sas') && $request->input('sas') !== '') ? (float)$request->input('sas') : $nilai->sas;
+
+        $nilai->ns = $ns;
+        $nilai->sas = $sas;
+        $nilai->nilai_akhir = (!is_null($ns) && !is_null($sas)) ? round(($ns + $sas) / 2, 2) : null;
         $nilai->save();
 
         $capaian = CapaianKompetensi::firstOrNew(['id_nilai' => $nilai->id_nilai]);
@@ -359,7 +360,7 @@ class NilaiController extends Controller
                     [
                         'nama_prestasi' => $namaPrestasi,
                         'jenis'         => $data['jenis'] ?? 'Akademik',
-                        'keterangan'    => $data['keterangan'] ?? 'Kabupaten',
+                        'keterangan'    => !empty($data['keterangan']) ? $data['keterangan'] : null,
                     ]
                 );
             } else {
