@@ -41,7 +41,10 @@ class StoreNilaiValidationTest extends TestCase
     public function test_ns_and_nilai_akhir_are_calculated_on_server(): void
     {
         $operator = User::where('username', 'operator')->first();
-        $siswa = Siswa::first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_NILAI_01'],
+            ['nama' => 'Siswa Test Nilai', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
         $mapel = MataPelajaran::first();
 
         $response = $this->actingAs($operator)->post(route('operator.nilai.store'), [

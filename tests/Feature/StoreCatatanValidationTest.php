@@ -38,7 +38,10 @@ class StoreCatatanValidationTest extends TestCase
     public function test_store_catatan_validates_status_kenaikan(): void
     {
         $operator = User::where('username', 'operator')->first();
-        $siswa = Siswa::first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_CATATAN_01'],
+            ['nama' => 'Siswa Test Catatan', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
 
         $response = $this->actingAs($operator)->post(route('operator.catatan.store'), [
             'semester_id' => 1,

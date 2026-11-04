@@ -26,7 +26,10 @@ class TindakLanjutTest extends TestCase
     public function test_operator_can_store_tindak_lanjut(): void
     {
         $operator = User::where('username', 'operator')->first();
-        $siswa = Siswa::first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_TL_01'],
+            ['nama' => 'Siswa Test TL', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
 
         $response = $this->actingAs($operator)->post(route('operator.tindak-lanjut.store'), [
             'id_siswa'         => $siswa->id_siswa,

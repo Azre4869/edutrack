@@ -38,7 +38,10 @@ class StorePresensiValidationTest extends TestCase
     public function test_store_presensi_validates_status_values(): void
     {
         $operator = User::where('username', 'operator')->first();
-        $siswa = Siswa::first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_PRESENSI_01'],
+            ['nama' => 'Siswa Test Presensi', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
 
         $response = $this->actingAs($operator)->post(route('operator.presensi-kelas.store'), [
             'tanggal' => '2026-11-03',

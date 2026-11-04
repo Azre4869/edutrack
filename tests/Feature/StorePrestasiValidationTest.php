@@ -21,12 +21,13 @@ class StorePrestasiValidationTest extends TestCase
 
     /**
      * Test validasi required pada store prestasi.
+     * Route wali.prestasi.store hanya boleh diakses oleh Wali Kelas, bukan Operator.
      */
     public function test_store_prestasi_validation_required_fields(): void
     {
-        $operator = User::where('username', 'operator')->first();
+        $wali = User::where('username', 'walikelas')->first();
 
-        $response = $this->actingAs($operator)->post(route('wali.prestasi.store'), [
+        $response = $this->actingAs($wali)->post(route('wali.prestasi.store'), [
             // Kosong tanpa semester_id dan prestasi
         ]);
 
@@ -38,11 +39,14 @@ class StorePrestasiValidationTest extends TestCase
      */
     public function test_updating_prestasi_does_not_create_duplicates(): void
     {
-        $operator = User::where('username', 'operator')->first();
-        $siswa = Siswa::first();
+        $wali = User::where('username', 'walikelas')->first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_PRESTASI_01'],
+            ['nama' => 'Siswa Test Prestasi', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
 
         // 1. Simpan pertama kali
-        $this->actingAs($operator)->post(route('wali.prestasi.store'), [
+        $this->actingAs($wali)->post(route('wali.prestasi.store'), [
             'semester_id' => 1,
             'prestasi' => [
                 $siswa->id_siswa => [
@@ -56,7 +60,7 @@ class StorePrestasiValidationTest extends TestCase
         $this->assertEquals(1, Prestasi::where('id_siswa', $siswa->id_siswa)->where('id_semester', 1)->count());
 
         // 2. Simpan kedua kali dengan nama prestasi berbeda (harus mengupdate, BUKAN menambah baris duplikat)
-        $this->actingAs($operator)->post(route('wali.prestasi.store'), [
+        $this->actingAs($wali)->post(route('wali.prestasi.store'), [
             'semester_id' => 1,
             'prestasi' => [
                 $siswa->id_siswa => [
