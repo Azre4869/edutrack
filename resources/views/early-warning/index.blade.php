@@ -144,7 +144,11 @@
                         @php
                             $isSelected = $selectedSiswa && $sw['id_siswa'] == ($selectedSiswa['id_siswa'] ?? null);
                         @endphp
-                        <tr class="transition cursor-pointer {{ $isSelected ? 'bg-orange-50/70 font-semibold' : 'hover:bg-blue-50/40' }}" onclick="window.location.href='?selected_id={{ $sw['id_siswa'] }}'">
+                        @php
+                            $rowQuery = array_merge(request()->query(), ['selected_id' => $sw['id_siswa']]);
+                            $rowUrl = route($rolePrefix . '.early-warning', $rowQuery);
+                        @endphp
+                        <tr class="transition cursor-pointer {{ $isSelected ? 'bg-orange-50/70 font-semibold' : 'hover:bg-blue-50/40' }}" onclick="window.location.href='{{ $rowUrl }}'">
                             <td class="p-2.5 text-center font-semibold border border-black">{{ $idx + 1 }}.</td>
                             <td class="p-2.5 text-center border border-black font-medium">{{ $sw['nis'] }}</td>
                             <td class="p-2.5 font-bold text-gray-900 border border-black">{{ $sw['nama'] }}</td>
@@ -167,7 +171,7 @@
                                 @endif
                             </td>
                             <td class="p-2.5 text-center border border-black">
-                                <a href="?selected_id={{ $sw['id_siswa'] }}" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white inline-flex items-center justify-center text-[10px] transition">
+                                <a href="{{ $rowUrl }}" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white inline-flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </a>
                             </td>

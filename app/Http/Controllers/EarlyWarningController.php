@@ -201,27 +201,34 @@ class EarlyWarningController extends Controller
         $selectedSiswa = null;
 
         if ($selectedId > 0) {
+            // Cari hanya di dalam kelas yang sedang difilter; jangan tampilkan siswa kelas lain diam-diam
             $selectedSiswa = collect($processedStudents)->firstWhere('id_siswa', $selectedId);
         }
 
         if (!$selectedSiswa) {
-            $selectedSiswa = !empty($siswaEarlyWarning) ? $siswaEarlyWarning[0] : (!empty($processedStudents) ? $processedStudents[0] : [
-                'id_siswa' => 0,
-                'nis' => '-',
-                'nama' => 'Tidak Ada Siswa Terpilih',
-                'kelas' => '-',
-                'jenis_peringatan' => '-',
-                'indikator' => 'Tidak ada siswa yang memenuhi kriteria pencarian.',
-                'tingkat_risiko' => 'Normal',
-                'rata_nilai' => '0,0',
-                'penurunan_nilai' => '0%',
-                'kehadiran' => '100%',
-                'alpha' => '-',
-                'penurunan_kehadiran' => '0%',
-                'ekskul_status' => '-',
-                'kkm_info' => '-',
-                'perilaku' => '-',
-            ]);
+            // Jika selected_id dikirim tapi siswa tidak ada di kelas terfilter, jangan tampilkan siswa lain.
+            // Fallback otomatis (siswa pertama berisiko) hanya berlaku ketika selected_id tidak dikirim.
+            if ($selectedId > 0) {
+                $selectedSiswa = null; // Panel akan menampilkan "Tidak Ada Siswa Terpilih"
+            } else {
+                $selectedSiswa = !empty($siswaEarlyWarning) ? $siswaEarlyWarning[0] : (!empty($processedStudents) ? $processedStudents[0] : [
+                    'id_siswa' => 0,
+                    'nis' => '-',
+                    'nama' => 'Tidak Ada Siswa Terpilih',
+                    'kelas' => '-',
+                    'jenis_peringatan' => '-',
+                    'indikator' => 'Tidak ada siswa yang memenuhi kriteria pencarian.',
+                    'tingkat_risiko' => 'Normal',
+                    'rata_nilai' => '0,0',
+                    'penurunan_nilai' => '0%',
+                    'kehadiran' => '100%',
+                    'alpha' => '-',
+                    'penurunan_kehadiran' => '0%',
+                    'ekskul_status' => '-',
+                    'kkm_info' => '-',
+                    'perilaku' => '-',
+                ]);
+            }
         }
 
         return view('early-warning.index', compact(
