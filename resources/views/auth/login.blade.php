@@ -16,7 +16,7 @@
     <!-- Vite Assets (Tailwind CSS) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen relative flex items-center justify-center bg-cover bg-center font-heading" style="background-image: url('{{ asset('images/login-bg.png') }}');">
+<body class="min-h-screen relative flex items-center justify-center bg-cover bg-center font-heading" style="background-image: url('{{ asset('images/login-bg.jpg') }}?v={{ filemtime(public_path('images/login-bg.jpg')) }}');">
 
     <!-- DARK OVERLAY -->
     <div class="absolute inset-0 bg-black/45 backdrop-blur-[2px]"></div>

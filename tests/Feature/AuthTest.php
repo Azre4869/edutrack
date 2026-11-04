@@ -116,4 +116,16 @@ class AuthTest extends TestCase
         $responsePost->assertRedirect('/login');
         $this->assertGuest();
     }
+
+    /**
+     * Test halaman login memuat background image yang benar.
+     */
+    public function test_login_page_renders_with_background_image(): void
+    {
+        $response = $this->get('/login');
+
+        $response->assertStatus(200);
+        $response->assertSee('images/login-bg.jpg');
+        $response->assertSee('Welcome');
+    }
 }
