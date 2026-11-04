@@ -108,17 +108,19 @@
                                         class="w-7 h-7 rounded-lg bg-blue-100 text-edu-blue flex items-center justify-center hover:bg-blue-200 transition">
                                         <i class="fas fa-eye text-xs"></i>
                                     </a>
+                                    @if($isRowLengkap)
                                     <a href="{{ route('wali.rapor.cetak', ['id' => $s->id_siswa, 'semester_id' => $selectedSemesterId]) }}"
-                                        title="{{ $isRowLengkap ? 'Cetak Rapor' : 'Rapor belum bisa dicetak karena nilai belum lengkap' }}"
-                                        target="{{ $isRowLengkap ? '_blank' : '_self' }}"
-                                        onclick="{{ $isRowLengkap ? '' : 'return false;' }}"
-                                        class="btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm {{ $isRowLengkap ? 'bg-gray-800 text-white hover:bg-black' : 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-60' }}">
+                                        title="Cetak Rapor"
+                                        target="_blank"
+                                        class="btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm bg-gray-800 text-white hover:bg-black">
                                         <i class="fas fa-print text-xs"></i>
                                     </a>
-                                    <button type="button" onclick="toggleStatusRapor(this)" title="Toggle Status Kelengkapan"
-                                        class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-sm transition cursor-pointer">
-                                        <i class="fas fa-check text-xs"></i>
-                                    </button>
+                                    @else
+                                    <span title="Rapor belum dapat dicetak: {{ $s->nilai_completed_count ?? 0 }}/{{ $s->nilai_total_count ?? 0 }} mapel lengkap"
+                                        class="btn-print-action w-7 h-7 rounded-lg flex items-center justify-center bg-gray-200 text-gray-400 cursor-not-allowed opacity-60">
+                                        <i class="fas fa-print text-xs"></i>
+                                    </span>
+                                    @endif
                                 </div>
                             </td>
                             @endif
@@ -208,37 +210,6 @@ function updateChartAndCounts() {
         raporChart.options.plugins.centerTextVal = pct + '%';
         raporChart.update();
     }
-}
-
-function toggleStatusRapor(btn) {
-    const tr = btn.closest('tr');
-    if (!tr) return;
-    const badge = tr.querySelector('.status-badge');
-    if (!badge) return;
-
-    const printLink = tr.querySelector('.btn-print-action');
-
-    if (badge.innerText.trim() === 'Lengkap') {
-        badge.innerText = 'Belum Lengkap';
-        badge.className = 'status-badge bg-amber-100 text-amber-700 text-[11px] font-bold px-3 py-1 rounded-full';
-        if (printLink) {
-            printLink.className = 'btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm bg-gray-200 text-gray-400 cursor-not-allowed opacity-60';
-            printLink.setAttribute('title', 'Rapor belum bisa dicetak karena nilai belum lengkap');
-            printLink.target = '_self';
-            printLink.onclick = function() { return false; };
-        }
-    } else {
-        badge.innerText = 'Lengkap';
-        badge.className = 'status-badge bg-emerald-100 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full';
-        if (printLink) {
-            printLink.className = 'btn-print-action w-7 h-7 rounded-lg flex items-center justify-center transition shadow-sm bg-gray-800 text-white hover:bg-black';
-            printLink.setAttribute('title', 'Cetak Rapor');
-            printLink.target = '_blank';
-            printLink.onclick = null;
-        }
-    }
-
-    updateChartAndCounts();
 }
 
 document.addEventListener('DOMContentLoaded', function() {

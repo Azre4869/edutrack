@@ -156,14 +156,15 @@ class DummyDataSeeder extends Seeder
         }
 
         // 6. NILAI & CAPAIAN KOMPETENSI
+        // 6a. Nilai parsial (siswa yang belum lengkap)
         $nilaiData = [
-            ['id_nilai' => 1, 'id_siswa' => 3, 'id_mapel' => 3, 'id_semester' => 2, 'nilai_akhir' => 90.00],
-            ['id_nilai' => 2, 'id_siswa' => 1, 'id_mapel' => 3, 'id_semester' => 2, 'nilai_akhir' => 68.20],
-            ['id_nilai' => 3, 'id_siswa' => 6, 'id_mapel' => 3, 'id_semester' => 2, 'nilai_akhir' => 88.00],
-            ['id_nilai' => 4, 'id_siswa' => 7, 'id_mapel' => 3, 'id_semester' => 2, 'nilai_akhir' => 92.00],
-            ['id_nilai' => 5, 'id_siswa' => 4, 'id_mapel' => 4, 'id_semester' => 1, 'nilai_akhir' => 92.50],
-            ['id_nilai' => 6, 'id_siswa' => 5, 'id_mapel' => 3, 'id_semester' => 1, 'nilai_akhir' => 80.00],
-            ['id_nilai' => 7, 'id_siswa' => 5, 'id_mapel' => 4, 'id_semester' => 1, 'nilai_akhir' => 85.00],
+            ['id_nilai' => 1, 'id_siswa' => 3, 'id_mapel' => 3, 'id_semester' => 2, 'tp1' => 88, 'tp2' => 92, 'sas' => 90, 'nilai_akhir' => 90.00],
+            ['id_nilai' => 2, 'id_siswa' => 1, 'id_mapel' => 3, 'id_semester' => 2, 'tp1' => 65, 'sas' => 72, 'nilai_akhir' => 68.20],
+            ['id_nilai' => 3, 'id_siswa' => 6, 'id_mapel' => 3, 'id_semester' => 2, 'tp1' => 85, 'tp2' => 90, 'sas' => 88, 'nilai_akhir' => 88.00],
+            ['id_nilai' => 4, 'id_siswa' => 7, 'id_mapel' => 3, 'id_semester' => 2, 'tp1' => 90, 'tp2' => 94, 'sas' => 91, 'nilai_akhir' => 92.00],
+            ['id_nilai' => 5, 'id_siswa' => 4, 'id_mapel' => 4, 'id_semester' => 1, 'tp1' => 91, 'tp2' => 93, 'sas' => 92, 'nilai_akhir' => 92.50],
+            ['id_nilai' => 6, 'id_siswa' => 5, 'id_mapel' => 3, 'id_semester' => 1, 'tp1' => 78, 'sas' => 82, 'nilai_akhir' => 80.00],
+            ['id_nilai' => 7, 'id_siswa' => 5, 'id_mapel' => 4, 'id_semester' => 1, 'tp1' => 84, 'tp2' => 86, 'sas' => 85, 'nilai_akhir' => 85.00],
         ];
         foreach ($nilaiData as $nd) {
             DB::table('nilai')->updateOrInsert(['id_nilai' => $nd['id_nilai']], $nd);
@@ -177,6 +178,42 @@ class DummyDataSeeder extends Seeder
                 'deskripsi_2' => 'Perlu bimbingan lebih lanjut dalam pengayaan kosakata bahasa Inggris tingkat lanjut.',
             ]
         );
+
+        // 6b. Nilai LENGKAP 12 Mapel untuk Siswa Demo (id_siswa = 3: Rani Arisanti Najma)
+        // Tujuan: tersedia minimal 1 siswa yang dapat dicetak rapornya di demo
+        $mapelIds = DB::table('mata_pelajaran')->orderBy('id_mapel')->pluck('id_mapel')->toArray();
+        $namaMapel = DB::table('mata_pelajaran')->orderBy('id_mapel')->pluck('nama_mapel', 'id_mapel')->toArray();
+
+        $capaianKe = 2;
+        $nilaiKe   = 8; // Mulai dari id_nilai 8 agar tidak conflict
+        foreach ($mapelIds as $idMapel) {
+            // Skip mapel Bahasa Inggris (id_mapel=3) karena sudah ada di id_nilai=1 untuk siswa 3
+            if ($idMapel == 3) continue;
+
+            DB::table('nilai')->updateOrInsert(
+                ['id_nilai' => $nilaiKe],
+                [
+                    'id_siswa'    => 3,
+                    'id_mapel'    => $idMapel,
+                    'id_semester' => 2,
+                    'tp1'         => 88,
+                    'tp2'         => 90,
+                    'sas'         => 89,
+                    'nilai_akhir' => 89.00,
+                ]
+            );
+            $namaM = $namaMapel[$idMapel] ?? 'Mata Pelajaran';
+            DB::table('capaian_kompetensi')->updateOrInsert(
+                ['id_capaian' => $capaianKe],
+                [
+                    'id_nilai'    => $nilaiKe,
+                    'deskripsi_1' => 'Menunjukkan penguasaan yang sangat baik dalam memahami dan menerapkan konsep ' . $namaM . '.',
+                    'deskripsi_2' => 'Perlu peningkatan pada pengerjaan soal tingkat lanjut ' . $namaM . '.',
+                ]
+            );
+            $nilaiKe++;
+            $capaianKe++;
+        }
 
         // 7. NOTIFIKASI
         $notifData = [

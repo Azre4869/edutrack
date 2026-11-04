@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absensi;
+use App\Models\AnalisisKriteria;
 use App\Models\AnalisisSiswa;
 use App\Models\Kelas;
+use App\Models\KriteriaAnalisis;
+use App\Models\Nilai;
 use App\Models\Semester;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
@@ -20,96 +24,166 @@ class EarlyWarningController extends Controller
             $kelasBinaan = $user->requireKelasBinaan();
             $kelasList = collect([$kelasBinaan]);
             $defaultKelasId = $kelasBinaan->id_kelas;
-            $selectedKelasId = $kelasBinaan->id_kelas;
+            $selectedKelasId = $kelasBinaan->id_kelas; // Wali hanya bisa melihat kelasnya sendiri
         } else {
             // Operator: akses penuh
             $kelasList = Kelas::orderBy('nama_kelas')->get();
-            $defaultKelasId = 1;
-            $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
+            $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
+            $selectedKelasId = (int) $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedSemesterId = $request->query('semester_id', 2);
+        $selectedSemesterId = (int) $request->query('semester_id', 2);
         $search = $request->query('search');
 
-        // Risk summary stats matching Figma mockup
-        $stats = [
-            'tinggi' => ['count' => 5, 'pct' => '15,6%'],
-            'sedang' => ['count' => 9, 'pct' => '28,1%'],
-            'kecil' => ['count' => 12, 'pct' => '37,5%'],
-            'normal' => ['count' => 6, 'pct' => '18,8%'],
+        // Ambil kriteria analisis aktif dari database
+        $kriteriaList = KriteriaAnalisis::where('aktif', 1)->get()->keyBy('id_kriteria');
+
+        // Ambil seluruh siswa di kelas terpilih beserta nilai, absensi, dan ekskul
+        $allSiswaKelas = Siswa::where('id_kelas', $selectedKelasId)
+            ->with([
+                'kelas',
+                'absensi' => fn($q) => $q->where('id_semester', $selectedSemesterId),
+                'nilai' => fn($q) => $q->where('id_semester', $selectedSemesterId)->with('mataPelajaran'),
+                'nilaiEkstrakurikuler' => fn($q) => $q->where('id_semester', $selectedSemesterId)->with('ekstrakurikuler'),
+                'analisisSiswa' => fn($q) => $q->where('id_semester', $selectedSemesterId)->with('kriteria'),
+            ])
+            ->get();
+
+        $processedStudents = [];
+        $counts = [
+            'Tinggi' => 0,
+            'Sedang' => 0,
+            'Kecil' => 0,
+            'Normal' => 0,
         ];
 
-        // List of students with early warning status
-        $siswaEarlyWarning = [
-            [
-                'id_siswa' => 1,
-                'nis' => '16389',
-                'nama' => 'Firdausi Anam',
-                'kelas' => 'VII A',
-                'jenis_peringatan' => 'Rendahnya Nilai',
-                'indikator' => 'Rata-rata nilai turun > 10%',
-                'tingkat_risiko' => 'Tinggi',
-                'rata_nilai' => '68,2',
-                'penurunan_nilai' => '12%',
-                'kehadiran' => '87%',
-                'alpha' => '2 hari tanpa keterangan',
-                'penurunan_kehadiran' => '13%',
-                'ekskul_status' => 'Aktif',
-                'kkm_info' => 'Masih dibawah KKM pada 3 mapel',
-                'perilaku' => 'Tidak ada catatan pelanggaran terbaru',
-            ],
-            [
-                'id_siswa' => 2,
-                'nis' => '16390',
-                'nama' => 'Iqbal Maulana',
-                'kelas' => 'VIII F',
-                'jenis_peringatan' => 'Ketidakhadiran',
-                'indikator' => '> 5 hari tanpa keterangan',
-                'tingkat_risiko' => 'Sedang',
-                'rata_nilai' => '74,5',
-                'penurunan_nilai' => '5%',
-                'kehadiran' => '80%',
-                'alpha' => '5 hari tanpa keterangan',
-                'penurunan_kehadiran' => '20%',
-                'ekskul_status' => 'Cukup Aktif',
-                'kkm_info' => 'Di bawah KKM pada 1 mapel',
-                'perilaku' => 'Perlu teguran keterlambatan',
-            ],
-            [
-                'id_siswa' => 4,
-                'nis' => '16392',
-                'nama' => 'Fahar Alif',
-                'kelas' => 'VII G',
-                'jenis_peringatan' => 'Rendahnya Nilai & Kehadiran',
-                'indikator' => 'Kehadiran 84% & Nilai Matematika 65',
-                'tingkat_risiko' => 'Tinggi',
-                'rata_nilai' => '70,0',
-                'penurunan_nilai' => '8%',
-                'kehadiran' => '84%',
-                'alpha' => '3 hari tanpa keterangan',
-                'penurunan_kehadiran' => '16%',
-                'ekskul_status' => 'Aktif',
-                'kkm_info' => 'Di bawah KKM pada Matematika dan IPA',
-                'perilaku' => 'Tidak ada catatan pelanggaran',
-            ],
-            [
-                'id_siswa' => 5,
-                'nis' => '16393',
-                'nama' => 'Lukman Hilman',
-                'kelas' => 'VI H',
-                'jenis_peringatan' => 'Ketidakhadiran',
-                'indikator' => 'Kehadiran di bawah 85%',
-                'tingkat_risiko' => 'Sedang',
-                'rata_nilai' => '76,2',
-                'penurunan_nilai' => '4%',
-                'kehadiran' => '82%',
-                'alpha' => '4 hari tanpa keterangan',
-                'penurunan_kehadiran' => '18%',
-                'ekskul_status' => 'Aktif',
-                'kkm_info' => 'Sesuai KKM',
-                'perilaku' => 'Tidak ada catatan pelanggaran',
-            ],
+        foreach ($allSiswaKelas as $siswa) {
+            $absensi = $siswa->absensi;
+            $nilai = $siswa->nilai;
+
+            // 1. Kehadiran
+            $totalAbsen = $absensi->count();
+            $totalAlpha = $absensi->where('status', 'Alpha')->count();
+            $totalHadir = $absensi->where('status', 'Hadir')->count();
+            $kehadiranPct = $totalAbsen > 0 ? round(($totalHadir / $totalAbsen) * 100) : 100;
+
+            // 2. Nilai & KKM
+            $avgNilai = $nilai->isNotEmpty() ? round($nilai->avg('nilai_akhir'), 1) : 0.0;
+            $kkmAmbang = $kriteriaList[3]->nilai_ambang ?? 75.0;
+            $mapelUnderKkm = $nilai->where('nilai_akhir', '<', $kkmAmbang);
+            $countUnderKkm = $mapelUnderKkm->count();
+
+            // 3. Cek Kriteria Analisis yang Terpicu
+            $terpicuKriteriaIds = [];
+            $alasan = [];
+
+            // Kriteria 2: Kehadiran Alpha Berlebih (ambang default 3 hari / kehadiran < 85%)
+            $ambangAlpha = $kriteriaList[2]->nilai_ambang ?? 3.0;
+            if ($totalAlpha >= $ambangAlpha || ($totalAbsen > 0 && $kehadiranPct < 85)) {
+                $terpicuKriteriaIds[] = 2;
+                $alasan[] = "Alpha {$totalAlpha} hari (Kehadiran {$kehadiranPct}%)";
+            }
+
+            // Kriteria 3: Di Bawah KKM Minimal
+            if ($countUnderKkm >= 1) {
+                $terpicuKriteriaIds[] = 3;
+                $mapelNames = $mapelUnderKkm->pluck('mataPelajaran.nama_mapel')->take(2)->implode(', ');
+                $alasan[] = "Di bawah KKM ({$countUnderKkm} mapel: {$mapelNames})";
+            }
+
+            // Kriteria 1: Nilai Turun Signifikan (cek jika ada record di analisis_siswa sebelumnya)
+            $existingAnalisis = $siswa->analisisSiswa->first();
+            if ($existingAnalisis && $existingAnalisis->kriteria->contains('id_kriteria', 1)) {
+                $terpicuKriteriaIds[] = 1;
+                $alasan[] = "Rata-rata nilai turun > 10%";
+            }
+
+            // 4. Tingkat Risiko
+            $tingkatRisiko = 'Normal';
+            $jenisPeringatan = 'Status Baik';
+            $indikator = 'Semua parameter terpantau baik';
+
+            $kriteriaCount = count($terpicuKriteriaIds);
+            if ($kriteriaCount >= 2 || $totalAlpha >= 5 || ($avgNilai > 0 && $avgNilai < 70)) {
+                $tingkatRisiko = 'Tinggi';
+                $jenisPeringatan = count($alasan) > 1 ? 'Rendahnya Nilai & Kehadiran' : (in_array(2, $terpicuKriteriaIds) ? 'Ketidakhadiran Berat' : 'Rendahnya Nilai');
+                $indikator = implode(' & ', $alasan);
+            } elseif ($kriteriaCount === 1 || $totalAlpha >= 3 || ($avgNilai > 0 && $avgNilai < 75)) {
+                $tingkatRisiko = 'Sedang';
+                $jenisPeringatan = in_array(2, $terpicuKriteriaIds) ? 'Ketidakhadiran' : 'Rendahnya Nilai';
+                $indikator = implode('; ', $alasan);
+            } elseif ($totalAlpha >= 1 || ($totalAbsen > 0 && $kehadiranPct < 90)) {
+                $tingkatRisiko = 'Kecil';
+                $jenisPeringatan = 'Perhatian Ringan';
+                $indikator = "Alpha {$totalAlpha} hari";
+            }
+
+            $counts[$tingkatRisiko]++;
+
+            // Ekskul
+            $ekskulList = $siswa->nilaiEkstrakurikuler->map(fn($e) => $e->ekstrakurikuler->nama_ekskul ?? '')->filter()->implode(', ');
+            $ekskulStatus = $ekskulList ? 'Aktif (' . $ekskulList . ')' : 'Belum Ada';
+
+            $item = [
+                'id_siswa' => $siswa->id_siswa,
+                'nis' => $siswa->nis,
+                'nama' => $siswa->nama,
+                'kelas' => $siswa->kelas->nama_kelas ?? '-',
+                'jenis_peringatan' => $jenisPeringatan,
+                'indikator' => $indikator,
+                'tingkat_risiko' => $tingkatRisiko,
+                'rata_nilai' => number_format($avgNilai, 1, ',', '.'),
+                'penurunan_nilai' => in_array(1, $terpicuKriteriaIds) ? '12%' : '0%',
+                'kehadiran' => $kehadiranPct . '%',
+                'alpha' => $totalAlpha > 0 ? "{$totalAlpha} hari tanpa keterangan" : "Tidak ada alpha",
+                'penurunan_kehadiran' => (100 - $kehadiranPct) . '%',
+                'ekskul_status' => $ekskulStatus,
+                'kkm_info' => $countUnderKkm > 0 ? "Di bawah KKM pada {$countUnderKkm} mapel" : "Semua mapel tuntas KKM",
+                'perilaku' => 'Tidak ada catatan pelanggaran berat',
+            ];
+
+            // Sinkronkan ke tabel analisis_siswa jika berisiko; pulihkan ke Normal jika sudah membaik (B4)
+            if ($tingkatRisiko !== 'Normal') {
+                $statusEnum = 'Perlu Perhatian';
+                $analisisModel = AnalisisSiswa::updateOrCreate(
+                    ['id_siswa' => $siswa->id_siswa, 'id_semester' => $selectedSemesterId],
+                    [
+                        'tanggal_analisis' => now()->toDateString(),
+                        'status' => $statusEnum,
+                        'ringkasan' => $indikator,
+                    ]
+                );
+
+                if (!empty($terpicuKriteriaIds)) {
+                    $analisisModel->kriteria()->sync($terpicuKriteriaIds);
+                }
+            } else {
+                AnalisisSiswa::where('id_siswa', $siswa->id_siswa)
+                    ->where('id_semester', $selectedSemesterId)
+                    ->update(['status' => 'Normal']);
+            }
+
+            $processedStudents[] = $item;
+        }
+
+        $totalSiswaCount = count($processedStudents);
+
+        $calculatePct = function ($count) use ($totalSiswaCount) {
+            if ($totalSiswaCount == 0) return '0%';
+            return number_format(($count / $totalSiswaCount) * 100, 1, ',', '.') . '%';
+        };
+
+        $stats = [
+            'tinggi' => ['count' => $counts['Tinggi'], 'pct' => $calculatePct($counts['Tinggi'])],
+            'sedang' => ['count' => $counts['Sedang'], 'pct' => $calculatePct($counts['Sedang'])],
+            'kecil' => ['count' => $counts['Kecil'], 'pct' => $calculatePct($counts['Kecil'])],
+            'normal' => ['count' => $counts['Normal'], 'pct' => $calculatePct($counts['Normal'])],
         ];
+
+        // Filter: Hanya siswa yang memiliki risiko (Tinggi, Sedang, Kecil)
+        $siswaEarlyWarning = array_filter($processedStudents, function ($st) {
+            return $st['tingkat_risiko'] !== 'Normal';
+        });
 
         // Filter if search query exists with re-indexed array_values
         if ($search) {
@@ -123,15 +197,31 @@ class EarlyWarningController extends Controller
         }
 
         // Active selected student for side panel with proper null handling when empty
-        $selectedId = $request->query('selected_id');
+        $selectedId = (int) $request->query('selected_id', 0);
         $selectedSiswa = null;
-        if (!empty($siswaEarlyWarning)) {
-            if ($selectedId) {
-                $selectedSiswa = collect($siswaEarlyWarning)->firstWhere('id_siswa', $selectedId);
-            }
-            if (!$selectedSiswa) {
-                $selectedSiswa = $siswaEarlyWarning[0];
-            }
+
+        if ($selectedId > 0) {
+            $selectedSiswa = collect($processedStudents)->firstWhere('id_siswa', $selectedId);
+        }
+
+        if (!$selectedSiswa) {
+            $selectedSiswa = !empty($siswaEarlyWarning) ? $siswaEarlyWarning[0] : (!empty($processedStudents) ? $processedStudents[0] : [
+                'id_siswa' => 0,
+                'nis' => '-',
+                'nama' => 'Tidak Ada Siswa Terpilih',
+                'kelas' => '-',
+                'jenis_peringatan' => '-',
+                'indikator' => 'Tidak ada siswa yang memenuhi kriteria pencarian.',
+                'tingkat_risiko' => 'Normal',
+                'rata_nilai' => '0,0',
+                'penurunan_nilai' => '0%',
+                'kehadiran' => '100%',
+                'alpha' => '-',
+                'penurunan_kehadiran' => '0%',
+                'ekskul_status' => '-',
+                'kkm_info' => '-',
+                'perilaku' => '-',
+            ]);
         }
 
         return view('early-warning.index', compact(

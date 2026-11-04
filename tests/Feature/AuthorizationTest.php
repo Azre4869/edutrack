@@ -125,11 +125,22 @@ class AuthorizationTest extends TestCase
      */
     public function test_unknown_role_triggers_logout_instead_of_redirect_loop(): void
     {
+        // Buat user dengan role valid dulu, lalu langsung update via DB
+        // agar bisa melewati validasi ENUM di MySQL saat insert
         $unknownUser = User::create([
             'username' => 'unknownuser',
             'password' => bcrypt('secret123'),
-            'role' => 'UnknownRole',
+            'role'     => 'Operator', // nilai valid untuk insert
         ]);
+
+        // Bypass ENUM: ubah langsung via raw query (tanpa strict mode)
+        \DB::statement("SET SESSION sql_mode = ''");
+        \DB::table('users')
+            ->where('id_user', $unknownUser->id_user)
+            ->update(['role' => 'UnknownRole']);
+
+        // Refresh model agar role terbaru terbaca
+        $unknownUser->refresh();
 
         $response = $this->actingAs($unknownUser)->get('/');
 
