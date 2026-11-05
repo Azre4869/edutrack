@@ -81,11 +81,25 @@ Jalankan migrasi skema tabel beserta master data dan data demo:
 php artisan migrate --seed
 ```
 
-> **Catatan Seeder**:
+> **Catatan Seeder Bawaan**:
 > - `MasterDataSeeder`: Mengisi data pokok sekolah (semester, kriteria analisis EWS, mapel, guru, kelas, dan akun sistem).
-> - `DummyDataSeeder`: Mengisi siswa, presensi harian, nilai sumatif, capaian kompetensi, riwayat ekskul, serta data demo lengkap 12 mapel untuk siswa **Rani Arisanti Najma (id_siswa = 3)** yang siap dicetak rapornya.
+> - `DummyDataSeeder`: Mengisi siswa awal, presensi harian dasar, nilai sumatif, capaian kompetensi, riwayat ekskul, serta data demo lengkap 12 mapel untuk siswa **Rani Arisanti Najma (id_siswa = 3)** yang siap dicetak rapornya.
 
-### 5. Kompilasi Aset Frontend (Vite)
+### 5. Seeder Data Simulasi Skala Penuh (Machine Learning & Analytics Dataset)
+Untuk melatih dan menguji algoritma analitik prediktif / *Machine Learning* dan *Early Warning System (EWS)* secara komprehensif, jalankan seeder simulasi:
+```bash
+php artisan db:seed --class=SimulasiDataSeeder
+```
+
+> ⚠️ **PENTING: CATATAN DATA SIMULASI**
+> - Data yang dihasilkan oleh `SimulasiDataSeeder` adalah **DATA SIMULASI FIKTIF** terkontrol dan realistis untuk keperluan riset, pengujian beban, dan pelatihan model data science/ML.
+> - **Skala & Cakupan**: 156 siswa (26 siswa per kelas di 6 kelas), 23.400+ baris absensi harian (150 hari kerja: 90 hari Sem 1 & 60 hari Sem 2), 3.744 baris nilai 12 mapel, 8.700+ nilai harian bertanda `[SIM]`, 312 catatan wali kelas, 330+ nilai ekskul, dan capaian kompetensi.
+> - **Distribusi 8 Persona Siswa**: Terbagi secara *stratified* (P1: Unggul stabil ~20%, P2: Menengah stabil ~33%, P3: Hadir tapi nilai rendah ~8%, P4: Sering alpha ~10%, P5: Nilai menurun ~10%, P6: Berisiko ganda ~8%, P7: Membaik ~7%, P8: Perubahan mendadak ~4%).
+> - **Evaluasi Model ML**: Label persona tersimpan terpisah pada file `database/seeders/data/persona_label.csv` dan **tidak** mencemari skema kolom basis data.
+> - **Idempoten & Deterministik**: Menggunakan seed acak terkunci (`2026`) dan dapat dijalankan berulang kali tanpa membuat duplikasi baris.
+> - **Guard Produksi**: Menolak dieksekusi di *environment* `production` kecuali diberikan variabel `SIM_ALLOW=true`.
+
+### 6. Kompilasi Aset Frontend (Vite)
 Aplikasi menggunakan Tailwind CSS terintegrasi Vite (tanpa ketergantungan CDN runtime):
 ```bash
 npm install
@@ -130,6 +144,7 @@ Rincian cakupan pengujian:
 - `NotifikasiRealDataTest`: Validasi isolasi data notifikasi per akun dan fungsi *mark as read*.
 - `LaporanRealDataTest`: Validasi agregasi riil jumlah siswa, guru, rata-rata nilai, dan 10 siswa nilai terendah.
 - `EarlyWarningRealDataTest`: Validasi deteksi otomatis kriteria EWS riil dan penyimpanan rencana tindak lanjut ke database.
+- `SimulasiDataSeederTest`: Validasi integritas data simulasi, rentang nilai 0–100, rumus NS & Nilai Akhir, toleransi distribusi persona (±3%), kapasitas kelas (24–28 siswa), dan sebaran Early Warning Semester 2.
 
 ---
 
