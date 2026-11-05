@@ -108,4 +108,14 @@ class Siswa extends Model
     {
         return $this->hasMany(CatatanWali::class, 'id_siswa', 'id_siswa');
     }
+
+    public function aiInsights()
+    {
+        return $this->hasMany(AiInsight::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function aiInsight()
+    {
+        return $this->hasOne(AiInsight::class, 'id_siswa', 'id_siswa')->latestOfMany('id');
+    }
 }

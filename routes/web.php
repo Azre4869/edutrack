@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiAnalysisController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CatatanController;
 use App\Http\Controllers\DashboardController;
@@ -89,6 +90,9 @@ Route::middleware(['web'])->group(function () {
         Route::get('/rapor', [RaporController::class, 'index'])->name('rapor');
         Route::get('/early-warning', [EarlyWarningController::class, 'index'])->name('early-warning');
         Route::post('/early-warning/run', [EarlyWarningController::class, 'run'])->name('early-warning.run');
+        Route::get('/early-warning/ai', [AiAnalysisController::class, 'index'])->name('early-warning.ai');
+        Route::post('/early-warning/ai/run', [AiAnalysisController::class, 'run'])->name('early-warning.ai.run');
+        Route::get('/early-warning/ai/evaluasi', [AiAnalysisController::class, 'evaluasi'])->name('early-warning.ai.evaluasi');
         Route::get('/early-warning/kriteria', [KriteriaAnalisisController::class, 'index'])->name('early-warning.kriteria');
         Route::put('/early-warning/kriteria/{id}', [KriteriaAnalisisController::class, 'update'])->name('early-warning.kriteria.update');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
@@ -128,6 +132,7 @@ Route::middleware(['web'])->group(function () {
         // Early Warning & Tindak Lanjut
         Route::get('/early-warning', [EarlyWarningController::class, 'index'])->name('early-warning');
         Route::post('/early-warning/run', [EarlyWarningController::class, 'run'])->name('early-warning.run');
+        Route::get('/early-warning/ai', [AiAnalysisController::class, 'index'])->name('early-warning.ai');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
 

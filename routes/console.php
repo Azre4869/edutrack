@@ -13,3 +13,10 @@ Schedule::command('ews:run')
     ->weeklyOn(1, '06:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/ews.log'));
+
+// Jadwal mingguan AI Analisis setelah EWS
+Schedule::command('ai:analisis')
+    ->weeklyOn(1, '06:15')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ai.log'));
+

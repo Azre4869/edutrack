@@ -113,6 +113,11 @@
 
         <!-- Action Buttons -->
         <div class="pt-4 flex flex-wrap items-center gap-2">
+            <a href="{{ route($rolePrefix . '.early-warning.ai', array_filter(['semester_id' => $selectedSemesterId, 'kelas_id' => $selectedKelasId])) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-brain"></i>
+                <span>Analisis AI</span>
+            </a>
+
             @if(!$isWali)
                 <a href="{{ route('operator.early-warning.kriteria') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-sliders"></i>
@@ -170,6 +175,7 @@
                         <th class="p-3 min-w-[140px] border border-black">Jenis Peringatan</th>
                         <th class="p-3 min-w-[200px] border border-black">Indikator</th>
                         <th class="p-3 w-28 border border-black">Tingkat Risiko</th>
+                        <th class="p-3 min-w-[130px] border border-black">Analisis AI</th>
                         <th class="p-3 w-16 border border-black">Aksi</th>
                     </tr>
                 </thead>
@@ -204,6 +210,30 @@
                                     </span>
                                 @endif
                             </td>
+                            <td class="p-2.5 border border-black">
+                                @if(!empty($sw['ai_insight']))
+                                    @php $ai = $sw['ai_insight']; @endphp
+                                    <div class="flex flex-col gap-1 items-start">
+                                        <span class="inline-block px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            {{ $ai->cluster_label }}
+                                        </span>
+                                        <div class="flex flex-wrap gap-1">
+                                            @if($ai->is_anomaly)
+                                                <span class="inline-block px-1 py-0.5 text-[8px] font-extrabold rounded bg-rose-100 text-rose-700 border border-rose-200" title="Skor anomali: {{ number_format($ai->anomaly_score, 2) }}">
+                                                    <i class="fa-solid fa-bolt text-rose-500"></i> Anomali
+                                                </span>
+                                            @endif
+                                            @if($ai->berpotensi_turun)
+                                                <span class="inline-block px-1 py-0.5 text-[8px] font-bold rounded bg-amber-100 text-amber-700 border border-amber-200" title="Prediksi nilai: {{ $ai->prediksi_nilai }}">
+                                                    <i class="fa-solid fa-arrow-trend-down"></i> Turun
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="text-[10px] text-gray-400 italic">Belum dihitung</span>
+                                @endif
+                            </td>
                             <td class="p-2.5 text-center border border-black">
                                 <a href="{{ $rowUrl }}" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white inline-flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
@@ -212,7 +242,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-gray-500 border border-black">
+                            <td colspan="9" class="p-8 text-center text-gray-500 border border-black">
                                 @if(!empty($search))
                                     Tidak ada data peringatan dini yang cocok dengan pencarian "{{ $search }}".
                                 @else
@@ -320,6 +350,81 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Analisis AI (Explainable Decision Support) -->
+            @if(!empty($selectedSiswa['ai_insight']))
+                @php $ai = $selectedSiswa['ai_insight']; @endphp
+                <div class="mt-5 p-4 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-purple-50/50 border border-indigo-200 shadow-sm">
+                    <div class="flex items-center justify-between pb-2.5 border-b border-indigo-100">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-brain text-indigo-600 text-sm"></i>
+                            <h6 class="text-xs font-black text-indigo-950 font-heading">Analisis AI (Pendukung Keputusan)</h6>
+                        </div>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-white text-indigo-800 font-bold border border-indigo-200">
+                            Data Simulasi
+                        </span>
+                    </div>
+
+                    <!-- Klaster Pola Belajar -->
+                    <div class="mt-3 flex items-center justify-between text-xs">
+                        <span class="text-gray-600 font-medium">Klaster Pola:</span>
+                        <span class="font-bold text-indigo-900 bg-white px-2 py-0.5 rounded border border-indigo-200">
+                            {{ $ai->cluster_label }}
+                        </span>
+                    </div>
+
+                    <!-- Deteksi Anomali -->
+                    <div class="mt-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-600 font-medium">Status Pola:</span>
+                            @if($ai->is_anomaly)
+                                <span class="font-extrabold text-rose-700 bg-rose-100 px-2 py-0.5 rounded border border-rose-300">
+                                    <i class="fa-solid fa-bolt mr-1"></i> Terindikasi Anomali
+                                </span>
+                            @else
+                                <span class="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    Pola Wajar
+                                </span>
+                            @endif
+                        </div>
+                        @if($ai->is_anomaly && !empty($ai->alasan))
+                            <div class="mt-2 space-y-1.5">
+                                @foreach($ai->alasan as $als)
+                                    <div class="p-2 rounded-xl bg-white border border-rose-200 text-[11px] text-rose-800 leading-snug">
+                                        <i class="fa-solid fa-circle-exclamation text-rose-500 mr-1"></i>
+                                        {{ $als['teks_penjelasan'] }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Proyeksi Prediktif OLS -->
+                    <div class="mt-3 pt-2.5 border-t border-indigo-100 grid grid-cols-2 gap-2 text-center">
+                        <div class="p-2 rounded-xl bg-white border border-indigo-100">
+                            <span class="text-[9px] text-gray-500 block">Proyeksi Nilai</span>
+                            <strong class="text-xs text-indigo-950 font-black font-heading">{{ number_format($ai->prediksi_nilai, 1) }}</strong>
+                            <span class="text-[9px] {{ $ai->slope_nilai < 0 ? 'text-rose-600' : 'text-emerald-600' }} font-bold block">
+                                {{ $ai->slope_nilai >= 0 ? '+' : '' }}{{ number_format($ai->slope_nilai, 2) }}/periode
+                            </span>
+                        </div>
+                        <div class="p-2 rounded-xl bg-white border border-indigo-100">
+                            <span class="text-[9px] text-gray-500 block">Proyeksi Hadir</span>
+                            <strong class="text-xs text-indigo-950 font-black font-heading">{{ number_format($ai->prediksi_kehadiran, 1) }}%</strong>
+                            <span class="text-[9px] {{ $ai->slope_kehadiran < 0 ? 'text-rose-600' : 'text-emerald-600' }} font-bold block">
+                                {{ $ai->slope_kehadiran >= 0 ? '+' : '' }}{{ number_format($ai->slope_kehadiran, 2) }}/minggu
+                            </span>
+                        </div>
+                    </div>
+
+                    @if($ai->berpotensi_turun)
+                        <div class="mt-2.5 p-2 rounded-xl bg-amber-50 border border-amber-200 flex items-center space-x-2 text-[10px] text-amber-900 font-medium">
+                            <i class="fa-solid fa-arrow-trend-down text-amber-600"></i>
+                            <span>Perhatian: Model memproyeksikan kecenderungan penurunan di masa mendatang.</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             <!-- Tindakan Yang Disarankan Box -->
             <div class="mt-5 p-3.5 bg-blue-50 border border-blue-200 rounded-2xl">

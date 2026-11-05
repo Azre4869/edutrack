@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Kelas;
 use App\Models\Semester;
+use App\Services\Ai\AiInsightService;
 use App\Services\EarlyWarning\EarlyWarningService;
 use Illuminate\Http\Request;
 
 class EarlyWarningController extends Controller
 {
     public function __construct(
-        protected EarlyWarningService $ewsService
+        protected EarlyWarningService $ewsService,
+        protected AiInsightService $aiService
     ) {}
 
     public function index(Request $request)
@@ -49,6 +51,27 @@ class EarlyWarningController extends Controller
         $selectedSiswa = $viewData['selectedSiswa'];
         $lastLog = $viewData['lastLog'];
 
+        // Ambil hasil AI run terbaru untuk semester ini
+        $latestAiRun = $this->aiService->getLatestSuccessfulRun($selectedSemesterId);
+
+        if ($latestAiRun) {
+            $studentIds = array_column($siswaEarlyWarning, 'id_siswa');
+            if ($selectedSiswa && !in_array($selectedSiswa['id_siswa'], $studentIds)) {
+                $studentIds[] = $selectedSiswa['id_siswa'];
+            }
+
+            $insightsMap = $this->aiService->getInsightsForSiswaIds($studentIds, $selectedSemesterId);
+
+            foreach ($siswaEarlyWarning as &$st) {
+                $st['ai_insight'] = $insightsMap->get($st['id_siswa']);
+            }
+            unset($st);
+
+            if ($selectedSiswa) {
+                $selectedSiswa['ai_insight'] = $insightsMap->get($selectedSiswa['id_siswa']);
+            }
+        }
+
         return view('early-warning.index', compact(
             'kelasList',
             'semesterList',
@@ -59,7 +82,8 @@ class EarlyWarningController extends Controller
             'stats',
             'siswaEarlyWarning',
             'selectedSiswa',
-            'lastLog'
+            'lastLog',
+            'latestAiRun'
         ));
     }
 
@@ -84,6 +108,15 @@ class EarlyWarningController extends Controller
             pemicu: 'Manual',
             userId: $user?->id_user
         );
+
+        // Jika AI diaktifkan, otomatis jalankan analisis AI sinkron dengan log EWS
+        if (config('services.ai.enabled', true)) {
+            $this->aiService->runAnalysis(
+                semesterId: $semesterId,
+                idLog: $log->id_log,
+                kelasId: $kelasId
+            );
+        }
 
         $rolePrefix = $user && $user->isOperator() ? 'operator' : 'wali';
 

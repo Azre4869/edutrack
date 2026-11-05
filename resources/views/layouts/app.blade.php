@@ -143,7 +143,9 @@
                             <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
                         </button>
                         <div id="submenu-ew-op" class="pl-6 space-y-1 {{ request()->is('operator/early-warning*') || request()->is('operator/tindak-lanjut*') ? '' : 'hidden' }}">
-                            <a href="{{ route('operator.early-warning') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.early-warning*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Early Warning Home</a>
+                            <a href="{{ route('operator.early-warning') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.early-warning') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Early Warning Home</a>
+                            <a href="{{ route('operator.early-warning.ai') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.early-warning.ai') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Analisis AI (Klaster & Anomali)</a>
+                            <a href="{{ route('operator.early-warning.ai.evaluasi') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.early-warning.ai.evaluasi') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Evaluasi Model AI</a>
                             <a href="{{ route('operator.tindak-lanjut') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.tindak-lanjut*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Tindak Lanjut</a>
                         </div>
                     </div>
@@ -219,7 +221,8 @@
                             <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
                         </button>
                         <div id="submenu-ew-wali" class="pl-6 space-y-1 {{ request()->is('wali/early-warning*') || request()->is('wali/tindak-lanjut*') ? '' : 'hidden' }}">
-                            <a href="{{ route('wali.early-warning') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('wali.early-warning*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Early Warning Home</a>
+                            <a href="{{ route('wali.early-warning') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('wali.early-warning') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Early Warning Home</a>
+                            <a href="{{ route('wali.early-warning.ai') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('wali.early-warning.ai') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Analisis AI (Kelas Binaan)</a>
                             <a href="{{ route('wali.tindak-lanjut') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('wali.tindak-lanjut*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Tindak Lanjut</a>
                         </div>
                     </div>
