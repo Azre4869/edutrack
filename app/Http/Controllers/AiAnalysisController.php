@@ -3,16 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiInsight;
+use App\Models\AiRun;
 use App\Models\Kelas;
 use App\Models\Semester;
 use App\Services\Ai\AiInsightService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class AiAnalysisController extends Controller
 {
     public function __construct(
         protected AiInsightService $aiService
     ) {}
+
+    /**
+     * Cek apakah AI service aktif (di-cache 60 detik agar tidak spam)
+     */
+    private function checkAiServiceHealth(): bool
+    {
+        return Cache::remember('ai_health_status', 60, function () {
+            try {
+                $baseUrl = rtrim(config('services.ai.url', 'http://127.0.0.1:8001'), '/');
+                $response = Http::timeout(2)->get("{$baseUrl}/health");
+                return $response->ok();
+            } catch (\Throwable) {
+                return false;
+            }
+        });
+    }
 
     /**
      * Halaman Utama Analisis AI: Klastering PCA 2D, Anomali, dan Pola Belajar
@@ -34,6 +53,7 @@ class AiAnalysisController extends Controller
         }
 
         $latestRun = $this->aiService->getLatestSuccessfulRun($selectedSemesterId);
+        $aiServiceActive = $this->checkAiServiceHealth();
 
         $insights = collect();
         $clusterSummary = [];
@@ -84,7 +104,8 @@ class AiAnalysisController extends Controller
             'insights',
             'clusterSummary',
             'anomalies',
-            'pcaPoints'
+            'pcaPoints',
+            'aiServiceActive'
         ));
     }
 
@@ -107,6 +128,9 @@ class AiAnalysisController extends Controller
             kelasId: $kelasId
         );
 
+        // Invalidasi cache health setelah run
+        Cache::forget('ai_health_status');
+
         if (!$result['success']) {
             return redirect()->back()->with('error', 'Analisis AI Gagal: ' . $result['message']);
         }
@@ -119,6 +143,7 @@ class AiAnalysisController extends Controller
 
     /**
      * Halaman Evaluasi Model Machine Learning
+     * TIDAK memanggil /evaluate secara otomatis — baca dari ai_run.metrik terbaru
      */
     public function evaluasi(Request $request)
     {
@@ -129,17 +154,66 @@ class AiAnalysisController extends Controller
 
         $semesterList = Semester::orderBy('id_semester')->get();
         $selectedSemesterId = (int) $request->query('semester_id', 2);
+        $aiServiceActive = $this->checkAiServiceHealth();
 
-        $evalResponse = $this->aiService->evaluateModel($selectedSemesterId);
+        // Baca data evaluasi tersimpan dari ai_run.metrik (tidak panggil /evaluate otomatis)
+        $latestRun = AiRun::where('status', 'Success')
+            ->orderBy('id', 'desc')
+            ->first();
 
-        $evalData = $evalResponse['success'] ? ($evalResponse['data'] ?? null) : null;
-        $evalError = !$evalResponse['success'] ? ($evalResponse['error'] ?? 'Terjadi kesalahan.') : null;
+        $evalData  = null;
+        $evalError = session('eval_error', null);
+        $evalRunAt = null;
+
+        if ($latestRun && isset($latestRun->metrik['eval'])) {
+            $evalData  = $latestRun->metrik['eval'];
+            $evalRunAt = $latestRun->updated_at;
+        }
 
         return view('early-warning.ai-evaluasi', compact(
             'semesterList',
             'selectedSemesterId',
             'evalData',
-            'evalError'
+            'evalError',
+            'evalRunAt',
+            'latestRun',
+            'aiServiceActive'
         ));
+    }
+
+    /**
+     * POST: Jalankan evaluasi ulang (memanggil /evaluate ke AI service)
+     * Hanya dipicu oleh tombol — bukan otomatis saat halaman dibuka
+     */
+    public function runEvaluasi(Request $request)
+    {
+        $user = auth()->user();
+        if ($user && !$user->isOperator()) {
+            abort(403, 'Hanya Operator yang berwenang menjalankan evaluasi model.');
+        }
+
+        $selectedSemesterId = (int) $request->input('semester_id', 2);
+
+        $evalResponse = $this->aiService->evaluateModel($selectedSemesterId);
+
+        if (!$evalResponse['success']) {
+            return redirect()
+                ->route('operator.early-warning.ai.evaluasi', ['semester_id' => $selectedSemesterId])
+                ->with('eval_error', $evalResponse['error'] ?? 'Gagal menghubungi service AI.');
+        }
+
+        // Simpan hasil evaluasi ke ai_run.metrik terbaru
+        $latestRun = AiRun::where('status', 'Success')->orderBy('id', 'desc')->first();
+        if ($latestRun) {
+            $metrik = $latestRun->metrik ?? [];
+            $metrik['eval'] = $evalResponse['data'];
+            $latestRun->update(['metrik' => $metrik]);
+        }
+
+        Cache::forget('ai_health_status');
+
+        return redirect()
+            ->route('operator.early-warning.ai.evaluasi', ['semester_id' => $selectedSemesterId])
+            ->with('eval_success', 'Evaluasi model berhasil dijalankan.');
     }
 }

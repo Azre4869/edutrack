@@ -93,6 +93,7 @@ Route::middleware(['web'])->group(function () {
         Route::get('/early-warning/ai', [AiAnalysisController::class, 'index'])->name('early-warning.ai');
         Route::post('/early-warning/ai/run', [AiAnalysisController::class, 'run'])->name('early-warning.ai.run');
         Route::get('/early-warning/ai/evaluasi', [AiAnalysisController::class, 'evaluasi'])->name('early-warning.ai.evaluasi');
+        Route::post('/early-warning/ai/evaluasi/run', [AiAnalysisController::class, 'runEvaluasi'])->name('early-warning.ai.evaluasi.run');
         Route::get('/early-warning/kriteria', [KriteriaAnalisisController::class, 'index'])->name('early-warning.kriteria');
         Route::put('/early-warning/kriteria/{id}', [KriteriaAnalisisController::class, 'update'])->name('early-warning.kriteria.update');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');

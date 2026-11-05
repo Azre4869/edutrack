@@ -61,42 +61,65 @@ def label_clusters_by_centroids(centroids_unscaled: np.ndarray) -> List[Tuple[st
     Fitur:
     0: rata_nilai_akhir, 1: simpangan, 2: mapel_bawah_kkm, 3: persen_hadir,
     4: jumlah_alpha, 5: alpha_maks, 6: slope_tp, 7: selisih_sem
+
+    Label dijamin UNIK — tanpa sufiks angka. Jika dua klaster jatuh ke kandidat
+    yang sama, klaster dengan ciri kurang dominan mendapat label alternatif.
     """
     k = centroids_unscaled.shape[0]
-    assigned_labels = []
-    used_labels = set()
+
+    # Kandidat label berurut dari paling spesifik ke paling umum, tiap label hanya dipakai 1x
+    LABEL_POOL: List[Tuple[str, str]] = [
+        ("Konsisten Unggul",        "Pencapaian akademik sangat tinggi dengan tingkat kehadiran prima dan tanpa alpha."),
+        ("Rentan Ganda",            "Kombinasi ketidakhadiran berulang dan capaian nilai di bawah KKM pada banyak mapel."),
+        ("Perlu Perbaikan Kehadiran", "Nilai akademik cukup namun frekuensi ketidakhadiran tanpa keterangan tinggi."),
+        ("Tren Nilai Menurun",      "Pola nilai menunjukkan penurunan signifikan dibanding capaian awal semester."),
+        ("Hadir tapi Nilai Rendah", "Kehadiran disiplin namun nilai akademik pada beberapa mata pelajaran di bawah KKM."),
+        ("Pola Membaik",            "Tren positif: performa akademik dan kedisiplinan kehadiran meningkat."),
+        ("Stabil Menengah",         "Karakteristik akademik dan kehadiran stabil di rentang standar ketuntasan."),
+        ("Berkembang Pesat",        "Peningkatan nilai cukup tinggi dengan kehadiran di atas rata-rata."),
+    ]
+
+    def _score_candidate(c: np.ndarray) -> int:
+        """Kembalikan indeks LABEL_POOL yang paling cocok untuk centroid c."""
+        nilai    = c[0]
+        mapel_kkm = c[2]
+        hadir    = c[3]
+        alpha    = c[4]
+        slope    = c[6]
+        selisih  = c[7]
+
+        if nilai >= 85.0 and hadir >= 95.0 and alpha < 1.0:
+            return 0  # Konsisten Unggul
+        if alpha >= 4.0 and (nilai < 72.0 or mapel_kkm >= 2.0):
+            return 1  # Rentan Ganda
+        if alpha >= 3.0 or hadir < 88.0:
+            return 2  # Perlu Perbaikan Kehadiran
+        if selisih <= -8.0 or slope <= -0.8:
+            return 3  # Tren Nilai Menurun
+        if nilai < 75.0 or mapel_kkm >= 1.5:
+            return 4  # Hadir tapi Nilai Rendah
+        if selisih >= 7.0 or slope >= 0.8:
+            return 5  # Pola Membaik
+        # Stabil Menengah sebagai default
+        return 6
+
+    # Dapatkan skor kandidat tiap centroid
+    candidate_scores = [_score_candidate(centroids_unscaled[i]) for i in range(k)]
+
+    # Resolusi konflik: jika dua klaster ingin label yang sama, yang "lebih jauh"
+    # dari kriteria utama mendapat label alternatif berikutnya dari pool.
+    used_indices: set = set()
+    assigned_labels: List[Tuple[str, str]] = []
 
     for i in range(k):
-        c = centroids_unscaled[i]
-        nilai = c[0]
-        mapel_kkm = c[2]
-        hadir = c[3]
-        alpha = c[4]
-        slope = c[6]
-        selisih = c[7]
-
-        # Logika penetapan profil klaster berbasis karakteristik data
-        if nilai >= 85.0 and hadir >= 95.0 and alpha < 1.0:
-            candidate = ("Konsisten Unggul", "Pencapaian akademik sangat tinggi dengan tingkat kehadiran yang prima.")
-        elif alpha >= 4.0 and (nilai < 72.0 or mapel_kkm >= 2.0):
-            candidate = ("Rentan Ganda", "Kombinasi ketidakhadiran berulang dan capaian nilai di bawah KKM.")
-        elif alpha >= 3.0 or hadir < 88.0:
-            candidate = ("Perlu Perbaikan Kehadiran", "Nilai akademik cukup namun frekuensi ketidakhadiran tanpa izin tinggi.")
-        elif selisih <= -8.0 or slope <= -0.8:
-            candidate = ("Tren Nilai Menurun", "Pola nilai menunjukkan penurunan signifikan dibanding capaian awal.")
-        elif nilai < 75.0 or mapel_kkm >= 1.5:
-            candidate = ("Hadir tapi Nilai Rendah", "Kehadiran disiplin namun nilai akademik pada beberapa mapel di bawah KKM.")
-        elif selisih >= 7.0 or slope >= 0.8:
-            candidate = ("Pola Membaik", "Tren positif dengan peningkatan performa akademik dan kedisiplinan.")
-        else:
-            candidate = ("Stabil Menengah", "Karakteristik akademik dan kehadiran stabil di rentang standar ketuntasan.")
-
-        # Hindari duplikasi label persis dengan penomoran jika perlu
-        lbl, desc = candidate
-        if lbl in used_labels:
-            lbl = f"{lbl} {i + 1}"
-        used_labels.add(lbl)
-        assigned_labels.append((lbl, desc))
+        idx = candidate_scores[i]
+        # Geser ke label berikutnya jika sudah dipakai (maks geser = panjang pool)
+        attempts = 0
+        while idx in used_indices and attempts < len(LABEL_POOL):
+            idx = (idx + 1) % len(LABEL_POOL)
+            attempts += 1
+        used_indices.add(idx)
+        assigned_labels.append(LABEL_POOL[idx])
 
     return assigned_labels
 
