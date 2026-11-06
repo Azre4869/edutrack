@@ -6,9 +6,11 @@ use App\Models\Absensi;
 use App\Models\AnalisisSiswa;
 use App\Models\Guru;
 use App\Models\Kelas;
+use App\Models\KriteriaAnalisis;
 use App\Models\Nilai;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class DashboardController extends Controller
 {
@@ -46,12 +48,18 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('operator.dashboard', compact(
-            'totalSiswa',
-            'kehadiranHariIni',
-            'rataRataNilai',
-            'perluPerhatian',
-            'siswaPerhatian'
+        // Perkembangan Nilai riil (Semua Siswa Sekolah)
+        $perkembangan = $this->getPerkembanganNilai();
+
+        return view('operator.dashboard', array_merge(
+            compact(
+                'totalSiswa',
+                'kehadiranHariIni',
+                'rataRataNilai',
+                'perluPerhatian',
+                'siswaPerhatian'
+            ),
+            $perkembangan
         ));
     }
 
@@ -91,13 +99,19 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('wali.dashboard', compact(
-            'totalSiswa',
-            'kehadiranHariIni',
-            'rataRataNilai',
-            'perluPerhatian',
-            'siswaPerhatian',
-            'kelasBinaan'
+        // Perkembangan Nilai riil (Siswa Kelas Binaan)
+        $perkembangan = $this->getPerkembanganNilai($siswaIds);
+
+        return view('wali.dashboard', array_merge(
+            compact(
+                'totalSiswa',
+                'kehadiranHariIni',
+                'rataRataNilai',
+                'perluPerhatian',
+                'siswaPerhatian',
+                'kelasBinaan'
+            ),
+            $perkembangan
         ));
     }
 
@@ -142,12 +156,58 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('guru.dashboard', compact(
-            'totalSiswa',
-            'kehadiranHariIni',
-            'rataRataNilai',
-            'perluPerhatian',
-            'siswaPerhatian'
+        // Perkembangan Nilai riil (Mapel Guru)
+        $perkembangan = $this->getPerkembanganNilai(null, $mapelIds);
+
+        return view('guru.dashboard', array_merge(
+            compact(
+                'totalSiswa',
+                'kehadiranHariIni',
+                'rataRataNilai',
+                'perluPerhatian',
+                'siswaPerhatian'
+            ),
+            $perkembangan
         ));
+    }
+
+    /**
+     * Hitung metrik perkembangan nilai secara riil dari database.
+     */
+    private function getPerkembanganNilai(?Collection $siswaIds = null, ?Collection $mapelIds = null): array
+    {
+        $kkm = KriteriaAnalisis::where('kode', 'KKM')->value('bobot') ?? 75;
+
+        $nilaiQuery = Nilai::query();
+        if ($siswaIds !== null && $siswaIds->isNotEmpty()) {
+            $nilaiQuery->whereIn('id_siswa', $siswaIds);
+        }
+        if ($mapelIds !== null && $mapelIds->isNotEmpty()) {
+            $nilaiQuery->whereIn('id_mapel', $mapelIds);
+        }
+
+        $siswaAvgQuery = (clone $nilaiQuery)
+            ->selectRaw('id_siswa, AVG(nilai_akhir) as rata')
+            ->groupBy('id_siswa')
+            ->get();
+
+        $tuntasCount = $siswaAvgQuery->filter(fn($s) => $s->rata >= $kkm)->count();
+        $belumTuntasCount = $siswaAvgQuery->filter(fn($s) => $s->rata < $kkm)->count();
+        $totalBernilai = $tuntasCount + $belumTuntasCount;
+        $persentaseKetuntasan = $totalBernilai > 0 ? round(($tuntasCount / $totalBernilai) * 100) : 0;
+
+        $avgUh1 = round((clone $nilaiQuery)->avg('tp1') ?? 0, 1);
+        $avgUh2 = round((clone $nilaiQuery)->avg('tp2') ?? 0, 1);
+        $avgPts = round((clone $nilaiQuery)->avg('sas') ?? 0, 1);
+
+        return [
+            'tuntasCount' => $tuntasCount,
+            'belumTuntasCount' => $belumTuntasCount,
+            'totalBernilai' => $totalBernilai,
+            'persentaseKetuntasan' => $persentaseKetuntasan,
+            'avgUh1' => $avgUh1,
+            'avgUh2' => $avgUh2,
+            'avgPts' => $avgPts,
+        ];
     }
 }

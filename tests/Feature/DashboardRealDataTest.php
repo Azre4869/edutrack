@@ -44,6 +44,12 @@ class DashboardRealDataTest extends TestCase
         // Nilai rata-rata sekolah
         $avgNilaiDB = round(Nilai::avg('nilai_akhir'), 1);
         $response->assertViewHas('rataRataNilai', $avgNilaiDB);
+
+        // Metrik perkembangan nilai riil
+        $response->assertViewHas('tuntasCount');
+        $response->assertViewHas('belumTuntasCount');
+        $response->assertViewHas('persentaseKetuntasan');
+        $this->assertEquals($response->viewData('totalBernilai'), $response->viewData('tuntasCount') + $response->viewData('belumTuntasCount'));
     }
 
     /**
@@ -70,6 +76,10 @@ class DashboardRealDataTest extends TestCase
         $response->assertViewHas('perluPerhatian', $perluPerhatianKelas);
         $response->assertViewHas('rataRataNilai', $avgNilaiKelas);
         $response->assertViewHas('kelasBinaan');
+        $response->assertViewHas('tuntasCount');
+        $response->assertViewHas('belumTuntasCount');
+        $response->assertViewHas('persentaseKetuntasan');
+        $this->assertEquals($response->viewData('totalBernilai'), $response->viewData('tuntasCount') + $response->viewData('belumTuntasCount'));
 
         // Pastikan siswa dari kelas lain tidak muncul di daftar perhatian wali
         $siswaLain = Siswa::where('id_kelas', '!=', $kelasBinaan->id_kelas)->first();
