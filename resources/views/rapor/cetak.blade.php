@@ -301,13 +301,20 @@ body {
     $namaMapelPilihan = ['Prakarya','Seni Budaya','Informatika','TIK'];
     $namaMapelMulok   = ['Bahasa Madura','Muatan Lokal','Bahasa Daerah','Bahasa Jawa'];
 
-    // HANYA tampilkan nilai yang SUDAH LENGKAP (semua TP terisi, SAS terisi, Nilai Akhir > 0, Capaian 1 & 2 terisi)
+    // HANYA tampilkan nilai yang SUDAH LENGKAP (minimal 1 TP terisi, SAS terisi, Nilai Akhir > 0, Capaian 1 & 2 terisi)
     $nilaiAll = $siswa->nilai->filter(function($n) {
         if (!$n) return false;
+
+        $hasAtLeastOneTp = false;
         for ($i = 1; $i <= 8; $i++) {
             $col = 'tp' . $i;
-            if (is_null($n->$col) || $n->$col === '') return false;
+            if (!is_null($n->$col) && $n->$col !== '') {
+                $hasAtLeastOneTp = true;
+                break;
+            }
         }
+        if (!$hasAtLeastOneTp) return false;
+
         if (is_null($n->sas) || $n->sas === '') return false;
         if (is_null($n->nilai_akhir) || (float)$n->nilai_akhir <= 0) return false;
         $c = $n->capaian;

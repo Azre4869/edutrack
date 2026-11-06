@@ -161,8 +161,8 @@
                             $hasSas = ($sasValue !== '');
                             $hasNa = ($naValue !== '');
 
-                            // Lengkap jika SEMUA TP (TP1 s/d TP8) terisi, SAS terisi, Nilai Akhir ada, Capaian 1 ada, Capaian 2 ada
-                            $isComplete = $allTpFilled && $hasSas && $hasNa && $hasCapaian1 && $hasCapaian2;
+                            // Lengkap jika minimal 1 TP terisi, SAS terisi, Nilai Akhir ada, Capaian 1 ada, Capaian 2 ada
+                            $isComplete = $hasAnyTp && $hasSas && $hasNa && $hasCapaian1 && $hasCapaian2;
                             $hasAny = $hasAnyTp || $hasSas || $hasNa || $hasCapaian1 || $hasCapaian2;
                             $isPartial = $hasAny && !$isComplete;
                         @endphp
@@ -332,8 +332,8 @@
         const naInput = row.querySelector('.na-input');
         const hasNa = naInput && naInput.value.trim() !== '' && !isNaN(parseFloat(naInput.value)) && parseFloat(naInput.value) > 0;
 
-        // Lengkap HANYA jika SEMUA TP (TP1 s/d TP8) terisi, SAS terisi, NA terhitung, Capaian 1 terisi, DAN Capaian 2 terisi
-        const isComplete = allTpFilled && hasSas && hasNa && hasC1 && hasC2;
+        // Lengkap jika minimal 1 TP terisi, SAS terisi, NA terhitung, Capaian 1 terisi, DAN Capaian 2 terisi
+        const isComplete = hasAnyTp && hasSas && hasNa && hasC1 && hasC2;
         const hasAny = hasAnyTp || hasSas || hasNa || hasC1 || hasC2;
 
         const statusCell = row.querySelector('.status-cell');
