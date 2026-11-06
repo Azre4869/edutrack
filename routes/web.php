@@ -68,6 +68,11 @@ Route::middleware(['web'])->group(function () {
         Route::put('/ekskul/{id}', [DataMasterController::class, 'updateEkskul'])->name('ekskul.update');
         Route::delete('/ekskul/{id}', [DataMasterController::class, 'destroyEkskul'])->name('ekskul.destroy');
 
+        Route::get('/semester', [DataMasterController::class, 'semester'])->name('semester');
+        Route::post('/semester', [DataMasterController::class, 'storeSemester'])->name('semester.store');
+        Route::post('/semester/{id}/set-active', [DataMasterController::class, 'setActiveSemester'])->name('semester.set-active');
+        Route::delete('/semester/{id}', [DataMasterController::class, 'destroySemester'])->name('semester.destroy');
+
         // Nilai
         Route::get('/nilai', [NilaiController::class, 'inputNilai'])->name('nilai');
         Route::post('/nilai', [NilaiController::class, 'storeNilai'])->name('nilai.store');

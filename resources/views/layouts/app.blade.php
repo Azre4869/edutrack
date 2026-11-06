@@ -96,12 +96,13 @@
                             </span>
                             <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
                         </button>
-                        <div id="submenu-data-op" class="pl-6 space-y-1 {{ request()->is('operator/siswa*') || request()->is('operator/guru*') || request()->is('operator/kelas*') || request()->is('operator/mapel*') || request()->is('operator/ekskul*') ? '' : 'hidden' }}">
+                        <div id="submenu-data-op" class="pl-6 space-y-1 {{ request()->is('operator/siswa*') || request()->is('operator/guru*') || request()->is('operator/kelas*') || request()->is('operator/mapel*') || request()->is('operator/ekskul*') || request()->is('operator/semester*') ? '' : 'hidden' }}">
                             <a href="{{ route('operator.siswa') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.siswa*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Siswa</a>
                             <a href="{{ route('operator.guru') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.guru*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Guru</a>
                             <a href="{{ route('operator.kelas') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.kelas*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Kelas</a>
                             <a href="{{ route('operator.mapel') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.mapel*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Mata Pelajaran</a>
                             <a href="{{ route('operator.ekskul') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.ekskul*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Ekstrakulikuler</a>
+                            <a href="{{ route('operator.semester') }}" class="block px-4 py-2 text-xs font-semibold rounded-md transition-colors {{ request()->routeIs('operator.semester*') ? 'bg-edu-orange text-white' : 'text-gray-600 hover:bg-blue-50' }}">Semester & Tahun Ajaran</a>
                         </div>
                     </div>
 

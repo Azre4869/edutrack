@@ -6,6 +6,7 @@ use App\Models\Ekstrakurikuler;
 use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
+use App\Models\Semester;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
 
@@ -391,5 +392,90 @@ class DataMasterController extends Controller
         $ekskul->delete();
 
         return back()->with('success', 'Data ekstrakurikuler berhasil dihapus.');
+    }
+
+    // ==================== SEMESTER ====================
+    public function semester(Request $request)
+    {
+        $search = $request->query('search');
+        $perPage = max(5, min(100, (int) $request->query('per_page', 20)));
+
+        $query = Semester::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_semester', 'like', "%{$search}%")
+                  ->orWhere('tahun_ajaran', 'like', "%{$search}%");
+            });
+        }
+
+        $semesters = $query->orderBy('id_semester', 'desc')->paginate($perPage)->withQueryString();
+
+        return view('master.semester', compact('semesters', 'search', 'perPage'));
+    }
+
+    public function storeSemester(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_semester' => 'required|in:Ganjil,Genap',
+            'tahun_ajaran'  => 'required|regex:/^\d{4}\/\d{4}$/',
+            'is_active'     => 'nullable|boolean',
+        ], [
+            'tahun_ajaran.regex' => 'Format tahun ajaran harus berupa format YYYY/YYYY (contoh: 2027/2028).',
+        ]);
+
+        // Cek kombinasi unik nama_semester + tahun_ajaran
+        $exists = Semester::where('nama_semester', $validated['nama_semester'])
+            ->where('tahun_ajaran', $validated['tahun_ajaran'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['tahun_ajaran' => 'Semester ' . $validated['nama_semester'] . ' untuk tahun ajaran ' . $validated['tahun_ajaran'] . ' sudah terdaftar.'])->withInput();
+        }
+
+        $isActive = $request->boolean('is_active');
+
+        if ($isActive) {
+            Semester::query()->update(['is_active' => false]);
+        }
+
+        Semester::create([
+            'nama_semester' => $validated['nama_semester'],
+            'tahun_ajaran'  => $validated['tahun_ajaran'],
+            'is_active'     => $isActive,
+        ]);
+
+        return back()->with('success', 'Semester baru berhasil ditambahkan.' . ($isActive ? ' Ditetapkan sebagai semester aktif.' : ''));
+    }
+
+    public function setActiveSemester($id)
+    {
+        $target = Semester::findOrFail($id);
+
+        Semester::query()->update(['is_active' => false]);
+        $target->update(['is_active' => true]);
+
+        return back()->with('success', "Semester {$target->nama_semester} ({$target->tahun_ajaran}) berhasil ditetapkan sebagai semester aktif sekolah.");
+    }
+
+    public function destroySemester($id)
+    {
+        $target = Semester::findOrFail($id);
+
+        if ($target->is_active) {
+            return back()->with('error', 'Semester aktif tidak dapat dihapus. Silakan aktifkan semester lain terlebih dahulu.');
+        }
+
+        // Cek apakah ada data transaksional terikat
+        $hasNilai = \App\Models\Nilai::where('id_semester', $id)->exists();
+        $hasAbsensi = \App\Models\Absensi::where('id_semester', $id)->exists();
+
+        if ($hasNilai || $hasAbsensi) {
+            return back()->with('error', 'Semester tidak dapat dihapus karena sudah memiliki rekaman nilai atau absensi siswa terkait.');
+        }
+
+        $target->delete();
+
+        return back()->with('success', 'Semester berhasil dihapus.');
     }
 }
