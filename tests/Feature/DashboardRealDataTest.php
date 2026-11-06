@@ -91,18 +91,22 @@ class DashboardRealDataTest extends TestCase
     }
 
     /**
-     * Dashboard menampilkan label 'Data contoh' pada bagian grafik yang belum real-time.
+     * Dashboard menampilkan label 'Data Real-time' dan data grafik kehadiran harian riil.
      */
     public function test_dashboard_displays_example_data_badge_for_static_charts(): void
     {
         $operator = User::where('username', 'operator')->first();
         $response = $this->actingAs($operator)->get(route('operator.dashboard'));
         $response->assertStatus(200);
-        $response->assertSee('Data contoh');
+        $response->assertSee('Data Real-time');
+        $response->assertViewHas('kehadiranLabels');
+        $response->assertViewHas('kehadiranHadir');
 
         $wali = User::where('username', 'walikelas')->first();
         $responseWali = $this->actingAs($wali)->get(route('wali.dashboard'));
         $responseWali->assertStatus(200);
-        $responseWali->assertSee('Data contoh');
+        $responseWali->assertSee('Data Real-time');
+        $responseWali->assertViewHas('kehadiranLabels');
+        $responseWali->assertViewHas('kehadiranHadir');
     }
 }

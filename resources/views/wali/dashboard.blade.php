@@ -61,8 +61,8 @@
         <div>
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-extrabold text-gray-900 font-heading">Grafik Kehadiran</h3>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                    <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-chart-line mr-1"></i> Data Real-time
                 </span>
             </div>
             <div class="relative h-64 w-full">
@@ -76,7 +76,7 @@
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block mr-1"></span> Sakit & Izin</span>
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-400 inline-block mr-1"></span> Alpa / Tanpa Ket.</span>
             </div>
-            <span class="text-[11px] font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">Rata-rata: 93.8%</span>
+            <span class="text-[11px] font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">Rata-rata: {{ $kehadiranRataRataPekan }}%</span>
         </div>
     </div>
 
@@ -180,27 +180,36 @@
 <script>
     // Kehadiran Bar Chart
     const ctxKehadiran = document.getElementById('kehadiranChartWali').getContext('2d');
+    const kehadiranLabels = {!! json_encode($kehadiranLabels) !!};
+    const hadirData = {!! json_encode($kehadiranHadir) !!};
+    const sakitIzinData = {!! json_encode($kehadiranSakitIzin) !!};
+    const alpaData = {!! json_encode($kehadiranAlpa) !!};
+
+    const hadirColors = hadirData.map((_, i) => i === hadirData.length - 1 ? '#2F5CAB' : '#CBD5E1');
+    const sakitColors = sakitIzinData.map((_, i) => i === sakitIzinData.length - 1 ? '#F59E0B' : '#EDF2F7');
+    const alpaColors = alpaData.map((_, i) => i === alpaData.length - 1 ? '#EF4444' : '#F1F5F9');
+
     new Chart(ctxKehadiran, {
         type: 'bar',
         data: {
-            labels: ['Senin\n28 Sep', 'Selasa\n29 Sep', 'Rabu\n30 Sep', 'Kamis\nHari ini', 'Jumat\n2 Okt'],
+            labels: kehadiranLabels,
             datasets: [
                 {
                     label: 'Hadir',
-                    data: [94, 96, 92, 98, 90],
-                    backgroundColor: ['#E2E8F0', '#E2E8F0', '#E2E8F0', '#2F5CAB', '#E2E8F0'],
+                    data: hadirData,
+                    backgroundColor: hadirColors,
                     borderRadius: 6,
                 },
                 {
                     label: 'Sakit/Izin',
-                    data: [4, 3, 5, 2, 6],
-                    backgroundColor: ['#EDF2F7', '#EDF2F7', '#EDF2F7', '#F59E0B', '#EDF2F7'],
+                    data: sakitIzinData,
+                    backgroundColor: sakitColors,
                     borderRadius: 6,
                 },
                 {
                     label: 'Alpha',
-                    data: [2, 1, 3, 0, 4],
-                    backgroundColor: ['#F1F5F9', '#F1F5F9', '#F1F5F9', '#EF4444', '#F1F5F9'],
+                    data: alpaData,
+                    backgroundColor: alpaColors,
                     borderRadius: 6,
                 }
             ]

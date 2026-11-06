@@ -48,8 +48,9 @@ class DashboardController extends Controller
             ];
         }
 
-        // Perkembangan Nilai riil (Semua Siswa Sekolah)
+        // Perkembangan Nilai & Grafik Kehadiran riil (Semua Siswa Sekolah)
         $perkembangan = $this->getPerkembanganNilai();
+        $grafikKehadiran = $this->getGrafikKehadiran();
 
         return view('operator.dashboard', array_merge(
             compact(
@@ -59,7 +60,8 @@ class DashboardController extends Controller
                 'perluPerhatian',
                 'siswaPerhatian'
             ),
-            $perkembangan
+            $perkembangan,
+            $grafikKehadiran
         ));
     }
 
@@ -99,8 +101,9 @@ class DashboardController extends Controller
             ];
         }
 
-        // Perkembangan Nilai riil (Siswa Kelas Binaan)
+        // Perkembangan Nilai & Grafik Kehadiran riil (Siswa Kelas Binaan)
         $perkembangan = $this->getPerkembanganNilai($siswaIds);
+        $grafikKehadiran = $this->getGrafikKehadiran($siswaIds);
 
         return view('wali.dashboard', array_merge(
             compact(
@@ -111,7 +114,8 @@ class DashboardController extends Controller
                 'siswaPerhatian',
                 'kelasBinaan'
             ),
-            $perkembangan
+            $perkembangan,
+            $grafikKehadiran
         ));
     }
 
@@ -156,8 +160,9 @@ class DashboardController extends Controller
             ];
         }
 
-        // Perkembangan Nilai riil (Mapel Guru)
+        // Perkembangan Nilai & Grafik Kehadiran riil (Mapel Guru)
         $perkembangan = $this->getPerkembanganNilai(null, $mapelIds);
+        $grafikKehadiran = $this->getGrafikKehadiran();
 
         return view('guru.dashboard', array_merge(
             compact(
@@ -167,7 +172,8 @@ class DashboardController extends Controller
                 'perluPerhatian',
                 'siswaPerhatian'
             ),
-            $perkembangan
+            $perkembangan,
+            $grafikKehadiran
         ));
     }
 
@@ -208,6 +214,73 @@ class DashboardController extends Controller
             'avgUh1' => $avgUh1,
             'avgUh2' => $avgUh2,
             'avgPts' => $avgPts,
+        ];
+    }
+
+    /**
+     * Hitung tren grafik kehadiran harian secara riil dari database.
+     */
+    private function getGrafikKehadiran(?Collection $siswaIds = null): array
+    {
+        $absensiQuery = Absensi::query();
+        if ($siswaIds !== null && $siswaIds->isNotEmpty()) {
+            $absensiQuery->whereIn('id_siswa', $siswaIds);
+        }
+
+        $recentDates = (clone $absensiQuery)
+            ->select('tanggal')
+            ->distinct()
+            ->orderBy('tanggal', 'desc')
+            ->take(5)
+            ->pluck('tanggal')
+            ->reverse()
+            ->values();
+
+        $labels = [];
+        $hadirData = [];
+        $sakitIzinData = [];
+        $alpaData = [];
+        $totalHadirPct = 0;
+
+        foreach ($recentDates as $tgl) {
+            $dateObj = \Carbon\Carbon::parse($tgl)->locale('id');
+            $dayName = $dateObj->isoFormat('dddd');
+            $dayDate = $dateObj->isoFormat('D MMM');
+            $labels[] = [$dayName, $dayDate];
+
+            $dayQuery = (clone $absensiQuery)->where('tanggal', $tgl);
+            $totalHarian = (clone $dayQuery)->count();
+            $hadirCount = (clone $dayQuery)->where('status', 'Hadir')->count();
+            $sakitIzinCount = (clone $dayQuery)->whereIn('status', ['Sakit', 'Izin'])->count();
+            $alpaCount = (clone $dayQuery)->where('status', 'Alpha')->count();
+
+            $hPct = $totalHarian > 0 ? round(($hadirCount / $totalHarian) * 100) : 0;
+            $siPct = $totalHarian > 0 ? round(($sakitIzinCount / $totalHarian) * 100) : 0;
+            $aPct = $totalHarian > 0 ? round(($alpaCount / $totalHarian) * 100) : 0;
+
+            $hadirData[] = $hPct;
+            $sakitIzinData[] = $siPct;
+            $alpaData[] = $aPct;
+            $totalHadirPct += $hPct;
+        }
+
+        $countDays = count($recentDates);
+        $rataRataPekan = $countDays > 0 ? round($totalHadirPct / $countDays, 1) : 0;
+
+        if (empty($labels)) {
+            $labels = [['Senin', '-'], ['Selasa', '-'], ['Rabu', '-'], ['Kamis', '-'], ['Jumat', '-']];
+            $hadirData = [0, 0, 0, 0, 0];
+            $sakitIzinData = [0, 0, 0, 0, 0];
+            $alpaData = [0, 0, 0, 0, 0];
+            $rataRataPekan = 0;
+        }
+
+        return [
+            'kehadiranLabels' => $labels,
+            'kehadiranHadir' => $hadirData,
+            'kehadiranSakitIzin' => $sakitIzinData,
+            'kehadiranAlpa' => $alpaData,
+            'kehadiranRataRataPekan' => $rataRataPekan,
         ];
     }
 }
