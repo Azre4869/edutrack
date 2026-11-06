@@ -111,9 +111,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route($rolePrefix . '.early-warning.ai', array_filter(['semester_id' => $selectedSemesterId, 'kelas_id' => $selectedKelasId])) }}"
-               class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-brain"></i>
-                <span>Analisis AI</span>
+               class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition"
+               style="background-color: #4f46e5; color: #ffffff;">
+                <i class="fa-solid fa-brain text-white"></i>
+                <span class="text-white">Analisis AI</span>
             </a>
             @if(!$isWali)
             <a href="{{ route('operator.early-warning.kriteria') }}"
@@ -124,14 +125,16 @@
             @endif
             <button type="submit" form="form-run-ews"
                     onclick="return confirm('Jalankan analisis Early Warning sekarang?')"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-bolt"></i>
-                <span>Jalankan Analisis</span>
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition"
+                    style="background-color: #059669; color: #ffffff;">
+                <i class="fa-solid fa-bolt text-white"></i>
+                <span class="text-white">Jalankan Analisis</span>
             </button>
             <a href="{{ url()->current() }}"
-               class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-md flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-rotate-right"></i>
-                <span>Reset</span>
+               class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-md flex items-center space-x-1.5 transition"
+               style="background-color: #E04F26; color: #ffffff;">
+                <i class="fa-solid fa-rotate-right text-white"></i>
+                <span class="text-white">Reset</span>
             </a>
         </div>
     </form>
@@ -166,7 +169,7 @@
     <div class="lg:col-span-8 bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto max-h-[640px]">
             {{-- table-fixed + kolom lebar tetap mencegah scroll horizontal di 1366px --}}
-            <table class="w-full table-fixed border-collapse text-xs text-left excel-table">
+            <table class="w-full min-w-[720px] table-fixed border-collapse text-xs text-left excel-table">
                 <thead>
                     <tr class="bg-edu-orange text-white text-center font-heading font-black tracking-wider text-[11px] uppercase sticky top-0 z-10">
                         <th class="p-3 w-10 border border-black">No.</th>
