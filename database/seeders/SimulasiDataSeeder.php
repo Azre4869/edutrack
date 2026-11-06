@@ -57,7 +57,7 @@ class SimulasiDataSeeder extends Seeder
         // 6. EKSPOR LABEL PERSONA KE CSV (Hanya untuk evaluasi model ML)
         $this->exportPersonaCsv($personaAssignments, $siswaMap);
 
-        // 7. SEED ABSENSI HARIAN (id_mapel = 1)
+        // 7. SEED ABSENSI HARIAN (Per Siswa per Hari)
         $this->seedAbsensi($siswaMap, $personaAssignments, $sem1Days, $sem2Days);
 
         // 8. SEED NILAI MATA PELAJARAN (12 Mapel x 2 Semester)
@@ -410,14 +410,13 @@ class SimulasiDataSeeder extends Seeder
                 $status = $sem1AbsenPlan[$idx] ?? 'Hadir';
                 $absensiRows[] = [
                     'id_siswa'    => $idSiswa,
-                    'id_mapel'    => 1,
                     'id_semester' => 1,
                     'tanggal'     => $tanggal,
                     'status'      => $status,
                 ];
 
                 if (count($absensiRows) >= 500) {
-                    DB::table('absensi')->upsert($absensiRows, ['id_siswa', 'id_mapel', 'id_semester', 'tanggal'], ['status']);
+                    DB::table('absensi')->upsert($absensiRows, ['id_siswa', 'id_semester', 'tanggal'], ['status']);
                     $absensiRows = [];
                 }
             }
@@ -434,21 +433,20 @@ class SimulasiDataSeeder extends Seeder
                 $status = $sem2AbsenPlan[$idx] ?? 'Hadir';
                 $absensiRows[] = [
                     'id_siswa'    => $idSiswa,
-                    'id_mapel'    => 1,
                     'id_semester' => 2,
                     'tanggal'     => $tanggal,
                     'status'      => $status,
                 ];
 
                 if (count($absensiRows) >= 500) {
-                    DB::table('absensi')->upsert($absensiRows, ['id_siswa', 'id_mapel', 'id_semester', 'tanggal'], ['status']);
+                    DB::table('absensi')->upsert($absensiRows, ['id_siswa', 'id_semester', 'tanggal'], ['status']);
                     $absensiRows = [];
                 }
             }
         }
 
         if (!empty($absensiRows)) {
-            DB::table('absensi')->upsert($absensiRows, ['id_siswa', 'id_mapel', 'id_semester', 'tanggal'], ['status']);
+            DB::table('absensi')->upsert($absensiRows, ['id_siswa', 'id_semester', 'tanggal'], ['status']);
         }
 
         $this->command?->info('Absensi harian berhasil disimpan secara idempoten.');

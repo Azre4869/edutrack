@@ -7,7 +7,6 @@ use App\Models\Absensi;
 use App\Models\CatatanWali;
 use App\Models\Ekstrakurikuler;
 use App\Models\Kelas;
-use App\Models\MataPelajaran;
 use App\Models\NilaiEkstrakurikuler;
 use App\Models\Semester;
 use App\Models\Siswa;
@@ -81,9 +80,6 @@ class PresensiController extends Controller
         $tanggal = $validated['tanggal'];
         $semesterId = $validated['semester_id'];
         $statusList = $validated['status'] ?? [];
-        
-        $firstMapel = MataPelajaran::first();
-        $mapelId = $validated['mapel_id'] ?? ($firstMapel->id_mapel ?? 1);
 
         foreach ($statusList as $siswaId => $status) {
             $siswa = Siswa::find($siswaId);
@@ -96,7 +92,6 @@ class PresensiController extends Controller
             Absensi::updateOrCreate(
                 [
                     'id_siswa'    => $siswaId,
-                    'id_mapel'    => $mapelId,
                     'tanggal'     => $tanggal,
                     'id_semester' => $semesterId,
                 ],

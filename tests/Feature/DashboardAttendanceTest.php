@@ -37,28 +37,24 @@ class DashboardAttendanceTest extends TestCase
         // Masukkan 3 baris Hadir dan 1 baris Izin (total 4 baris, persentase = 3/4 * 100 = 75%)
         Absensi::create([
             'id_siswa' => $siswa->id_siswa,
-            'id_mapel' => 1,
             'tanggal' => '2026-11-01',
             'status' => 'Hadir',
             'id_semester' => 1,
         ]);
         Absensi::create([
             'id_siswa' => $siswa->id_siswa,
-            'id_mapel' => 1,
             'tanggal' => '2026-11-02',
             'status' => 'Hadir',
             'id_semester' => 1,
         ]);
         Absensi::create([
             'id_siswa' => $siswa->id_siswa,
-            'id_mapel' => 1,
             'tanggal' => '2026-11-03',
             'status' => 'Hadir',
             'id_semester' => 1,
         ]);
         Absensi::create([
             'id_siswa' => $siswa->id_siswa,
-            'id_mapel' => 1,
             'tanggal' => '2026-11-04',
             'status' => 'Izin',
             'id_semester' => 1,

@@ -24,7 +24,6 @@ class StorePresensiRequest extends FormRequest
         return [
             'tanggal'     => 'required|date',
             'semester_id' => 'required|exists:semester,id_semester',
-            'mapel_id'    => 'nullable|exists:mata_pelajaran,id_mapel',
             'kelas_id'    => 'nullable|exists:kelas,id_kelas',
             'status'      => 'required|array',
             'status.*'    => 'required|in:Hadir,Sakit,Izin,Alpha',

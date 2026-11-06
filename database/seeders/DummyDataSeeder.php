@@ -269,7 +269,6 @@ class DummyDataSeeder extends Seeder
             DB::table('absensi')->updateOrInsert(
                 [
                     'id_siswa' => $sId,
-                    'id_mapel' => 3,
                     'id_semester' => 2,
                     'tanggal' => $today,
                 ],

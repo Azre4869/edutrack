@@ -44,7 +44,6 @@ class EarlyWarningSelectedIdTest extends TestCase
         for ($i = 1; $i <= 5; $i++) {
             Absensi::create([
                 'id_siswa'    => $siswa->id_siswa,
-                'id_mapel'    => 1,
                 'id_semester' => $semesterId,
                 'tanggal'     => now()->subDays($i)->toDateString(),
                 'status'      => 'Alpha',

@@ -317,8 +317,8 @@ class DataMasterController extends Controller
     public function destroyMapel($id)
     {
         $mapel = MataPelajaran::findOrFail($id);
-        if ($mapel->nilai()->exists() || \App\Models\NilaiHarian::where('id_mapel', $id)->exists() || \App\Models\Absensi::where('id_mapel', $id)->exists()) {
-            return back()->with('error', 'Mata pelajaran tidak dapat dihapus karena masih memiliki riwayat nilai atau absensi.');
+        if ($mapel->nilai()->exists() || \App\Models\NilaiHarian::where('id_mapel', $id)->exists()) {
+            return back()->with('error', 'Mata pelajaran tidak dapat dihapus karena masih memiliki riwayat nilai.');
         }
 
         $mapel->delete();

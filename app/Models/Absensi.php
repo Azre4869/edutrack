@@ -12,7 +12,6 @@ class Absensi extends Model
 
     protected $fillable = [
         'id_siswa',
-        'id_mapel',
         'id_semester',
         'tanggal',
         'status',
@@ -21,11 +20,6 @@ class Absensi extends Model
     public function siswa()
     {
         return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
-    }
-
-    public function mataPelajaran()
-    {
-        return $this->belongsTo(MataPelajaran::class, 'id_mapel', 'id_mapel');
     }
 
     public function semester()
