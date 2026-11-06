@@ -35,7 +35,28 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
   - Penambahan lebar minimum tabel `min-w-[720px]` agar kolom AI dan Aksi tidak terpotong pada resolusi layar 1024px/1366px.
   - Kompilasi ulang seluruh bundle asset melalui `npm run build`.
 
-### D. Fitur Akademik dan Manajemen Inti yang Sudah Berjalan
+### D. Sinkronisasi Jumlah Anggota Ekstrakurikuler (Masalah 4 - Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi.
+- **Implementasi**:
+  - Pada method `DataMasterController::ekskul()` di [`app/Http/Controllers/DataMasterController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/DataMasterController.php), ditambahkan agregasi `withCount` dinamis berbasis semester aktif (`Semester::aktif()`):
+    ```php
+    ->withCount([
+        'nilaiEkstrakurikuler as jumlah_anggota' => function ($q) use ($activeSemester) {
+            if ($activeSemester) {
+                $q->where('id_semester', $activeSemester->id_semester);
+            }
+            $q->select(DB::raw('COUNT(DISTINCT id_siswa)'));
+        }
+    ])
+    ```
+  - Pada [`resources/views/master/ekskul.blade.php`](file:///e:/tugasprog/edutrack/resources/views/master/ekskul.blade.php):
+    - Ditambahkan kolom header `Jumlah Anggota` pada tabel utama.
+    - Ditambahkan badge jumlah siswa (`{{ $e->jumlah_anggota ?? 0 }} Siswa`) lengkap dengan ikon grup.
+    - Ditambahkan info jumlah anggota pada modal pop-up detail kegiatan ekskul (`modalDetailEkskul`).
+    - Kolom baru otomatis terbawa saat pengguna menekan tombol **Export Excel**.
+  - Ditambahkan automated feature test: [`tests/Feature/EkskulManagementTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/EkskulManagementTest.php) (2 pengujian: verifikasi akurasi jumlah siswa ekskul dan proteksi akses non-operator).
+
+### E. Fitur Akademik dan Manajemen Inti yang Sudah Berjalan
 1. **Autentikasi & Otorisasi Berbasis Peran**:
    - Multi-role: `Operator`, `Wali Kelas`, `Guru Mapel`.
    - Proteksi sesi, proteksi rute via `RoleMiddleware`, dan redirect dashboard otomatis.
@@ -73,22 +94,13 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 
 ## 2. Fitur yang Belum Selesai / Sedang Berlangsung (Pending Tasks)
 
-### Masalah 4: Jumlah Anggota Ekstrakurikuler pada Data Master Masih Kosong
-- **Lokasi Permasalahan**:
-  - Halaman antarmuka [`resources/views/master/ekskul.blade.php`](file:///e:/tugasprog/edutrack/resources/views/master/ekskul.blade.php).
-  - Controller method `DataMasterController::ekskul()` di [`app/Http/Controllers/DataMasterController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/DataMasterController.php).
-- **Kondisi Saat Ini**:
-  - Tabel master ekstrakurikuler menampilkan kolom: `No.`, `Nama Ekstrakurikuler`, `Guru Pembina`, `Jadwal Latihan`, `Status`, dan `Aksi`.
-  - **Belum ada kolom "Jumlah Anggota"** yang menampilkan total siswa yang terdaftar mengikuti kegiatan ekskul tersebut.
-- **Rencana Solusi yang Ditunda untuk Konfirmasi Pengguna**:
-  1. Pada `DataMasterController::ekskul()`, tambahkan agregasi hitung siswa unik dari tabel relasi `nilai_ekstrakurikuler`:
-     ```php
-     withCount(['nilaiEkstrakurikuler as jumlah_anggota' => function($q) use ($activeSemester) {
-         $q->where('id_semester', $activeSemester?->id_semester)
-           ->distinct('id_siswa');
-     }])
-     ```
-  2. Pada berkas view `master/ekskul.blade.php`, tambahkan header kolom `JUMLAH ANGGOTA` dan sel `{{ $e->jumlah_anggota ?? 0 }} Siswa`.
+*Saat ini seluruh 4 masalah utama dari roadmap perbaikan telah diselesaikan:*
+1. ✅ **Masalah 1**: Fitur Kelola Semester Baru & Penanda Aktif (Operator).
+2. ✅ **Masalah 2**: Pembersihan Atribut `id_mapel` pada Entitas Absensi.
+3. ✅ **Masalah 3**: Bug Kotak Putih Kosong & Kerapian Tabel Early Warning.
+4. ✅ **Masalah 4**: Sinkronisasi Jumlah Anggota Ekstrakurikuler dengan Data Siswa.
+
+*Catatan Non-Kodingan*: Terdapat beberapa revisi redaksional pada naskah buku manual dan gambar ERD (tercatat di analisis temuan dokumentasi).
 
 ---
 
@@ -100,11 +112,12 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Hardcoded ID `semester_id = 2` di berbagai modul | Pengembang sebelumnya memakai nilai statis karena belum ada antarmuka semester aktif | Dibuatkan fitur kelola semester dan helper `Semester::aktif()` di semua controller |
 | Galat integritas saat input absensi tanpa mapel | Skema mewajibkan `id_mapel NOT NULL` pada tabel `absensi` | Atribut `id_mapel` dihapus permanen dari basis data, model, request, dan controller |
 | Kotak putih kosong di bilah filter Early Warning | Class Tailwind `bg-indigo-600` belum masuk asset build CSS | Dilakukan `npm run build` dan penambahan inline style cadangan pada Blade |
+| Jumlah anggota ekskul tidak tampil di Data Master | Query ekskul belum menyertakan agregasi counter ke relasi `nilai_ekstrakurikuler` | Ditambahkan query `withCount` dinamis berbasis semester aktif dan kolom tabel baru |
 | Tindak Lanjut Operator mengalami 403 Forbidden | Redirect setelah submit mengarah ke rute wali kelas (`wali.early-warning`) | Redirect disesuaikan berdasarkan peran pengguna (`operator.early-warning` vs `wali.early-warning`) |
 
 ---
 
 ## 4. Prioritas Pengembangan Selanjutnya
 
-1. **Prioritas Utama**: Menyelesaikan **Masalah 4** (Menampilkan Jumlah Anggota Ekstrakurikuler yang tersinkronisasi dengan data siswa di semester aktif).
-2. **Prioritas Sekunder**: Menjalankan regresi tes penuh (`php artisan test`) untuk memastikan seluruh 80+ pengujian tetap 100% lulus.
+1. **Prioritas Utama**: Memastikan seluruh sistem stabil dan menunggu arahan/permintaan fitur baru dari pengguna.
+2. **Prioritas Sekunder**: Menjalankan regresi tes berkala sebelum perilisan atau penyerahan sistem.

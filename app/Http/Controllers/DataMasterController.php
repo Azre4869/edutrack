@@ -9,6 +9,7 @@ use App\Models\MataPelajaran;
 use App\Models\Semester;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DataMasterController extends Controller
 {
@@ -331,8 +332,18 @@ class DataMasterController extends Controller
     {
         $search = $request->query('search');
         $perPage = max(5, min(100, (int) $request->query('per_page', 50)));
+        $activeSemester = Semester::aktif();
 
-        $query = Ekstrakurikuler::with('guru');
+        $query = Ekstrakurikuler::with('guru')
+            ->withCount([
+                'nilaiEkstrakurikuler as jumlah_anggota' => function ($q) use ($activeSemester) {
+                    if ($activeSemester) {
+                        $q->where('id_semester', $activeSemester->id_semester);
+                    }
+                    $q->select(DB::raw('COUNT(DISTINCT id_siswa)'));
+                }
+            ]);
+
         if ($search) {
             $query->where('nama_ekskul', 'like', "%{$search}%");
         }
@@ -340,7 +351,7 @@ class DataMasterController extends Controller
         $ekskul = $query->paginate($perPage)->withQueryString();
         $guruList = Guru::orderBy('nama_guru')->get();
 
-        return view('master.ekskul', compact('ekskul', 'guruList', 'search', 'perPage'));
+        return view('master.ekskul', compact('ekskul', 'guruList', 'search', 'perPage', 'activeSemester'));
     }
 
     public function storeEkskul(Request $request)

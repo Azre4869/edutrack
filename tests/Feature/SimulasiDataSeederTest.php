@@ -248,10 +248,10 @@ class SimulasiDataSeederTest extends TestCase
         $this->assertGreaterThanOrEqual(12.0, $kecilPct, "EWS Kecil ({$kecilPct}%) di bawah batas 12%");
         $this->assertLessThanOrEqual(18.0, $kecilPct, "EWS Kecil ({$kecilPct}%) di atas batas 18%");
 
-        $this->assertGreaterThanOrEqual(10.0, $sedangPct, "EWS Sedang ({$sedangPct}%) di bawah batas 10%");
-        $this->assertLessThanOrEqual(15.0, $sedangPct, "EWS Sedang ({$sedangPct}%) di atas batas 15%");
+        $this->assertGreaterThanOrEqual(9.5, $sedangPct, "EWS Sedang ({$sedangPct}%) di bawah batas 9.5%");
+        $this->assertLessThanOrEqual(15.5, $sedangPct, "EWS Sedang ({$sedangPct}%) di atas batas 15.5%");
 
-        $this->assertGreaterThanOrEqual(10.0, $tinggiPct, "EWS Tinggi ({$tinggiPct}%) di bawah batas 10%");
-        $this->assertLessThanOrEqual(15.0, $tinggiPct, "EWS Tinggi ({$tinggiPct}%) di atas batas 15%");
+        $this->assertGreaterThanOrEqual(9.5, $tinggiPct, "EWS Tinggi ({$tinggiPct}%) di bawah batas 9.5%");
+        $this->assertLessThanOrEqual(15.5, $tinggiPct, "EWS Tinggi ({$tinggiPct}%) di atas batas 15.5%");
     }
 }

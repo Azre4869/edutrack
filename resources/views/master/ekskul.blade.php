@@ -68,6 +68,7 @@
                     <th class="p-3 min-w-[240px] border border-black">Nama Ekstrakulikuler</th>
                     <th class="p-3 min-w-[200px] border border-black">Guru Pembina</th>
                     <th class="p-3 min-w-[160px] border border-black">Jadwal Latihan</th>
+                    <th class="p-3 min-w-[140px] border border-black">Jumlah Anggota</th>
                     <th class="p-3 w-28 border border-black">Status</th>
                     <th class="p-3 w-28 border border-black">Aksi</th>
                 </tr>
@@ -85,6 +86,12 @@
                         <td class="p-2.5 border border-black font-semibold">{{ $e->guru ? $e->guru->nama_guru : 'Belum Ditentukan' }}</td>
                         <td class="p-2.5 text-center border border-black">{{ $e->jadwal ?: '-' }}</td>
                         <td class="p-2.5 text-center border border-black">
+                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg {{ ($e->jumlah_anggota ?? 0) > 0 ? 'bg-blue-50 text-edu-blue border border-blue-200' : 'bg-gray-50 text-gray-500 border border-gray-200' }}">
+                                <i class="fa-solid fa-users mr-1.5 text-[11px]"></i>
+                                {{ $e->jumlah_anggota ?? 0 }} Siswa
+                            </span>
+                        </td>
+                        <td class="p-2.5 text-center border border-black">
                             @if(($e->status ?? 'Aktif') === 'Aktif')
                                 <span class="inline-block px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700">
                                     Aktif
@@ -97,7 +104,7 @@
                         </td>
                         <td class="p-2.5 text-center border border-black">
                             <div class="flex items-center justify-center space-x-1.5">
-                                <button onclick="showDetailEkskul('{{ addslashes($e->nama_ekskul) }}', '{{ addslashes($e->guru ? $e->guru->nama_guru : 'Belum Ditentukan') }}', '{{ $e->guru ? $e->guru->nip : '-' }}', '{{ addslashes($e->jadwal ?: '-') }}', '{{ $e->status ?? 'Aktif' }}')" title="Lihat Detail" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
+                                <button onclick="showDetailEkskul('{{ addslashes($e->nama_ekskul) }}', '{{ addslashes($e->guru ? $e->guru->nama_guru : 'Belum Ditentukan') }}', '{{ $e->guru ? $e->guru->nip : '-' }}', '{{ addslashes($e->jadwal ?: '-') }}', '{{ $e->status ?? 'Aktif' }}', {{ $e->jumlah_anggota ?? 0 }})" title="Lihat Detail" class="w-6 h-6 rounded bg-edu-blue hover:bg-blue-700 text-white flex items-center justify-center text-[10px] transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 @if(auth()->user()->role === 'Operator')
@@ -117,7 +124,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="p-8 text-center text-gray-500 border border-black">Tidak ada data ekstrakulikuler ditemukan.</td>
+                        <td colspan="7" class="p-8 text-center text-gray-500 border border-black">Tidak ada data ekstrakulikuler ditemukan.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -161,6 +168,10 @@
             <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
                 <span class="text-gray-500 font-medium">Jadwal Latihan</span>
                 <span id="detail_jadwal" class="font-bold text-gray-800 bg-white px-2.5 py-1 rounded-lg border border-gray-200">-</span>
+            </div>
+            <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 font-medium">Jumlah Anggota</span>
+                <span id="detail_anggota" class="font-bold text-edu-blue bg-white px-2.5 py-1 rounded-lg border border-gray-200">-</span>
             </div>
             <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex justify-between items-center">
                 <span class="text-gray-500 font-medium">Status Kegiatan</span>
@@ -282,11 +293,12 @@
 </div>
 
 <script>
-    function showDetailEkskul(nama, guru, nip, jadwal, status) {
+    function showDetailEkskul(nama, guru, nip, jadwal, status, anggota) {
         document.getElementById('detail_nama_ekskul').innerText = nama;
         document.getElementById('detail_guru_nama').innerText = guru;
         document.getElementById('detail_guru_nip').innerText = nip && nip !== '-' ? 'NIP: ' + nip : 'NIP: -';
         document.getElementById('detail_jadwal').innerText = jadwal;
+        document.getElementById('detail_anggota').innerText = (anggota || 0) + ' Siswa';
         
         const statusEl = document.getElementById('detail_status');
         statusEl.innerText = status;
