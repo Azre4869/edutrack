@@ -59,9 +59,9 @@
 
     @php
         $currentUser = auth()->user() ?? (object)[
-            'role' => 'Wali Kelas',
-            'displayName' => 'Endang Sulistian, S.Pd.',
-            'username' => 'walikelas'
+            'role' => 'Guest',
+            'displayName' => '-',
+            'username' => 'guest'
         ];
         $role = $currentUser->role;
         $currentRoute = Route::currentRouteName();
@@ -372,7 +372,7 @@
             <div class="flex items-center space-x-6">
                 <!-- Date in Indonesian -->
                 <div class="text-white text-sm font-semibold font-heading tracking-wider">
-                    {{ now()->translatedFormat('l, j F Y') }}
+                    {{ now()->locale('id')->translatedFormat('l, j F Y') }}
                 </div>
 
                 <!-- LOGOUT BUTTON -->

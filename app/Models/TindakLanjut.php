@@ -13,6 +13,7 @@ class TindakLanjut extends Model
     protected $fillable = [
         'id_analisis',
         'id_user',
+        'id_guru',
         'tanggal',
         'waktu',
         'jenis_konseling',
@@ -26,6 +27,11 @@ class TindakLanjut extends Model
         'hasil_evaluasi',
         'skor_efektivitas',
     ];
+
+    public function guru()
+    {
+        return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
+    }
 
     public function analisisSiswa()
     {

@@ -40,7 +40,7 @@ class AiAnalysisController extends Controller
     {
         $user = auth()->user();
         $semesterList = Semester::orderBy('id_semester')->get();
-        $selectedSemesterId = (int) $request->query('semester_id', 2);
+        $selectedSemesterId = (int) $request->query('semester_id', Semester::aktif()?->id_semester ?? 1);
 
         // DLAC Kelas
         if ($user && $user->isWaliKelas()) {
@@ -119,7 +119,7 @@ class AiAnalysisController extends Controller
             abort(403, 'Hanya Operator yang berwenang menjalankan ulang Analisis AI secara global.');
         }
 
-        $semesterId = (int) $request->input('semester_id', 2);
+        $semesterId = (int) $request->input('semester_id', Semester::aktif()?->id_semester ?? 1);
         $kelasId = $request->input('kelas_id') ? (int) $request->input('kelas_id') : null;
 
         $result = $this->aiService->runAnalysis(
@@ -153,7 +153,7 @@ class AiAnalysisController extends Controller
         }
 
         $semesterList = Semester::orderBy('id_semester')->get();
-        $selectedSemesterId = (int) $request->query('semester_id', 2);
+        $selectedSemesterId = (int) $request->query('semester_id', Semester::aktif()?->id_semester ?? 1);
         $aiServiceActive = $this->checkAiServiceHealth();
 
         // Baca data evaluasi tersimpan dari ai_run.metrik (tidak panggil /evaluate otomatis)
@@ -192,7 +192,7 @@ class AiAnalysisController extends Controller
             abort(403, 'Hanya Operator yang berwenang menjalankan evaluasi model.');
         }
 
-        $selectedSemesterId = (int) $request->input('semester_id', 2);
+        $selectedSemesterId = (int) $request->input('semester_id', Semester::aktif()?->id_semester ?? 1);
 
         $evalResponse = $this->aiService->evaluateModel($selectedSemesterId);
 

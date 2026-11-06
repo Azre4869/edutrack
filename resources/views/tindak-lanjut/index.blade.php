@@ -14,7 +14,7 @@
                 <i class="fas fa-user text-orange-400 text-2xl"></i>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-gray-800 font-montserrat">{{ $siswa->nama ?? ($siswa->nama_siswa ?? '-') }}</h2>
+                <h2 class="text-xl font-bold text-gray-800 font-montserrat">{{ $siswa->nama ?? '-' }}</h2>
                 <p class="text-gray-500 text-sm">NISN {{ $siswa->nisn ?? ($siswa->nis ?? '-') }} &nbsp;|&nbsp; {{ $siswa->kelas->nama_kelas ?? '-' }}</p>
                 <span class="inline-flex items-center gap-1 mt-1 text-red-600 text-xs font-semibold">
                     <i class="fas fa-circle-exclamation"></i> Risiko Tinggi
@@ -24,7 +24,7 @@
         <div class="flex flex-1 flex-wrap gap-8 justify-around border-l pl-6">
             <div>
                 <p class="text-gray-400 text-xs">Rata-rata nilai</p>
-                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->rata_nilai ?? '0,0' }}</p>
+                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->rata_nilai ?? '-' }}</p>
                 @if(isset($analisis->arah) && $analisis->arah === 'turun')
                     <p class="text-red-600 text-xs"><i class="fas fa-arrow-down"></i> {{ $analisis->perubahan_teks }}</p>
                 @elseif(isset($analisis->arah) && $analisis->arah === 'naik')
@@ -37,12 +37,12 @@
             </div>
             <div>
                 <p class="text-gray-400 text-xs">Kehadiran</p>
-                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->kehadiran_pct ?? 100 }}%</p>
+                <p class="text-2xl font-bold text-edu-blue">{{ isset($analisis->kehadiran_pct) ? $analisis->kehadiran_pct . '%' : '-' }}</p>
                 <p class="text-gray-400 text-xs">Perlu pemantauan kehadiran</p>
             </div>
             <div>
                 <p class="text-gray-400 text-xs">Di bawah KKM</p>
-                <p class="text-2xl font-bold text-edu-blue">{{ $analisis->di_bawah_kkm ?? 0 }} mapel</p>
+                <p class="text-2xl font-bold text-edu-blue">{{ isset($analisis->di_bawah_kkm) ? $analisis->di_bawah_kkm . ' mapel' : '-' }}</p>
                 <p class="text-gray-400 text-xs">Capaian kompetensi</p>
             </div>
             <div class="text-right">
@@ -50,7 +50,7 @@
                     <i class="fas fa-shield-check"></i>
                     <span>Tidak ada pelanggaran terbaru</span>
                 </div>
-                <p class="text-gray-500 text-xs mt-1">2026/2027 &nbsp;·&nbsp; Semester Genap</p>
+                <p class="text-gray-500 text-xs mt-1">{{ $semesterObj ? $semesterObj->tahun_ajaran . ' · Semester ' . $semesterObj->nama_semester : '-' }}</p>
             </div>
         </div>
     </div>
@@ -62,6 +62,8 @@
     <form action="{{ route($rolePrefix . '.tindak-lanjut.store') }}" method="POST">
         @csrf
         <input type="hidden" name="id_siswa" value="{{ $siswa->id_siswa ?? '' }}">
+        <input type="hidden" name="id_analisis" value="{{ $analisisRecord->id_analisis ?? '' }}">
+        <input type="hidden" name="semester_id" value="{{ $semesterId ?? '' }}">
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
@@ -89,22 +91,24 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal sesi <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <input type="date" name="tanggal_sesi" required
+                                value="{{ old('tanggal_sesi', $counseling['tanggal_sesi'] ?? '') }}"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Waktu sesi <span class="text-red-500">*</span></label>
                         <input type="time" name="waktu_sesi" required
+                            value="{{ old('waktu_sesi', $counseling['waktu_sesi'] ?? '') }}"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jenis konseling</label>
                         <select name="jenis_konseling" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
-                            <option>Akademik &amp; kehadiran</option>
-                            <option>Akademik</option>
-                            <option>Kehadiran</option>
-                            <option>Perilaku</option>
-                            <option>Lainnya</option>
+                            <option value="Akademik & kehadiran" {{ old('jenis_konseling', $counseling['jenis_konseling'] ?? '') === 'Akademik & kehadiran' ? 'selected' : '' }}>Akademik &amp; kehadiran</option>
+                            <option value="Akademik" {{ old('jenis_konseling', $counseling['jenis_konseling'] ?? '') === 'Akademik' ? 'selected' : '' }}>Akademik</option>
+                            <option value="Kehadiran" {{ old('jenis_konseling', $counseling['jenis_konseling'] ?? '') === 'Kehadiran' ? 'selected' : '' }}>Kehadiran</option>
+                            <option value="Perilaku" {{ old('jenis_konseling', $counseling['jenis_konseling'] ?? '') === 'Perilaku' ? 'selected' : '' }}>Perilaku</option>
+                            <option value="Lainnya" {{ old('jenis_konseling', $counseling['jenis_konseling'] ?? '') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                         </select>
                     </div>
                 </div>
@@ -114,24 +118,27 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pendamping / konselor <span class="text-red-500">*</span></label>
                         <select name="pendamping" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
-                            <option>Endang Sulistian, S.Pd.</option>
+                            <option value="">-- Pilih Guru Pendamping --</option>
                             @foreach($guruList ?? [] as $guru)
-                                <option value="{{ $guru->id_guru }}">{{ $guru->nama_guru }}</option>
+                                <option value="{{ $guru->id_guru }}" {{ (string) old('pendamping', '') === (string) $guru->id_guru ? 'selected' : '' }}>
+                                    {{ $guru->nama_guru }}{{ !empty($guru->jabatan) ? ' (' . $guru->jabatan . ')' : '' }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Peserta yang diundang</label>
                         <select name="peserta" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
-                            <option>Siswa &amp; orang tua / wali</option>
-                            <option>Siswa saja</option>
-                            <option>Orang tua / wali saja</option>
+                            <option value="Siswa & orang tua / wali" {{ old('peserta', $counseling['peserta'] ?? '') === 'Siswa & orang tua / wali' ? 'selected' : '' }}>Siswa &amp; orang tua / wali</option>
+                            <option value="Siswa saja" {{ old('peserta', $counseling['peserta'] ?? '') === 'Siswa saja' ? 'selected' : '' }}>Siswa saja</option>
+                            <option value="Orang tua / wali saja" {{ old('peserta', $counseling['peserta'] ?? '') === 'Orang tua / wali saja' ? 'selected' : '' }}>Orang tua / wali saja</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Tempat / media</label>
                         <div class="relative">
                             <input type="text" name="tempat" placeholder="Isi ruang atau tautan"
+                                value="{{ old('tempat', $counseling['tempat'] ?? '') }}"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
                             <i class="fas fa-location-dot absolute right-3 top-2.5 text-gray-400 text-sm"></i>
                         </div>
@@ -146,7 +153,7 @@
                     </div>
                     <textarea name="catatan" rows="5" maxlength="2000"
                         placeholder="Tuliskan hal yang dibahas, kebutuhan siswa, masukan orang tua, dan kesepakatan bersama. Jangan mencatat kesimpulan sebelum sesi berlangsung."
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none resize-none"></textarea>
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none resize-none">{{ old('catatan', '') }}</textarea>
                     <div class="flex justify-between text-xs text-gray-400 mt-1">
                         <span>Belum ada catatan sesi</span>
                         <span>0 / 2.000</span>
@@ -156,7 +163,7 @@
                 {{-- Fokus Early Warning --}}
                 <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <h4 class="text-edu-blue font-semibold text-sm mb-1">Fokus awal dari Early Warning</h4>
-                    <p class="text-gray-600 text-sm">Telusuri penurunan nilai dan kebutuhan belajar pada 3 mapel di bawah KKM. Bahas kehadiran dan rencanakan dukungan bersama siswa serta orang tua.</p>
+                    <p class="text-gray-600 text-sm">Telusuri penurunan nilai dan kebutuhan belajar pada {{ isset($analisis->di_bawah_kkm) ? $analisis->di_bawah_kkm . ' mapel' : '-' }} di bawah KKM. Bahas kehadiran dan rencanakan dukungan bersama siswa serta orang tua.</p>
                 </div>
 
                 <p class="text-gray-400 text-xs flex items-center gap-1">
@@ -181,7 +188,7 @@
                             class="mt-1 w-4 h-4 accent-edu-blue">
                         <div>
                             <p class="text-edu-blue font-semibold text-sm">Pendampingan belajar &amp; remedial</p>
-                            <p class="text-gray-500 text-xs">Koordinasikan dukungan pada 3 mapel di bawah KKM; pantau perkembangan nilai.</p>
+                            <p class="text-gray-500 text-xs">Koordinasikan dukungan pada {{ isset($analisis->di_bawah_kkm) ? $analisis->di_bawah_kkm . ' mapel' : '-' }} di bawah KKM; pantau perkembangan nilai.</p>
                             <p class="text-gray-400 text-xs mt-0.5">Pelaksana usulan: wali kelas &amp; guru mapel</p>
                         </div>
                     </label>
@@ -212,9 +219,14 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung jawab <span class="text-red-500">*</span></label>
                         <select name="penanggung_jawab" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
-                            <option>Endang Sulistian, S.Pd.</option>
+                            <option value="">-- Pilih Penanggung Jawab --</option>
+                            @php
+                                $selectedPj = old('penanggung_jawab', auth()->user()?->id_guru ?? '');
+                            @endphp
                             @foreach($guruList ?? [] as $guru)
-                                <option value="{{ $guru->id_guru }}">{{ $guru->nama_guru }}</option>
+                                <option value="{{ $guru->id_guru }}" {{ (string) $selectedPj === (string) $guru->id_guru ? 'selected' : '' }}>
+                                    {{ $guru->nama_guru }}{{ !empty($guru->jabatan) ? ' (' . $guru->jabatan . ')' : '' }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -224,6 +236,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal evaluasi tindak lanjut <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <input type="date" name="tanggal_evaluasi" required
+                                value="{{ old('tanggal_evaluasi', $counseling['tanggal_evaluasi'] ?? '') }}"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-edu-blue focus:outline-none">
                         </div>
                     </div>

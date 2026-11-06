@@ -6,7 +6,7 @@
 
 @section('content')
 @php
-    $role = auth()->user()->role;
+    $role = auth()->user()->role ?? '';
     $readRouteName = 'wali.notifikasi.read';
     if ($role === 'Operator') {
         $readRouteName = 'operator.notifikasi.read';
@@ -39,24 +39,24 @@
                 <p class="text-4xl font-bold text-gray-800 font-montserrat">{{ $belumDibaca }}</p>
             </div>
         </div>
-        {{-- Tugas --}}
+        {{-- Peringatan EWS --}}
         <div class="bg-white rounded-xl p-5 flex items-center gap-4 shadow-sm border border-gray-100">
-            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <i class="fas fa-clipboard-list text-2xl text-green-500"></i>
+            <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <i class="fas fa-triangle-exclamation text-2xl text-amber-500"></i>
             </div>
             <div>
-                <p class="text-green-600 text-sm font-semibold">Tugas</p>
-                <p class="text-4xl font-bold text-gray-800 font-montserrat">{{ $tugas }}</p>
+                <p class="text-amber-600 text-sm font-semibold">Peringatan EWS</p>
+                <p class="text-4xl font-bold text-gray-800 font-montserrat">{{ $ewsWarning }}</p>
             </div>
         </div>
-        {{-- Pengumuman --}}
+        {{-- Sudah dibaca --}}
         <div class="bg-white rounded-xl p-5 flex items-center gap-4 shadow-sm border border-gray-100">
-            <div class="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
-                <i class="fas fa-bullhorn text-2xl text-yellow-500"></i>
+            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <i class="fas fa-envelope-open text-2xl text-green-500"></i>
             </div>
             <div>
-                <p class="text-yellow-600 text-sm font-semibold">Pengumuman</p>
-                <p class="text-4xl font-bold text-gray-800 font-montserrat">{{ $pengumuman }}</p>
+                <p class="text-green-600 text-sm font-semibold">Sudah dibaca</p>
+                <p class="text-4xl font-bold text-gray-800 font-montserrat">{{ $sudahDibaca }}</p>
             </div>
         </div>
     </div>

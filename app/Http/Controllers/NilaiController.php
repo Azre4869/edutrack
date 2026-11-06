@@ -20,6 +20,9 @@ class NilaiController extends Controller
     {
         $user = auth()->user();
         $semesterList = Semester::orderBy('id_semester')->get();
+        $activeSemester = Semester::aktif();
+        $tahunAjaranList = Semester::getTahunAjaranList();
+        $selectedTahunAjaran = $request->query('tahun_ajaran', $activeSemester?->tahun_ajaran ?? '2026/2027');
 
         // --- Data-Level Access Control ---
         if ($user->isGuruMapel()) {
@@ -40,17 +43,17 @@ class NilaiController extends Controller
             // Operator: akses penuh
             $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
             $kelasList = Kelas::orderBy('nama_kelas')->get();
-            $defaultMapelId = 3; // Default Bahasa Inggris as in mockup
+            $defaultMapelId = $mapelList->first()?->id_mapel ?? null;
         }
 
         $selectedKelasId = $request->query('kelas_id', $kelasList->first()->id_kelas ?? 1);
-        $selectedSemesterId = $request->query('semester_id', 2);
-        $selectedMapelId = (int)$request->query('mapel_id', $defaultMapelId);
+        $selectedSemesterId = (int) $request->query('semester_id', $activeSemester?->id_semester ?? 1);
+        $selectedMapelId = $request->filled('mapel_id') ? (int) $request->query('mapel_id') : $defaultMapelId;
 
         // Proteksi jika user mencoba mengubah ID via URL query string
         if ($user->isGuruMapel()) {
             if (!$mapelList->contains('id_mapel', $selectedMapelId)) {
-                $selectedMapelId = $mapelList->first()->id_mapel;
+                $selectedMapelId = $mapelList->first()?->id_mapel;
             }
         } elseif ($user->isWaliKelas()) {
             $selectedKelasId = $user->requireKelasBinaan()->id_kelas;
@@ -67,12 +70,15 @@ class NilaiController extends Controller
         }
         $siswaList = $query->orderBy('nama')->get();
 
-        $nilaiMap = Nilai::with('capaian')
-            ->whereIn('id_siswa', $siswaList->pluck('id_siswa'))
-            ->where('id_semester', $selectedSemesterId)
-            ->where('id_mapel', $selectedMapelId)
-            ->get()
-            ->keyBy('id_siswa');
+        $nilaiMap = collect();
+        if ($selectedMapelId) {
+            $nilaiMap = Nilai::with('capaian')
+                ->whereIn('id_siswa', $siswaList->pluck('id_siswa'))
+                ->where('id_semester', $selectedSemesterId)
+                ->where('id_mapel', $selectedMapelId)
+                ->get()
+                ->keyBy('id_siswa');
+        }
 
         return view('nilai.input-nilai', compact(
             'kelasList',
@@ -81,6 +87,8 @@ class NilaiController extends Controller
             'selectedKelasId',
             'selectedSemesterId',
             'selectedMapelId',
+            'tahunAjaranList',
+            'selectedTahunAjaran',
             'search',
             'siswaList',
             'nilaiMap'
@@ -177,7 +185,7 @@ class NilaiController extends Controller
         $user = auth()->user();
         $siswaId = (int)$request->query('siswa_id');
         $mapelId = (int)$request->query('mapel_id');
-        $semesterId = $request->query('semester_id', 2);
+        $semesterId = (int)$request->query('semester_id', Semester::aktif()?->id_semester ?? 1);
 
         if ($user && $mapelId && !$user->canAccessMapel($mapelId)) {
             return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Anda tidak memiliki wewenang untuk mata pelajaran ini.'], 403);
@@ -302,7 +310,10 @@ class NilaiController extends Controller
             $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedSemesterId = $request->query('semester_id', 2);
+        $activeSemester = Semester::aktif();
+        $selectedSemesterId = (int)$request->query('semester_id', $activeSemester?->id_semester ?? 1);
+        $tahunAjaranList = Semester::getTahunAjaranList();
+        $selectedTahunAjaran = $request->query('tahun_ajaran', $activeSemester?->tahun_ajaran ?? '2026/2027');
         $search = $request->query('search');
 
         $query = Siswa::where('id_kelas', $selectedKelasId);
@@ -324,6 +335,8 @@ class NilaiController extends Controller
             'semesterList',
             'selectedKelasId',
             'selectedSemesterId',
+            'tahunAjaranList',
+            'selectedTahunAjaran',
             'search',
             'siswaList',
             'prestasiMap'

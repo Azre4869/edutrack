@@ -16,24 +16,25 @@ class NotifikasiController extends Controller
         $allNotif = $query->get();
 
         $isDemoData = false;
-
         if ($allNotif->isEmpty()) {
-            // Jika user belum memiliki notifikasi, ambil notifikasi demo jika ada, atau sediakan fallback
-            $isDemoData = true;
+            $isDemoData = false;
         }
 
         $total = $allNotif->count();
         $belumDibaca = $allNotif->where('sudah_dibaca', 0)->count();
 
-        $tugas = $allNotif->filter(function ($item) {
-            $pesan = strtolower($item->pesan);
-            return str_contains($pesan, 'tugas') || str_contains($pesan, 'nilai') || str_contains($pesan, 'input');
+        // Kartu statistik mencerminkan data EWS riil dari database
+        $ewsWarning = $allNotif->filter(function ($item) {
+            $pesan = strtolower($item->pesan ?? '');
+            $tipe = strtoupper($item->tipe ?? '');
+            return !empty($item->id_analisis)
+                || $tipe === 'EWS_ALERT'
+                || str_contains($pesan, 'early warning')
+                || str_contains($pesan, 'peringatan')
+                || str_contains($pesan, 'risiko');
         })->count();
 
-        $pengumuman = $allNotif->filter(function ($item) {
-            $pesan = strtolower($item->pesan);
-            return str_contains($pesan, 'ujian') || str_contains($pesan, 'jadwal') || str_contains($pesan, 'pengumuman');
-        })->count();
+        $sudahDibaca = $allNotif->where('sudah_dibaca', 1)->count();
 
         // Format data notifikasi
         $mapNotif = function ($item) {
@@ -43,7 +44,7 @@ class NotifikasiController extends Controller
             $tipe = 'info';
             $judul = 'Notifikasi';
 
-            if (str_contains($pesanLower, 'warning') || str_contains($pesanLower, 'peringatan') || str_contains($pesanLower, 'early warning')) {
+            if (!empty($item->id_analisis) || ($item->tipe ?? '') === 'EWS_ALERT' || str_contains($pesanLower, 'warning') || str_contains($pesanLower, 'peringatan') || str_contains($pesanLower, 'early warning') || str_contains($pesanLower, 'risiko')) {
                 $tipe = 'warning';
                 $judul = 'Early Warning';
             } elseif (str_contains($pesanLower, 'ujian') || str_contains($pesanLower, 'jadwal') || str_contains($pesanLower, 'pengumuman')) {
@@ -83,8 +84,8 @@ class NotifikasiController extends Controller
         return view('notifikasi.index', compact(
             'total',
             'belumDibaca',
-            'tugas',
-            'pengumuman',
+            'ewsWarning',
+            'sudahDibaca',
             'hariIni',
             'kemarin',
             'isDemoData'

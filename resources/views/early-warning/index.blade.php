@@ -74,8 +74,9 @@
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
                 <select name="tahun_ajaran" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
-                    <option value="2026/2027" {{ ($selectedTahunAjaran ?? '') === '2026/2027' ? 'selected' : '' }}>2026/2027</option>
-                    <option value="2025/2026" {{ ($selectedTahunAjaran ?? '') === '2025/2026' ? 'selected' : '' }}>2025/2026</option>
+                    @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
+                        <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
+                    @endforeach
                 </select>
             </div>
             <div>

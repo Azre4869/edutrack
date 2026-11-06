@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\AnalisisSiswa;
+use App\Models\Guru;
+use App\Models\Nilai;
+use App\Models\Semester;
 use App\Models\Siswa;
 use App\Models\TindakLanjut;
 use App\Models\User;
@@ -21,7 +24,7 @@ class TindakLanjutTest extends TestCase
     }
 
     /**
-     * Test operator dapat menyimpan tindak lanjut konseling.
+     * Test operator dapat menyimpan tindak lanjut konseling dan diarahkan ke operator.early-warning.
      */
     public function test_operator_can_store_tindak_lanjut(): void
     {
@@ -46,6 +49,42 @@ class TindakLanjutTest extends TestCase
             'id_user' => $operator->id_user,
             'tanggal' => '2026-11-10',
             'jenis_konseling' => 'Akademik',
+        ]);
+    }
+
+    /**
+     * Test wali kelas dapat menyimpan tindak lanjut dan diarahkan ke wali.early-warning (tidak terkena 403).
+     */
+    public function test_wali_can_store_tindak_lanjut_and_redirects_to_wali_early_warning(): void
+    {
+        $wali = User::where('username', 'walikelas')->first();
+        $guru = Guru::first();
+        $kelasBinaan = $wali->requireKelasBinaan();
+        $siswa = Siswa::create([
+            'nis' => 'TEST_WALI_01',
+            'nama' => 'Siswa Binaan Wali',
+            'jenis_kelamin' => 'L',
+            'id_kelas' => $kelasBinaan->id_kelas,
+            'status_siswa' => 'Aktif'
+        ]);
+
+        $response = $this->actingAs($wali)->post(route('wali.tindak-lanjut.store'), [
+            'id_siswa'         => $siswa->id_siswa,
+            'pendamping'       => $guru->id_guru,
+            'penanggung_jawab' => $guru->id_guru,
+            'tanggal_sesi'     => '2026-11-15',
+            'waktu_sesi'       => '08:30',
+            'jenis_konseling'  => 'Kehadiran',
+            'tanggal_evaluasi' => '2026-11-29',
+            'catatan'          => 'Catatan konseling wali kelas.',
+        ]);
+
+        $response->assertRedirect(route('wali.early-warning'));
+        $this->assertDatabaseHas('tindak_lanjut', [
+            'id_user' => $wali->id_user,
+            'id_guru' => $guru->id_guru,
+            'tanggal' => '2026-11-15',
+            'status'  => 'Sedang Diproses',
         ]);
     }
 
@@ -102,6 +141,62 @@ class TindakLanjutTest extends TestCase
         $this->assertNotEquals($analisisA->id_analisis, $tindakLanjutB->id_analisis);
         // Pastikan id_analisis B tertaut ke Siswa B
         $this->assertEquals($siswaB->id_siswa, $tindakLanjutB->analisisSiswa->id_siswa);
+    }
+
+    /**
+     * Test validasi gagal bila id_analisis yang dikirim tidak sesuai dengan siswa.
+     */
+    public function test_cannot_store_tindak_lanjut_with_mismatched_id_analisis(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+
+        $siswaA = Siswa::create([
+            'nis' => 'TEST_A', 'nama' => 'Siswa A', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif'
+        ]);
+        $analisisA = AnalisisSiswa::create([
+            'id_siswa' => $siswaA->id_siswa, 'id_semester' => 1, 'tanggal_analisis' => '2026-10-01', 'status' => 'Perlu Perhatian'
+        ]);
+
+        $siswaB = Siswa::create([
+            'nis' => 'TEST_B', 'nama' => 'Siswa B', 'jenis_kelamin' => 'P', 'id_kelas' => 1, 'status_siswa' => 'Aktif'
+        ]);
+
+        // Mencoba mengirim analisis milik siswa A untuk siswa B
+        $response = $this->actingAs($operator)->post(route('operator.tindak-lanjut.store'), [
+            'id_siswa'         => $siswaB->id_siswa,
+            'id_analisis'      => $analisisA->id_analisis,
+            'tanggal_sesi'     => '2026-11-15',
+            'tanggal_evaluasi' => '2026-11-29',
+        ]);
+
+        $response->assertSessionHasErrors('id_analisis');
+    }
+
+    /**
+     * Test view tindak lanjut menampilkan data riil siswa.
+     */
+    public function test_tindak_lanjut_view_shows_real_metrics_without_dummy_data(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+        $siswa = Siswa::create([
+            'nis' => 'TEST_METRIK', 'nama' => 'Siswa Riil Metrik', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif'
+        ]);
+
+        $activeSemester = Semester::aktif();
+
+        Nilai::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_mapel' => 1,
+            'id_semester' => $activeSemester->id_semester,
+            'nilai_akhir' => 70.0, // di bawah KKM 75
+        ]);
+
+        $response = $this->actingAs($operator)->get(route('operator.tindak-lanjut', $siswa->id_siswa));
+
+        $response->assertStatus(200);
+        $response->assertSee('Siswa Riil Metrik');
+        $response->assertSee('70,0');
+        $response->assertSee('1 mapel');
     }
 
     /**

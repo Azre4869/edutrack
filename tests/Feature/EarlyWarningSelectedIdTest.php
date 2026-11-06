@@ -133,7 +133,7 @@ class EarlyWarningSelectedIdTest extends TestCase
     {
         $wali = User::where('username', 'walikelas')->first();
 
-        // Kelas binaan wali: id_kelas=1 (guru id_guru=1 → Endang Sulistian, wali kelas VII A)
+        // Kelas binaan wali: id_kelas=1 (guru id_guru=1, wali kelas VII A)
         $kelasBinaan = $wali->getKelasBinaan();
         $this->assertNotNull($kelasBinaan, 'Wali harus punya kelas binaan');
 

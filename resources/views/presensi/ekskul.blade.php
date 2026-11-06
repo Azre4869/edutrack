@@ -17,9 +17,10 @@
             <!-- Tahun Ajaran -->
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
-                <select name="tahun_ajaran" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                    <option value="2026/2027" selected>2026/2027</option>
-                    <option value="2025/2026">2025/2026</option>
+                <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
+                        <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
+                    @endforeach
                 </select>
             </div>
 

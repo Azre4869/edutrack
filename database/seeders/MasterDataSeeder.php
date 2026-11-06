@@ -42,8 +42,8 @@ class MasterDataSeeder extends Seeder
 
         // 3. SEMESTER
         $semesterData = [
-            ['id_semester' => 1, 'nama_semester' => 'Ganjil', 'tahun_ajaran' => '2026/2027'],
-            ['id_semester' => 2, 'nama_semester' => 'Genap', 'tahun_ajaran' => '2026/2027'],
+            ['id_semester' => 1, 'nama_semester' => 'Ganjil', 'tahun_ajaran' => '2026/2027', 'is_active' => false],
+            ['id_semester' => 2, 'nama_semester' => 'Genap', 'tahun_ajaran' => '2026/2027', 'is_active' => true],
         ];
         foreach ($semesterData as $s) {
             DB::table('semester')->updateOrInsert(['id_semester' => $s['id_semester']], $s);

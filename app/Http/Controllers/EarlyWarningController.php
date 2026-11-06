@@ -33,8 +33,11 @@ class EarlyWarningController extends Controller
             $selectedKelasId = (int) $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedSemesterId = (int) $request->query('semester_id', 2);
-        $selectedTahunAjaran = $request->query('tahun_ajaran', '2026/2027');
+        $activeSemester = Semester::aktif();
+        $selectedSemesterId = (int) $request->query('semester_id', $activeSemester?->id_semester ?? 1);
+        $selectedSemester = Semester::find($selectedSemesterId) ?? $activeSemester;
+        $tahunAjaranList = Semester::getTahunAjaranList();
+        $selectedTahunAjaran = $request->query('tahun_ajaran', $selectedSemester?->tahun_ajaran ?? '2026/2027');
         $search = $request->query('search');
         $selectedId = (int) $request->query('selected_id', 0);
 
@@ -78,6 +81,7 @@ class EarlyWarningController extends Controller
             'selectedKelasId',
             'selectedSemesterId',
             'selectedTahunAjaran',
+            'tahunAjaranList',
             'search',
             'stats',
             'siswaEarlyWarning',
@@ -93,7 +97,7 @@ class EarlyWarningController extends Controller
     public function run(Request $request)
     {
         $user = auth()->user();
-        $semesterId = (int) $request->input('semester_id', 2);
+        $semesterId = (int) $request->input('semester_id', Semester::aktif()?->id_semester ?? 1);
         $kelasId = $request->input('kelas_id') ? (int) $request->input('kelas_id') : null;
 
         // Wali Kelas hanya bisa menjalankan untuk kelas binaannya

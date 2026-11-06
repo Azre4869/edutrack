@@ -122,7 +122,7 @@ Semua akun demo di bawah ini menggunakan kata sandi standar: **`password`**
 | Username | Peran (Role) | Keterangan / Hak Akses |
 | :--- | :--- | :--- |
 | `operator` | **Operator** | Administrator sistem. Memiliki akses penuh ke Data Master, Monitoring Rapor semua kelas, Laporan Eksekutif, dan EWS sekolah. |
-| `walikelas` | **Wali Kelas** | Wali Kelas VII A (Endang Sulistian, S.Pd.). Hanya dapat mengelola siswa kelas VII A, input catatan, presensi ekskul, dan cetak rapor siswa kelasnya. |
+| `walikelas` | **Wali Kelas** | Wali Kelas VII A. Hanya dapat mengelola siswa kelas VII A, input catatan, presensi ekskul, dan cetak rapor siswa kelasnya. |
 | `gurumapel` | **Guru Mapel** | Guru Pengampu Bahasa Inggris (Siti Aminah, M.Pd.). Hanya berwenang menginput nilai sumatif dan capaian kompetensi untuk mata pelajarannya. |
 
 ---

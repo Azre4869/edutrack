@@ -28,7 +28,10 @@ class CatatanController extends Controller
             $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedSemesterId = $request->query('semester_id', 2);
+        $activeSemester = Semester::aktif();
+        $selectedSemesterId = (int) $request->query('semester_id', $activeSemester?->id_semester ?? 1);
+        $tahunAjaranList = Semester::getTahunAjaranList();
+        $selectedTahunAjaran = $request->query('tahun_ajaran', $activeSemester?->tahun_ajaran ?? '2026/2027');
         $search = $request->query('search');
 
         $query = Siswa::where('id_kelas', $selectedKelasId);
@@ -50,6 +53,8 @@ class CatatanController extends Controller
             'semesterList',
             'selectedKelasId',
             'selectedSemesterId',
+            'tahunAjaranList',
+            'selectedTahunAjaran',
             'search',
             'siswaList',
             'catatanMap'

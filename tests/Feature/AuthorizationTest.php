@@ -26,7 +26,7 @@ class AuthorizationTest extends TestCase
      */
     public function test_wali_kelas_cannot_modify_other_class_students(): void
     {
-        // User walikelas (Endang Sulistian, id_guru = 1, Wali Kelas VII A = id_kelas 1)
+        // User walikelas (id_guru = 1, Wali Kelas VII A = id_kelas 1)
         $wali = User::where('username', 'walikelas')->first();
 
         // Buat atau cari siswa di kelas VII G (id_kelas = 2)

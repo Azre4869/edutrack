@@ -23,16 +23,17 @@
             </div>
             <div>
                 <label class="text-xs text-gray-700 mb-1 block font-bold">Tahun Ajaran</label>
-                <select name="tahun_ajaran" class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none">
-                    <option value="2026/2027" selected>2026/2027</option>
-                    <option value="2025/2026">2025/2026</option>
+                <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
+                        <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
+                    @endforeach
                 </select>
             </div>
             <div>
                 <label class="text-xs text-gray-700 mb-1 block font-bold">Semester</label>
                 <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($semesterList as $sm)
-                        <option value="{{ $sm->id_semester }}" {{ ($selectedSemesterId ?? 2) == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
+                        <option value="{{ $sm->id_semester }}" {{ ($selectedSemesterId ?? '') == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
                     @endforeach
                 </select>
             </div>

@@ -28,7 +28,10 @@ class RaporController extends Controller
             $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
 
-        $selectedSemesterId = $request->query('semester_id', 2);
+        $activeSemester = Semester::aktif();
+        $selectedSemesterId = (int) $request->query('semester_id', $activeSemester?->id_semester ?? 1);
+        $tahunAjaranList = Semester::getTahunAjaranList();
+        $selectedTahunAjaran = $request->query('tahun_ajaran', $activeSemester?->tahun_ajaran ?? '2026/2027');
         $selectedTanggal = $request->query('tanggal', now()->toDateString());
         $search = $request->query('search');
 
@@ -87,6 +90,8 @@ class RaporController extends Controller
             'semesterList',
             'selectedKelasId',
             'selectedSemesterId',
+            'tahunAjaranList',
+            'selectedTahunAjaran',
             'selectedTanggal',
             'search',
             'siswaList',
@@ -114,7 +119,7 @@ class RaporController extends Controller
             abort(403, 'Akses ditolak: Cetak dan detail rapor merupakan hak eksklusif Wali Kelas.');
         }
 
-        $selectedSemesterId = $request->query('semester_id', 2);
+        $selectedSemesterId = (int) $request->query('semester_id', Semester::aktif()?->id_semester ?? 1);
 
         $siswa = Siswa::with([
             'kelas.waliKelas',
