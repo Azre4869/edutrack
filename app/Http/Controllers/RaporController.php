@@ -160,8 +160,8 @@ class RaporController extends Controller
 
         // Semester aktif
         $semesterObj = Semester::find($selectedSemesterId);
-        $semesterLabel = $semesterObj->nama_semester ?? ($selectedSemesterId == 2 ? 'Genap' : 'Ganjil');
-        $tahunAjaran   = $siswa->kelas->tahun_ajaran ?? '2026/2027';
+        $semesterLabel = $semesterObj->nama_semester ?? '-';
+        $tahunAjaran   = $siswa->kelas->tahun_ajaran ?? ($semesterObj->tahun_ajaran ?? '-');
 
         // Wali kelas & NIP
         $waliKelas = $siswa->kelas->waliKelas ?? null;
@@ -171,12 +171,12 @@ class RaporController extends Controller
         // Tanggal rapor
         $tanggalRapor = \Carbon\Carbon::now()->isoFormat('D MMMM Y');
 
-        // Kepala Sekolah (Dinamis dari Master Guru)
-        $kepsek = Guru::where('nip', '19671007 199802 1 001')
-            ->orWhere('nama_guru', 'like', '%Teguh Suparyanto%')
+        // Kepala Sekolah (Dinamis dari Master Guru berdasarkan jabatan)
+        $kepsek = Guru::where('jabatan', 'like', '%Kepala Sekolah%')
+            ->orWhere('jabatan', 'like', '%Kepsek%')
             ->first();
-        $namaKepsek = $kepsek->nama_guru ?? 'Drs. Teguh Suparyanto, MMPd.';
-        $nipKepsek  = $kepsek->nip ?? '19671007 199802 1 001';
+        $namaKepsek = $kepsek->nama_guru ?? '-';
+        $nipKepsek  = $kepsek->nip ?? '-';
 
         // Status kelengkapan riil siswa
         $totalMapel = \App\Models\MataPelajaran::count() ?: 12;

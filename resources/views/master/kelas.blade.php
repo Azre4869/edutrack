@@ -140,7 +140,7 @@
 
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Tahun Ajaran *</label>
-                <input type="text" name="tahun_ajaran" value="2026/2027" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                <input type="text" name="tahun_ajaran" value="{{ old('tahun_ajaran', \App\Models\Semester::aktif()?->tahun_ajaran ?? '') }}" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-edu-orange focus:outline-none">
             </div>
 
             <div>

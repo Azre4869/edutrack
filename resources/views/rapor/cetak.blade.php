@@ -565,8 +565,8 @@ body {
             <p>Sampang, {{ $tanggalRapor }}</p>
             <p>Kepala UPTD SMP Negeri 1 Sampang,</p>
             <div class="ttd-space"></div>
-            <p class="ul-name">{{ $namaKepsek ?? 'Drs. Teguh Suparyanto, MMPd.' }}</p>
-            <p class="nip">NIP. {{ $nipKepsek ?? '19671007 199802 1 001' }}</p>
+            <p class="ul-name">{{ $namaKepsek ?? '-' }}</p>
+            <p class="nip">NIP. {{ $nipKepsek ?? '-' }}</p>
         </div>
     </div>
 
@@ -825,8 +825,8 @@ body {
             <p>Sampang, {{ $tanggalRapor }}</p>
             <p>Kepala Sekolah,</p>
             <div class="sp"></div>
-            <p class="ul">{{ $namaKepsek ?? 'Drs. Teguh Suparyanto, MMPd.' }}</p>
-            <p class="nip">NIP. {{ $nipKepsek ?? '19671007 199802 1 001' }}</p>
+            <p class="ul">{{ $namaKepsek ?? '-' }}</p>
+            <p class="nip">NIP. {{ $nipKepsek ?? '-' }}</p>
         </div>
     </div>
 

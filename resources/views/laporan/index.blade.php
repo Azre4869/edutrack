@@ -147,7 +147,7 @@
                     @forelse($siswaTerendah ?? [] as $i => $s)
                     <tr class="border-b border-gray-50 hover:bg-gray-50">
                         <td class="py-1.5">{{ $i+1 }}</td>
-                        <td class="py-1.5">{{ is_array($s) ? ($s['nama'] ?? '') : ($s->nama ?? $s->nama_siswa ?? '') }}</td>
+                        <td class="py-1.5">{{ is_array($s) ? ($s['nama'] ?? '-') : ($s->nama ?? '-') }}</td>
                         <td class="py-1.5">{{ is_array($s) ? ($s['kelas'] ?? '') : ($s->kelas ?? '') }}</td>
                         <td class="py-1.5 text-right font-semibold text-red-600">{{ is_array($s) ? ($s['nilai'] ?? '') : ($s->rata ?? '') }}</td>
                     </tr>

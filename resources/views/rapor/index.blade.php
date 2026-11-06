@@ -171,7 +171,7 @@
                     <i class="fas fa-file-lines text-edu-orange"></i> Informasi Template
                 </h4>
                 <p class="text-gray-400 mb-1">Template Aktif</p>
-                <p class="text-edu-blue font-bold text-xs mb-2">SMP Negeri 1 Sampang - Rapor 2026/2027</p>
+                <p class="text-edu-blue font-bold text-xs mb-2">SMP Negeri 1 Sampang - Rapor {{ $selectedTahunAjaran ?? '' }}</p>
                 <span class="inline-block bg-blue-50 text-edu-blue font-bold px-2.5 py-1 rounded-lg">Format Kurikulum Merdeka</span>
             </div>
 
