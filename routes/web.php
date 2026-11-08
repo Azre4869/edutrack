@@ -102,10 +102,13 @@ Route::middleware(['web'])->group(function () {
         Route::get('/early-warning/kriteria', [KriteriaAnalisisController::class, 'index'])->name('early-warning.kriteria');
         Route::put('/early-warning/kriteria/{id}', [KriteriaAnalisisController::class, 'update'])->name('early-warning.kriteria.update');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
+        Route::get('/tindak-lanjut/{id}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut.siswa');
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
         Route::patch('/tindak-lanjut/{id}/selesai', [TindakLanjutController::class, 'markCompleted'])->name('tindak-lanjut.selesai');
         Route::delete('/tindak-lanjut/{id}', [TindakLanjutController::class, 'destroy'])->name('tindak-lanjut.destroy');
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
+
+        // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
         Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
@@ -142,9 +145,11 @@ Route::middleware(['web'])->group(function () {
         Route::post('/early-warning/run', [EarlyWarningController::class, 'run'])->name('early-warning.run');
         Route::get('/early-warning/ai', [AiAnalysisController::class, 'index'])->name('early-warning.ai');
         Route::get('/tindak-lanjut/{id?}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut');
+        Route::get('/tindak-lanjut/{id}', [TindakLanjutController::class, 'index'])->name('tindak-lanjut.siswa');
         Route::post('/tindak-lanjut', [TindakLanjutController::class, 'store'])->name('tindak-lanjut.store');
         Route::patch('/tindak-lanjut/{id}/selesai', [TindakLanjutController::class, 'markCompleted'])->name('tindak-lanjut.selesai');
         Route::delete('/tindak-lanjut/{id}', [TindakLanjutController::class, 'destroy'])->name('tindak-lanjut.destroy');
+        Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
 
         // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');

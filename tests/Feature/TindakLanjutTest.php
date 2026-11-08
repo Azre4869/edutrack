@@ -318,4 +318,100 @@ class TindakLanjutTest extends TestCase
         $response = $this->actingAs($wali)->delete(route('wali.tindak-lanjut.destroy', $tl->id_tindak_lanjut));
         $response->assertStatus(403);
     }
+
+    /**
+     * Test operator dapat melihat halaman rekap riwayat konseling (tanpa ID siswa).
+     */
+    public function test_operator_can_view_rekap_riwayat_tindak_lanjut(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_REKAP_01'],
+            ['nama' => 'Siswa Rekap Test', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
+        $analisis = AnalisisSiswa::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_semester' => Semester::aktif()?->id_semester ?? 1,
+            'tanggal_analisis' => now()->toDateString(),
+            'status' => 'Perlu Perhatian',
+        ]);
+        TindakLanjut::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $operator->id_user,
+            'tanggal' => now()->toDateString(),
+            'tindakan' => 'Sesi Konseling Rekap',
+            'catatan_konseling' => 'Catatan konseling di rekap',
+            'status' => 'Sedang Diproses',
+        ]);
+
+        $response = $this->actingAs($operator)->get(route('operator.tindak-lanjut'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Rekap Riwayat Konseling');
+        $response->assertSee('Siswa Rekap Test');
+        $response->assertSee('Catatan konseling di rekap');
+    }
+
+    /**
+     * Test wali kelas melihat rekap riwayat konseling dibatasi hanya siswa kelas binaannya (DLAC).
+     */
+    public function test_wali_can_view_rekap_riwayat_tindak_lanjut_filtered_by_kelas_binaan(): void
+    {
+        $wali = User::where('username', 'walikelas')->first();
+        $kelasBinaan = $wali->requireKelasBinaan();
+
+        // Siswa binaan
+        $siswaBinaan = Siswa::create([
+            'nis' => 'TEST_BINAAN_01',
+            'nama' => 'Siswa Binaan Sendiri',
+            'jenis_kelamin' => 'L',
+            'id_kelas' => $kelasBinaan->id_kelas,
+            'status_siswa' => 'Aktif'
+        ]);
+        $analisisBinaan = AnalisisSiswa::create([
+            'id_siswa' => $siswaBinaan->id_siswa,
+            'id_semester' => Semester::aktif()?->id_semester ?? 1,
+            'tanggal_analisis' => now()->toDateString(),
+            'status' => 'Perlu Perhatian',
+        ]);
+        TindakLanjut::create([
+            'id_analisis' => $analisisBinaan->id_analisis,
+            'id_user' => $wali->id_user,
+            'tanggal' => now()->toDateString(),
+            'tindakan' => 'Sesi Siswa Binaan',
+            'catatan_konseling' => 'Konseling siswa binaan sendiri',
+            'status' => 'Sedang Diproses',
+        ]);
+
+        // Siswa kelas lain
+        $siswaLain = Siswa::create([
+            'nis' => 'TEST_LAIN_01',
+            'nama' => 'Siswa Kelas Lain Luar',
+            'jenis_kelamin' => 'P',
+            'id_kelas' => $kelasBinaan->id_kelas === 1 ? 2 : 1,
+            'status_siswa' => 'Aktif'
+        ]);
+        $analisisLain = AnalisisSiswa::create([
+            'id_siswa' => $siswaLain->id_siswa,
+            'id_semester' => Semester::aktif()?->id_semester ?? 1,
+            'tanggal_analisis' => now()->toDateString(),
+            'status' => 'Perlu Perhatian',
+        ]);
+        TindakLanjut::create([
+            'id_analisis' => $analisisLain->id_analisis,
+            'id_user' => 1,
+            'tanggal' => now()->toDateString(),
+            'tindakan' => 'Sesi Siswa Lain',
+            'catatan_konseling' => 'Konseling siswa lain rahasia',
+            'status' => 'Sedang Diproses',
+        ]);
+
+        $response = $this->actingAs($wali)->get(route('wali.tindak-lanjut'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Siswa Binaan Sendiri');
+        $response->assertSee('Konseling siswa binaan sendiri');
+        $response->assertDontSee('Siswa Kelas Lain Luar');
+        $response->assertDontSee('Konseling siswa lain rahasia');
+    }
 }

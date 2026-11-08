@@ -56,22 +56,29 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
     - Kolom baru otomatis terbawa saat pengguna menekan tombol **Export Excel**.
   - Ditambahkan automated feature test: [`tests/Feature/EkskulManagementTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/EkskulManagementTest.php) (2 pengujian: verifikasi akurasi jumlah siswa ekskul dan proteksi akses non-operator).
 
-### E. Riwayat Draf & Sesi Konseling + Tandai Selesai & Hapus (Baru Diselesaikan)
-- **Status**: Selesai & Terverifikasi (Lulus Pengujian — 9 pengujian, 24 assertions).
+### E. Rekap Terpadu Riwayat Konseling & Penanganan Tindak Lanjut (Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi (Lulus Pengujian — 11 pengujian, 33 assertions; seluruh 87 tes sistem 100% PASS).
 - **Implementasi**:
-  - Pada `TindakLanjutController` di [`app/Http/Controllers/TindakLanjutController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/TindakLanjutController.php):
-    - Method `index()`: ditambahkan query `$riwayatTindakLanjut` dengan eager loading relasi `guru`, `user`, dan `analisisSiswa`.
-    - Method `markCompleted($id)`: menandai status sesi menjadi `'Selesai'`, menerima input `hasil_evaluasi` dan `skor_efektivitas` opsional, mengisi `tanggal_evaluasi` otomatis jika belum terisi.
-    - Method `destroy($id)`: menghapus satu sesi/draf konseling dengan validasi akses DLAC (wali kelas hanya bisa hapus sesi siswa di kelas binaannya).
-  - Pada [`resources/views/tindak-lanjut/index.blade.php`](file:///e:/tugasprog/edutrack/resources/views/tindak-lanjut/index.blade.php):
-    - Ditambahkan kartu visual **"Riwayat Draf & Sesi Konseling"** menampilkan: nomor sesi, tanggal & jam, badge status, guru konselor, lokasi, catatan konseling, rencana dukungan, catatan hasil evaluasi.
-    - Setiap kartu riwayat memiliki tombol **"Tandai Selesai"** (hijau, muncul jika status bukan Selesai) dan tombol **"Hapus"** (merah, selalu muncul) dengan konfirmasi `confirm()` browser.
-  - Ditambahkan rute baru di [`routes/web.php`](file:///e:/tugasprog/edutrack/routes/web.php):
-    - `PATCH /tindak-lanjut/{id}/selesai` → `tindak-lanjut.selesai`
-    - `DELETE /tindak-lanjut/{id}` → `tindak-lanjut.destroy`
-    - (Didaftarkan di grup Operator dan Wali Kelas)
-  - Kompilasi ulang aset frontend via Vite (`npm run build`).
-  - Verifikasi otomatis: 9 pengujian di [`tests/Feature/TindakLanjutTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/TindakLanjutTest.php) berstatus PASS, termasuk 3 test baru: `test_operator_can_mark_tindak_lanjut_completed`, `test_operator_can_delete_tindak_lanjut`, `test_wali_cannot_delete_tindak_lanjut_of_other_class`.
+  - **Pemisahan Alur Rekap vs Form Siswa**:
+    - Menu sidebar **Tindak Lanjut** (`/operator/tindak-lanjut` atau `/wali/tindak-lanjut`) kini menjadi **Halaman Rekap Terpadu Riwayat Konseling** lintas siswa (menggunakan view [`resources/views/tindak-lanjut/rekap.blade.php`](file:///e:/tugasprog/edutrack/resources/views/tindak-lanjut/rekap.blade.php)).
+    - Memperbaiki kejanggalan sistem lama di mana halaman tanpa parameter siswa otomatis mengambil siswa pertama di database (`Siswa::first()` alias Firdausi Anam).
+    - Halaman form input konseling baru kini spesifik diakses per siswa melalui URL `/tindak-lanjut/{id_siswa}` (misal saat menekan tombol "Tindak Lanjut Siswa Ini" dari Early Warning atau tombol "Tambah Sesi" dari rekap).
+  - **Fitur Halaman Rekap Konseling**:
+    - Menampilkan kartu sesi konseling untuk semua siswa lengkap dengan status badge (*Sedang Diproses*, *Selesai*), tanggal/jam sesi, guru pendamping, lokasi, catatan konseling, dan hasil evaluasi.
+    - Filter berdasarkan semester aktif/arsip serta kolom pencarian instan nama/NIS siswa.
+    - Tombol aksi langsung pada setiap kartu: **"Tandai Selesai"**, **"Hapus"**, dan tautan **"Tambah Sesi"**.
+    - Kontrol Akses Data (DLAC): Operator dapat memantau seluruh sesi sekolah, sedangkan Wali Kelas otomatis hanya melihat sesi konseling siswa kelas binaannya.
+  - **Aksi Siklus Konseling di Controller**:
+    - Method `markCompleted($id)` di [`TindakLanjutController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/TindakLanjutController.php): menandai sesi menjadi `'Selesai'`, mengisi `tanggal_evaluasi`, serta menerima catatan evaluasi.
+    - Method `destroy($id)`: menghapus draf/sesi dengan pengecekan wewenang DLAC.
+  - **Rute Web**:
+    - `GET /tindak-lanjut` → Rekap Riwayat Konseling (`tindak-lanjut`).
+    - `GET /tindak-lanjut/{id}` → Form input sesi baru per siswa (`tindak-lanjut.siswa`).
+    - `PATCH /tindak-lanjut/{id}/selesai` → Tandai selesai (`tindak-lanjut.selesai`).
+    - `DELETE /tindak-lanjut/{id}` → Hapus sesi (`tindak-lanjut.destroy`).
+  - **Pengujian Otomatis**:
+    - 11 pengujian di [`tests/Feature/TindakLanjutTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/TindakLanjutTest.php) lulus (termasuk verifikasi rekap global operator dan isolasi kelas binaan wali).
+    - Seluruh 87 feature test proyek berstatus **100% green**.
 
 ### F. Fitur Akademik dan Manajemen Inti yang Sudah Berjalan
 1. **Autentikasi & Otorisasi Berbasis Peran**:
@@ -136,6 +143,7 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Jumlah anggota ekskul tidak tampil di Data Master | Query ekskul belum menyertakan agregasi counter ke relasi `nilai_ekstrakurikuler` | Ditambahkan query `withCount` dinamis berbasis semester aktif dan kolom tabel baru |
 | Tindak Lanjut Operator mengalami 403 Forbidden | Redirect setelah submit mengarah ke rute wali kelas (`wali.early-warning`) | Redirect disesuaikan berdasarkan peran pengguna (`operator.early-warning` vs `wali.early-warning`) |
 | Draf konseling tersimpan tidak muncul di antarmuka web | Setelah submit, form me-reset ke draf baru dan belum ada komponen UI untuk menampilkan data riwayat dari tabel `tindak_lanjut` | Ditambahkan query riwayat di `TindakLanjutController`, kartu Riwayat Sesi Konseling di `index.blade.php`, serta tombol Tandai Selesai dan Hapus dengan proteksi DLAC |
+| Menu Tindak Lanjut otomatis membuka siswa "Firdausi Anam" | Controller lama melakukan fallback `$siswa = Siswa::first()` jika parameter ID siswa kosong | Halaman utama `/tindak-lanjut` diubah menjadi Rekap Terpadu seluruh riwayat konseling sekolah, form konseling baru dipindah ke `/tindak-lanjut/{id_siswa}` |
 
 ---
 

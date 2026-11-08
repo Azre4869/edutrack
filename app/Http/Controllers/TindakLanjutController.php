@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Auth;
 
 class TindakLanjutController extends Controller
 {
+    /**
+     * Halaman rekap semua riwayat konseling (tanpa id siswa).
+     * Ketika id siswa diberikan, tampilkan form input sesi baru untuk siswa tersebut.
+     */
     public function index(Request $request, $siswaId = null)
     {
         $user = auth()->user();
@@ -21,39 +25,99 @@ class TindakLanjutController extends Controller
             $user->requireKelasBinaan();
         }
 
-        if ($siswaId) {
-            $siswa = Siswa::with('kelas')->findOrFail($siswaId);
-        } else {
-            if ($user && $user->isWaliKelas()) {
-                $siswa = Siswa::with('kelas')->where('id_kelas', $user->requireKelasBinaan()->id_kelas)->first() ?? Siswa::with('kelas')->first();
-            } else {
-                $siswa = Siswa::with('kelas')->first();
-            }
+        $rolePrefix = $user && $user->isOperator() ? 'operator' : 'wali';
+
+        // Tanpa id siswa → halaman rekap semua riwayat konseling
+        if (!$siswaId) {
+            return $this->rekapRiwayat($request, $user, $rolePrefix);
         }
 
-        if ($user && $siswa && !$user->canAccessSiswa($siswa)) {
+        // Dengan id siswa → form input sesi baru + riwayat siswa tersebut
+        return $this->formSesiSiswa($request, $user, $rolePrefix, $siswaId);
+    }
+
+    /**
+     * Halaman rekap: semua riwayat konseling lintas siswa.
+     */
+    protected function rekapRiwayat(Request $request, $user, string $rolePrefix)
+    {
+        $activeSemester = Semester::aktif();
+        $semesterId = (int) $request->query('semester_id', $activeSemester?->id_semester ?? 1);
+        $semesterList = Semester::orderByDesc('id_semester')->get();
+        $search = trim($request->query('search', ''));
+
+        $query = TindakLanjut::with([
+            'analisisSiswa.siswa.kelas',
+            'guru',
+            'user',
+        ])->orderByDesc('tanggal')->orderByDesc('id_tindak_lanjut');
+
+        // Batasi ke kelas binaan jika wali kelas (DLAC)
+        if ($user && $user->isWaliKelas()) {
+            $kelasBinaan = $user->requireKelasBinaan();
+            $query->whereHas('analisisSiswa.siswa', function ($q) use ($kelasBinaan) {
+                $q->where('id_kelas', $kelasBinaan->id_kelas);
+            });
+        }
+
+        // Filter semester
+        if ($semesterId) {
+            $query->whereHas('analisisSiswa', function ($q) use ($semesterId) {
+                $q->where('id_semester', $semesterId);
+            });
+        }
+
+        // Filter pencarian nama siswa
+        if ($search !== '') {
+            $query->whereHas('analisisSiswa.siswa', function ($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('nis', 'like', '%' . $search . '%')
+                  ->orWhere('nisn', 'like', '%' . $search . '%');
+            });
+        }
+
+        $semuaRiwayat = $query->get();
+        $semesterObj  = Semester::find($semesterId) ?? $activeSemester;
+
+        return view('tindak-lanjut.rekap', compact(
+            'semuaRiwayat',
+            'rolePrefix',
+            'semesterId',
+            'semesterObj',
+            'semesterList',
+            'search'
+        ));
+    }
+
+    /**
+     * Form input sesi baru untuk siswa tertentu + riwayat sesi siswa tersebut.
+     */
+    protected function formSesiSiswa(Request $request, $user, string $rolePrefix, $siswaId)
+    {
+        $siswa = Siswa::with('kelas')->findOrFail($siswaId);
+
+        if ($user && !$user->canAccessSiswa($siswa)) {
             abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk melihat tindak lanjut siswa ini.');
         }
 
-        $rolePrefix = $user && $user->isOperator() ? 'operator' : 'wali';
         $activeSemester = Semester::aktif();
         $semesterId = (int) $request->query('semester_id', $activeSemester?->id_semester ?? 1);
         $semesterObj = Semester::find($semesterId) ?? $activeSemester;
 
         // Hitung metrik analisis riil siswa dari database
-        $nilaiCurrent = $siswa ? Nilai::where('id_siswa', $siswa->id_siswa)
+        $nilaiCurrent = Nilai::where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semesterId)
             ->whereNotNull('nilai_akhir')
-            ->get() : collect();
+            ->get();
 
         $hasNilai = $nilaiCurrent->isNotEmpty();
         $avgNilai = $hasNilai ? round($nilaiCurrent->avg('nilai_akhir'), 1) : null;
         $countUnderKkm = $hasNilai ? $nilaiCurrent->where('nilai_akhir', '<', 75.0)->count() : null;
 
         // Absensi semester ini
-        $absensiCurrent = $siswa ? Absensi::where('id_siswa', $siswa->id_siswa)
+        $absensiCurrent = Absensi::where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semesterId)
-            ->get() : collect();
+            ->get();
         $totalAbsen = $absensiCurrent->count();
         $totalHadir = $absensiCurrent->where('status', 'Hadir')->count();
         $kehadiranPct = $totalAbsen > 0 ? round(($totalHadir / $totalAbsen) * 100) : null;
@@ -63,7 +127,7 @@ class TindakLanjutController extends Controller
             ->orderBy('id_semester', 'desc')
             ->first();
         $prevAvg = null;
-        if ($semesterSebelumnya && $siswa) {
+        if ($semesterSebelumnya) {
             $prevAvg = Nilai::where('id_siswa', $siswa->id_siswa)
                 ->where('id_semester', $semesterSebelumnya->id_semester)
                 ->whereNotNull('nilai_akhir')
@@ -71,7 +135,7 @@ class TindakLanjutController extends Controller
         }
 
         $perubahanTeks = 'Tidak ada data pembanding';
-        $arahPerubahan = 'none'; // 'turun', 'naik', 'tetap', 'none'
+        $arahPerubahan = 'none';
         if ($prevAvg !== null && $prevAvg > 0 && $avgNilai !== null && $avgNilai > 0) {
             $prevAvg = round($prevAvg, 1);
             if ($avgNilai < $prevAvg) {
@@ -89,59 +153,51 @@ class TindakLanjutController extends Controller
         }
 
         $analisis = (object) [
-            'rata_nilai' => $avgNilai !== null ? number_format($avgNilai, 1, ',', '.') : null,
+            'rata_nilai'     => $avgNilai !== null ? number_format($avgNilai, 1, ',', '.') : null,
             'perubahan_teks' => $perubahanTeks,
-            'arah' => $arahPerubahan,
-            'kehadiran_pct' => $kehadiranPct,
-            'di_bawah_kkm' => $countUnderKkm,
+            'arah'           => $arahPerubahan,
+            'kehadiran_pct'  => $kehadiranPct,
+            'di_bawah_kkm'   => $countUnderKkm,
         ];
 
         // Cari analisis siswa dari database
-        $analisisRecord = null;
-        if ($siswa) {
-            $analisisRecord = AnalisisSiswa::where('id_siswa', $siswa->id_siswa)
-                ->where('id_semester', $semesterId)
-                ->latest('tanggal_analisis')
-                ->first();
+        $analisisRecord = AnalisisSiswa::where('id_siswa', $siswa->id_siswa)
+            ->where('id_semester', $semesterId)
+            ->latest('tanggal_analisis')
+            ->first()
+            ?? AnalisisSiswa::where('id_siswa', $siswa->id_siswa)
+            ->latest('tanggal_analisis')
+            ->first();
 
-            if (!$analisisRecord) {
-                $analisisRecord = AnalisisSiswa::where('id_siswa', $siswa->id_siswa)
-                    ->latest('tanggal_analisis')
-                    ->first();
-            }
-        }
-
-        // Ambil data guru dari database
         $guruList = Guru::orderBy('nama_guru')->get();
 
-        // Default consultation session details
         $defaultNamaGuru = $user?->guru?->nama_guru ?? ($guruList->first()?->nama_guru ?? '-');
         $counseling = [
-            'tanggal_sesi' => now()->addDays(2)->toDateString(),
-            'waktu_sesi' => '09:00',
-            'jenis_konseling' => 'Akademik & kehadiran',
-            'pendamping' => $defaultNamaGuru,
-            'peserta' => 'Siswa & orang tua / wali',
-            'tempat' => 'Ruang BK / Ruang Konseling',
-            'catatan' => 'Siswa bersedia mengikuti bimbingan remedial dan orang tua berkomitmen memantau jam belajar mandiri di rumah.',
-            'status' => 'Direncanakan',
+            'tanggal_sesi'     => now()->addDays(2)->toDateString(),
+            'waktu_sesi'       => '09:00',
+            'jenis_konseling'  => 'Akademik & kehadiran',
+            'pendamping'       => $defaultNamaGuru,
+            'peserta'          => 'Siswa & orang tua / wali',
+            'tempat'           => 'Ruang BK / Ruang Konseling',
+            'catatan'          => '',
+            'status'           => 'Direncanakan',
             'penanggung_jawab' => $defaultNamaGuru,
             'tanggal_evaluasi' => now()->addDays(14)->toDateString(),
-            'rencana' => [
-                'remedial' => true,
+            'rencana'          => [
+                'remedial'  => true,
                 'kehadiran' => true,
-                'motivasi' => true,
+                'motivasi'  => true,
             ],
         ];
 
-        // Ambil riwayat draf & sesi tindak lanjut yang tersimpan untuk siswa ini
-        $riwayatTindakLanjut = $siswa ? TindakLanjut::with(['guru', 'user', 'analisisSiswa'])
+        // Riwayat sesi konseling siswa ini
+        $riwayatTindakLanjut = TindakLanjut::with(['guru', 'user', 'analisisSiswa'])
             ->whereHas('analisisSiswa', function ($q) use ($siswa) {
                 $q->where('id_siswa', $siswa->id_siswa);
             })
             ->orderByDesc('tanggal')
             ->orderByDesc('id_tindak_lanjut')
-            ->get() : collect();
+            ->get();
 
         return view('tindak-lanjut.index', compact(
             'siswa',

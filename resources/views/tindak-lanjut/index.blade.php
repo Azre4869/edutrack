@@ -7,6 +7,16 @@
 @section('content')
 <div class="space-y-4">
 
+    {{-- Top Navigation Bar --}}
+    <div class="flex items-center justify-between">
+        <a href="{{ route($rolePrefix . '.tindak-lanjut') }}" class="inline-flex items-center gap-2 text-edu-blue hover:text-blue-800 font-bold text-xs bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-100 transition">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Rekap Riwayat Konseling
+        </a>
+        <a href="{{ route($rolePrefix . '.early-warning') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 font-semibold text-xs bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-100 transition">
+            <i class="fa-solid fa-triangle-exclamation text-edu-orange"></i> Ke Early Warning
+        </a>
+    </div>
+
     {{-- Student Profile Card --}}
     <div class="bg-white rounded-xl p-5 flex flex-wrap items-center gap-6">
         <div class="flex items-center gap-4">
@@ -252,9 +262,15 @@
 
         {{-- Bottom Action Bar --}}
         <div class="bg-white rounded-xl mt-4 px-6 py-4 flex items-center justify-between">
-            <a href="{{ route($rolePrefix . '.early-warning') }}" class="flex items-center gap-2 text-edu-blue font-semibold text-sm hover:underline">
-                <i class="fas fa-arrow-left"></i> Kembali ke Early Warning
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route($rolePrefix . '.tindak-lanjut') }}" class="flex items-center gap-1.5 text-edu-blue font-semibold text-xs hover:underline">
+                    <i class="fas fa-list-check"></i> Rekap Riwayat
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="{{ route($rolePrefix . '.early-warning') }}" class="flex items-center gap-1.5 text-gray-500 font-semibold text-xs hover:underline">
+                    <i class="fas fa-arrow-left"></i> Early Warning
+                </a>
+            </div>
             <div class="text-center">
                 @if(isset($riwayatTindakLanjut) && $riwayatTindakLanjut->isNotEmpty())
                     <p class="text-emerald-700 font-semibold text-sm">
