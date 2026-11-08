@@ -256,8 +256,16 @@
                 <i class="fas fa-arrow-left"></i> Kembali ke Early Warning
             </a>
             <div class="text-center">
-                <p class="text-gray-700 font-semibold text-sm">Draf baru - Belum disimpan</p>
-                <p class="text-gray-400 text-xs">Menyimpan draf tidak menandai konseling sebagai selesai.</p>
+                @if(isset($riwayatTindakLanjut) && $riwayatTindakLanjut->isNotEmpty())
+                    <p class="text-emerald-700 font-semibold text-sm">
+                        <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>
+                        {{ $riwayatTindakLanjut->count() }} Sesi / Draf Tersimpan di Bawah
+                    </p>
+                    <p class="text-gray-400 text-xs">Form di atas dapat diisi kembali untuk menjadwalkan sesi tindak lanjut berikutnya.</p>
+                @else
+                    <p class="text-gray-700 font-semibold text-sm">Draf baru - Belum disimpan</p>
+                    <p class="text-gray-400 text-xs">Menyimpan draf tidak menandai konseling sebagai selesai.</p>
+                @endif
             </div>
             <button type="submit"
                 class="bg-edu-blue hover:bg-blue-700 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition">
@@ -265,6 +273,109 @@
             </button>
         </div>
     </form>
+
+    {{-- ======= RIWAYAT DRAF & SESI KONSELING ======= --}}
+    <div class="bg-white rounded-2xl mt-6 p-6 shadow-md border border-gray-100 font-heading">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-edu-blue flex items-center justify-center text-lg shadow-sm">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900">Riwayat Draf & Sesi Konseling</h3>
+                    <p class="text-xs text-gray-500 font-body">Daftar catatan dan rencana bimbingan konseling yang telah tersimpan untuk siswa ini.</p>
+                </div>
+            </div>
+            <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-edu-blue font-bold">
+                {{ isset($riwayatTindakLanjut) ? $riwayatTindakLanjut->count() : 0 }} Sesi Tersimpan
+            </span>
+        </div>
+
+        @if(isset($riwayatTindakLanjut) && $riwayatTindakLanjut->isNotEmpty())
+            <div class="mt-4 space-y-4 font-body">
+                @foreach($riwayatTindakLanjut as $idx => $tl)
+                    @php
+                        $statusBadge = match($tl->status) {
+                            'Selesai'         => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                            'Sedang Diproses' => 'bg-amber-100 text-amber-800 border-amber-200',
+                            default           => 'bg-blue-100 text-blue-800 border-blue-200',
+                        };
+                    @endphp
+                    <div class="p-4 rounded-xl bg-gray-50/80 border border-gray-200 hover:border-edu-blue/40 transition">
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-gray-200/80 text-xs">
+                            <div class="flex items-center space-x-2 font-heading">
+                                <span class="font-black text-gray-900 text-sm">
+                                    Sesi #{{ $riwayatTindakLanjut->count() - $idx }}
+                                </span>
+                                <span class="text-gray-400">&bull;</span>
+                                <span class="text-gray-600 font-medium">
+                                    <i class="fa-regular fa-calendar mr-1 text-edu-orange"></i>
+                                    {{ \Carbon\Carbon::parse($tl->tanggal)->translatedFormat('l, d F Y') }}
+                                    @if($tl->waktu)
+                                        pukul {{ substr($tl->waktu, 0, 5) }} WIB
+                                    @endif
+                                </span>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border {{ $statusBadge }}">
+                                {{ $tl->status }}
+                            </span>
+                        </div>
+
+                        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                            <div class="p-2.5 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                <span class="text-gray-400 text-[10px] block font-heading font-semibold">Guru Pendamping / Konselor</span>
+                                <strong class="text-gray-800 font-heading block mt-0.5 text-xs">
+                                    {{ $tl->guru?->nama_guru ?? ($tl->user?->name ?? 'Belum Ditentukan') }}
+                                </strong>
+                                <span class="text-[10px] text-gray-400">Pencatat: {{ $tl->user?->username ?? 'Operator' }}</span>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                <span class="text-gray-400 text-[10px] block font-heading font-semibold">Jenis & Tempat</span>
+                                <strong class="text-gray-800 font-heading block mt-0.5 text-xs">{{ $tl->jenis_konseling ?? '-' }}</strong>
+                                <span class="text-[10px] text-gray-500">{{ $tl->tempat_media ?? 'Ruang BK' }} &bull; {{ $tl->peserta_diundang ?? 'Siswa' }}</span>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                <span class="text-gray-400 text-[10px] block font-heading font-semibold">Rencana Evaluasi</span>
+                                <strong class="text-gray-800 font-heading block mt-0.5 text-xs">
+                                    {{ $tl->tanggal_evaluasi ? \Carbon\Carbon::parse($tl->tanggal_evaluasi)->translatedFormat('d M Y') : 'Belum Dijadwalkan' }}
+                                </strong>
+                                <span class="text-[10px] text-gray-500">Efektivitas: {{ $tl->skor_efektivitas ?? 'Belum Dievaluasi' }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Catatan Konseling & Rencana Dukungan --}}
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-xs space-y-2">
+                            <div>
+                                <span class="font-bold text-gray-700 block mb-1">Catatan Konseling:</span>
+                                <p class="text-gray-700 bg-white p-3 rounded-lg border border-gray-100 leading-relaxed font-body">
+                                    "{{ $tl->catatan_konseling ?: 'Tidak ada catatan tambahan.' }}"
+                                </p>
+                            </div>
+                            @if($tl->rencana_dukungan)
+                                <div>
+                                    <span class="font-bold text-gray-700 block mb-1">Rencana Dukungan yang Dipilih:</span>
+                                    <div class="flex flex-wrap gap-1.5 mt-1">
+                                        @foreach(explode(', ', $tl->rencana_dukungan) as $renc)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-blue-50 text-edu-blue border border-blue-200 text-[11px] font-medium">
+                                                <i class="fa-solid fa-check text-[9px] mr-1 text-emerald-600"></i>
+                                                {{ ucfirst($renc) }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="mt-4 p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200 font-body">
+                <i class="fa-solid fa-clipboard-list text-3xl text-gray-300 mb-2"></i>
+                <p class="text-sm font-bold text-gray-600">Belum Ada Sesi Konseling yang Tersimpan</p>
+                <p class="text-xs text-gray-400 mt-0.5">Isi form di atas dan klik tombol "Simpan Draf Konseling" untuk membuat sesi pertama bagi siswa ini.</p>
+            </div>
+        @endif
+    </div>
 
 </div>
 @endsection

@@ -134,6 +134,15 @@ class TindakLanjutController extends Controller
             ],
         ];
 
+        // Ambil riwayat draf & sesi tindak lanjut yang tersimpan untuk siswa ini
+        $riwayatTindakLanjut = $siswa ? TindakLanjut::with(['guru', 'user', 'analisisSiswa'])
+            ->whereHas('analisisSiswa', function ($q) use ($siswa) {
+                $q->where('id_siswa', $siswa->id_siswa);
+            })
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id_tindak_lanjut')
+            ->get() : collect();
+
         return view('tindak-lanjut.index', compact(
             'siswa',
             'counseling',
@@ -142,7 +151,8 @@ class TindakLanjutController extends Controller
             'analisis',
             'analisisRecord',
             'semesterId',
-            'semesterObj'
+            'semesterObj',
+            'riwayatTindakLanjut'
         ));
     }
 

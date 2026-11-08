@@ -56,7 +56,17 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
     - Kolom baru otomatis terbawa saat pengguna menekan tombol **Export Excel**.
   - Ditambahkan automated feature test: [`tests/Feature/EkskulManagementTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/EkskulManagementTest.php) (2 pengujian: verifikasi akurasi jumlah siswa ekskul dan proteksi akses non-operator).
 
-### E. Fitur Akademik dan Manajemen Inti yang Sudah Berjalan
+### E. Riwayat Draf & Sesi Konseling pada Tindak Lanjut (Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi (Lulus Pengujian).
+- **Implementasi**:
+  - Pada method `TindakLanjutController::index()` di [`app/Http/Controllers/TindakLanjutController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/TindakLanjutController.php), ditambahkan query riwayat konseling siswa (`$riwayatTindakLanjut`) dengan eager loading relasi `guru`, `user`, dan `analisisSiswa`, diurutkan secara kronologis terbalik.
+  - Pada [`resources/views/tindak-lanjut/index.blade.php`](file:///e:/tugasprog/edutrack/resources/views/tindak-lanjut/index.blade.php):
+    - Bilah aksi formulir diperbarui dengan indikator dinamis: menginformasikan jika ada sesi/draf tersimpan di database dan form di atas siap digunakan untuk sesi lanjutan.
+    - Ditambahkan kartu visual baru **"Riwayat Draf & Sesi Konseling"** di bawah form yang menampilkan daftar sesi: nomor sesi, tanggal & jam, badge status, guru konselor, lokasi, catatan konseling (misal draf teks yang tersimpan), dan rencana dukungan terpilih.
+  - Kompilasi ulang aset frontend via Vite (`npm run build`).
+  - Verifikasi otomatis: seluruh 6 pengujian di [`tests/Feature/TindakLanjutTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/TindakLanjutTest.php) berstatus PASS.
+
+### F. Fitur Akademik dan Manajemen Inti yang Sudah Berjalan
 1. **Autentikasi & Otorisasi Berbasis Peran**:
    - Multi-role: `Operator`, `Wali Kelas`, `Guru Mapel`.
    - Proteksi sesi, proteksi rute via `RoleMiddleware`, dan redirect dashboard otomatis.
@@ -114,6 +124,7 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Kotak putih kosong di bilah filter Early Warning | Class Tailwind `bg-indigo-600` belum masuk asset build CSS | Dilakukan `npm run build` dan penambahan inline style cadangan pada Blade |
 | Jumlah anggota ekskul tidak tampil di Data Master | Query ekskul belum menyertakan agregasi counter ke relasi `nilai_ekstrakurikuler` | Ditambahkan query `withCount` dinamis berbasis semester aktif dan kolom tabel baru |
 | Tindak Lanjut Operator mengalami 403 Forbidden | Redirect setelah submit mengarah ke rute wali kelas (`wali.early-warning`) | Redirect disesuaikan berdasarkan peran pengguna (`operator.early-warning` vs `wali.early-warning`) |
+| Draf konseling tersimpan tidak muncul di antarmuka web | Setelah submit, form me-reset ke draf baru dan belum ada komponen UI untuk menampilkan data riwayat dari tabel `tindak_lanjut` | Ditambahkan query riwayat di `TindakLanjutController` dan kartu Riwayat Sesi Konseling di `index.blade.php` |
 
 ---
 
