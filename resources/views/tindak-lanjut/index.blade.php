@@ -316,9 +316,27 @@
                                     @endif
                                 </span>
                             </div>
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border {{ $statusBadge }}">
-                                {{ $tl->status }}
-                            </span>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border {{ $statusBadge }}">
+                                    {{ $tl->status }}
+                                </span>
+                                @if($tl->status !== 'Selesai')
+                                    <form action="{{ route($rolePrefix . '.tindak-lanjut.selesai', $tl->id_tindak_lanjut) }}" method="POST" onsubmit="return confirm('Tandai sesi konseling ini sebagai Selesai?')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition shadow-sm" title="Tandai konseling ini telah selesai dilaksanakan">
+                                            <i class="fa-solid fa-check"></i> Tandai Selesai
+                                        </button>
+                                    </form>
+                                @endif
+                                <form action="{{ route($rolePrefix . '.tindak-lanjut.destroy', $tl->id_tindak_lanjut) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus sesi konseling ini? Data yang dihapus tidak dapat dikembalikan.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition" title="Hapus sesi / draf ini">
+                                        <i class="fa-regular fa-trash-can"></i> Hapus
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
                         <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -362,6 +380,14 @@
                                             </span>
                                         @endforeach
                                     </div>
+                                </div>
+                            @endif
+                            @if($tl->hasil_evaluasi)
+                                <div>
+                                    <span class="font-bold text-gray-700 block mb-1">Catatan Hasil Evaluasi:</span>
+                                    <p class="text-gray-700 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-200 leading-relaxed font-body">
+                                        <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> {{ $tl->hasil_evaluasi }}
+                                    </p>
                                 </div>
                             @endif
                         </div>

@@ -214,4 +214,108 @@ class TindakLanjutTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Tidak Ada Siswa Terpilih');
     }
+
+    /**
+     * Test operator dapat menandai tindak lanjut sebagai selesai.
+     */
+    public function test_operator_can_mark_tindak_lanjut_completed(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_TL_DONE'],
+            ['nama' => 'Siswa Test Selesai', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
+        $analisis = AnalisisSiswa::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_semester' => Semester::aktif()?->id_semester ?? 1,
+            'tanggal_analisis' => now()->toDateString(),
+            'status' => 'Perlu Perhatian',
+        ]);
+        $tl = TindakLanjut::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $operator->id_user,
+            'tanggal' => now()->toDateString(),
+            'tindakan' => 'Sesi Konseling',
+            'status' => 'Sedang Diproses',
+        ]);
+
+        $response = $this->actingAs($operator)->patch(route('operator.tindak-lanjut.selesai', $tl->id_tindak_lanjut), [
+            'hasil_evaluasi' => 'Siswa menunjukkan perbaikan.',
+            'skor_efektivitas' => 'Membaik',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('tindak_lanjut', [
+            'id_tindak_lanjut' => $tl->id_tindak_lanjut,
+            'status' => 'Selesai',
+            'hasil_evaluasi' => 'Siswa menunjukkan perbaikan.',
+            'skor_efektivitas' => 'Membaik',
+        ]);
+    }
+
+    /**
+     * Test operator dapat menghapus tindak lanjut.
+     */
+    public function test_operator_can_delete_tindak_lanjut(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+        $siswa = Siswa::firstOrCreate(
+            ['nis' => 'TEST_TL_DEL'],
+            ['nama' => 'Siswa Test Hapus', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
+        );
+        $analisis = AnalisisSiswa::create([
+            'id_siswa' => $siswa->id_siswa,
+            'id_semester' => Semester::aktif()?->id_semester ?? 1,
+            'tanggal_analisis' => now()->toDateString(),
+            'status' => 'Perlu Perhatian',
+        ]);
+        $tl = TindakLanjut::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $operator->id_user,
+            'tanggal' => now()->toDateString(),
+            'tindakan' => 'Sesi Konseling Hapus',
+            'status' => 'Sedang Diproses',
+        ]);
+
+        $response = $this->actingAs($operator)->delete(route('operator.tindak-lanjut.destroy', $tl->id_tindak_lanjut));
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('tindak_lanjut', [
+            'id_tindak_lanjut' => $tl->id_tindak_lanjut,
+        ]);
+    }
+
+    /**
+     * Test wali kelas tidak dapat menghapus tindak lanjut milik siswa di luar kelas binaannya (DLAC).
+     */
+    public function test_wali_cannot_delete_tindak_lanjut_of_other_class(): void
+    {
+        $wali = User::where('username', 'walikelas')->first();
+        $kelasBinaan = $wali->requireKelasBinaan();
+
+        // Siswa di kelas lain (id_kelas != kelas binaan)
+        $siswaLain = Siswa::create([
+            'nis' => 'TEST_SISWA_OTHER',
+            'nama' => 'Siswa Kelas Lain',
+            'jenis_kelamin' => 'P',
+            'id_kelas' => $kelasBinaan->id_kelas === 1 ? 2 : 1,
+            'status_siswa' => 'Aktif'
+        ]);
+        $analisis = AnalisisSiswa::create([
+            'id_siswa' => $siswaLain->id_siswa,
+            'id_semester' => Semester::aktif()?->id_semester ?? 1,
+            'tanggal_analisis' => now()->toDateString(),
+            'status' => 'Perlu Perhatian',
+        ]);
+        $tl = TindakLanjut::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => 1,
+            'tanggal' => now()->toDateString(),
+            'tindakan' => 'Sesi Konseling Kelas Lain',
+            'status' => 'Sedang Diproses',
+        ]);
+
+        $response = $this->actingAs($wali)->delete(route('wali.tindak-lanjut.destroy', $tl->id_tindak_lanjut));
+        $response->assertStatus(403);
+    }
 }

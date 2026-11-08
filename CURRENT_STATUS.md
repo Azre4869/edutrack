@@ -56,15 +56,22 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
     - Kolom baru otomatis terbawa saat pengguna menekan tombol **Export Excel**.
   - Ditambahkan automated feature test: [`tests/Feature/EkskulManagementTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/EkskulManagementTest.php) (2 pengujian: verifikasi akurasi jumlah siswa ekskul dan proteksi akses non-operator).
 
-### E. Riwayat Draf & Sesi Konseling pada Tindak Lanjut (Baru Diselesaikan)
-- **Status**: Selesai & Terverifikasi (Lulus Pengujian).
+### E. Riwayat Draf & Sesi Konseling + Tandai Selesai & Hapus (Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi (Lulus Pengujian — 9 pengujian, 24 assertions).
 - **Implementasi**:
-  - Pada method `TindakLanjutController::index()` di [`app/Http/Controllers/TindakLanjutController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/TindakLanjutController.php), ditambahkan query riwayat konseling siswa (`$riwayatTindakLanjut`) dengan eager loading relasi `guru`, `user`, dan `analisisSiswa`, diurutkan secara kronologis terbalik.
+  - Pada `TindakLanjutController` di [`app/Http/Controllers/TindakLanjutController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/TindakLanjutController.php):
+    - Method `index()`: ditambahkan query `$riwayatTindakLanjut` dengan eager loading relasi `guru`, `user`, dan `analisisSiswa`.
+    - Method `markCompleted($id)`: menandai status sesi menjadi `'Selesai'`, menerima input `hasil_evaluasi` dan `skor_efektivitas` opsional, mengisi `tanggal_evaluasi` otomatis jika belum terisi.
+    - Method `destroy($id)`: menghapus satu sesi/draf konseling dengan validasi akses DLAC (wali kelas hanya bisa hapus sesi siswa di kelas binaannya).
   - Pada [`resources/views/tindak-lanjut/index.blade.php`](file:///e:/tugasprog/edutrack/resources/views/tindak-lanjut/index.blade.php):
-    - Bilah aksi formulir diperbarui dengan indikator dinamis: menginformasikan jika ada sesi/draf tersimpan di database dan form di atas siap digunakan untuk sesi lanjutan.
-    - Ditambahkan kartu visual baru **"Riwayat Draf & Sesi Konseling"** di bawah form yang menampilkan daftar sesi: nomor sesi, tanggal & jam, badge status, guru konselor, lokasi, catatan konseling (misal draf teks yang tersimpan), dan rencana dukungan terpilih.
+    - Ditambahkan kartu visual **"Riwayat Draf & Sesi Konseling"** menampilkan: nomor sesi, tanggal & jam, badge status, guru konselor, lokasi, catatan konseling, rencana dukungan, catatan hasil evaluasi.
+    - Setiap kartu riwayat memiliki tombol **"Tandai Selesai"** (hijau, muncul jika status bukan Selesai) dan tombol **"Hapus"** (merah, selalu muncul) dengan konfirmasi `confirm()` browser.
+  - Ditambahkan rute baru di [`routes/web.php`](file:///e:/tugasprog/edutrack/routes/web.php):
+    - `PATCH /tindak-lanjut/{id}/selesai` → `tindak-lanjut.selesai`
+    - `DELETE /tindak-lanjut/{id}` → `tindak-lanjut.destroy`
+    - (Didaftarkan di grup Operator dan Wali Kelas)
   - Kompilasi ulang aset frontend via Vite (`npm run build`).
-  - Verifikasi otomatis: seluruh 6 pengujian di [`tests/Feature/TindakLanjutTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/TindakLanjutTest.php) berstatus PASS.
+  - Verifikasi otomatis: 9 pengujian di [`tests/Feature/TindakLanjutTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/TindakLanjutTest.php) berstatus PASS, termasuk 3 test baru: `test_operator_can_mark_tindak_lanjut_completed`, `test_operator_can_delete_tindak_lanjut`, `test_wali_cannot_delete_tindak_lanjut_of_other_class`.
 
 ### F. Fitur Akademik dan Manajemen Inti yang Sudah Berjalan
 1. **Autentikasi & Otorisasi Berbasis Peran**:
@@ -99,6 +106,10 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
    - Pencatatan rencana bimbingan konseling per siswa berisiko.
    - Penugasan guru pendamping/konselor melalui foreign key `id_guru`.
    - Pelacakan status: `Belum Ditindak`, `Sedang Diproses`, `Selesai`.
+   - Riwayat seluruh sesi tersimpan tampil di kartu "Riwayat Draf & Sesi Konseling".
+   - Tombol **Tandai Selesai** (mengisi `hasil_evaluasi`, `skor_efektivitas`, `tanggal_evaluasi`) dan **Hapus** draf tersedia di tiap kartu riwayat dengan proteksi DLAC.
+   - *Catatan teknis*: Kolom `tindakan` di tabel `tindak_lanjut` diisi hardcode `'Sesi konseling dijadwalkan'` karena kolom bersifat NOT NULL — tidak kritis, karena catatan isi sebenarnya disimpan di kolom `catatan_konseling`. Ini adalah peninggalan desain lama yang **sengaja dibiarkan** (tidak memerlukan perbaikan kritis).
+   - *Catatan desain*: Tabel `nilai_harian` ada di skema database dan model sudah dibuat, namun **sengaja ditinggalkan** tanpa UI input (keputusan desain produk). Kolom ini hanya diisi oleh seeder simulasi dan dikonsumsi AI — bukan fitur yang perlu diimplementasikan.
 
 ---
 
@@ -124,11 +135,20 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Kotak putih kosong di bilah filter Early Warning | Class Tailwind `bg-indigo-600` belum masuk asset build CSS | Dilakukan `npm run build` dan penambahan inline style cadangan pada Blade |
 | Jumlah anggota ekskul tidak tampil di Data Master | Query ekskul belum menyertakan agregasi counter ke relasi `nilai_ekstrakurikuler` | Ditambahkan query `withCount` dinamis berbasis semester aktif dan kolom tabel baru |
 | Tindak Lanjut Operator mengalami 403 Forbidden | Redirect setelah submit mengarah ke rute wali kelas (`wali.early-warning`) | Redirect disesuaikan berdasarkan peran pengguna (`operator.early-warning` vs `wali.early-warning`) |
-| Draf konseling tersimpan tidak muncul di antarmuka web | Setelah submit, form me-reset ke draf baru dan belum ada komponen UI untuk menampilkan data riwayat dari tabel `tindak_lanjut` | Ditambahkan query riwayat di `TindakLanjutController` dan kartu Riwayat Sesi Konseling di `index.blade.php` |
+| Draf konseling tersimpan tidak muncul di antarmuka web | Setelah submit, form me-reset ke draf baru dan belum ada komponen UI untuk menampilkan data riwayat dari tabel `tindak_lanjut` | Ditambahkan query riwayat di `TindakLanjutController`, kartu Riwayat Sesi Konseling di `index.blade.php`, serta tombol Tandai Selesai dan Hapus dengan proteksi DLAC |
 
 ---
 
-## 4. Prioritas Pengembangan Selanjutnya
+## 4. Keputusan Desain yang Disengaja (Intentional Design Decisions)
+
+| Komponen | Keputusan | Alasan |
+|---|---|---|
+| Kolom `tindak_lanjut.tindakan` | Diisi hardcode `'Sesi konseling dijadwalkan'` | Kolom NOT NULL, pengembang lama tidak membuat field input; catatan sebenarnya ada di `catatan_konseling` yang sudah dipakai |
+| Tabel `nilai_harian` | Tidak ada UI input, hanya diisi seeder simulasi | Fitur ditinggalkan secara sadar; data nilai formatif tidak diinput secara terpisah di sistem ini |
+
+---
+
+## 5. Prioritas Pengembangan Selanjutnya
 
 1. **Prioritas Utama**: Memastikan seluruh sistem stabil dan menunggu arahan/permintaan fitur baru dari pengguna.
 2. **Prioritas Sekunder**: Menjalankan regresi tes berkala sebelum perilisan atau penyerahan sistem.

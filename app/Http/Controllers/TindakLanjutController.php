@@ -250,4 +250,59 @@ class TindakLanjutController extends Controller
 
         return redirect()->route($rolePrefix . '.early-warning')->with('success', 'Draf konseling dan rencana tindak lanjut berhasil disimpan.');
     }
+
+    /**
+     * Tandai sesi konseling sebagai selesai.
+     */
+    public function markCompleted(Request $request, $id)
+    {
+        $tl = TindakLanjut::with('analisisSiswa.siswa')->findOrFail($id);
+        $user = Auth::user();
+        $siswa = $tl->analisisSiswa?->siswa;
+
+        if ($user && $siswa && !$user->canAccessSiswa($siswa)) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.');
+        }
+
+        $validated = $request->validate([
+            'hasil_evaluasi'   => 'nullable|string|max:1000',
+            'skor_efektivitas' => 'nullable|in:Membaik,Tetap,Memburuk,Belum Dievaluasi',
+        ]);
+
+        $updateData = [
+            'status' => 'Selesai',
+        ];
+
+        if ($request->filled('hasil_evaluasi')) {
+            $updateData['hasil_evaluasi'] = $validated['hasil_evaluasi'];
+        }
+        if ($request->filled('skor_efektivitas')) {
+            $updateData['skor_efektivitas'] = $validated['skor_efektivitas'];
+        }
+        if (!$tl->tanggal_evaluasi) {
+            $updateData['tanggal_evaluasi'] = now()->toDateString();
+        }
+
+        $tl->update($updateData);
+
+        return back()->with('success', 'Sesi konseling berhasil ditandai selesai.');
+    }
+
+    /**
+     * Hapus riwayat / draf sesi konseling.
+     */
+    public function destroy($id)
+    {
+        $tl = TindakLanjut::with('analisisSiswa.siswa')->findOrFail($id);
+        $user = Auth::user();
+        $siswa = $tl->analisisSiswa?->siswa;
+
+        if ($user && $siswa && !$user->canAccessSiswa($siswa)) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk siswa ini.');
+        }
+
+        $tl->delete();
+
+        return back()->with('success', 'Draf / sesi konseling berhasil dihapus.');
+    }
 }
