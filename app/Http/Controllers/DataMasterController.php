@@ -28,7 +28,7 @@ class DataMasterController extends Controller
             $query->where('id_kelas', $kelasBinaan->id_kelas);
             $kelasList = collect([$kelasBinaan]);
         } else {
-            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $kelasList = Kelas::cachedAll();
         }
 
         if ($search) {

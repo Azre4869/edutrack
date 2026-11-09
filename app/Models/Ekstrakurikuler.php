@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Ekstrakurikuler extends Model
 {
@@ -16,6 +17,27 @@ class Ekstrakurikuler extends Model
         'jadwal',
         'status',
     ];
+
+    /**
+     * Invalidasi cache ekskul saat data berubah.
+     */
+    protected static function booted(): void
+    {
+        $invalidate = fn() => Cache::forget('ekskul_all');
+
+        static::saved($invalidate);
+        static::deleted($invalidate);
+    }
+
+    /**
+     * Dapatkan semua ekstrakurikuler terurut (cached 30 menit).
+     */
+    public static function cachedAll()
+    {
+        return Cache::remember('ekskul_all', 1800, function () {
+            return static::orderBy('nama_ekskul')->get();
+        });
+    }
 
     public function guru()
     {

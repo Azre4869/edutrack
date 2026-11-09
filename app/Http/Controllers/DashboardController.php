@@ -70,8 +70,10 @@ class DashboardController extends Controller
         $user = auth()->user();
         $kelasBinaan = $user?->requireKelasBinaan();
 
-        $totalSiswa = Siswa::where('id_kelas', $kelasBinaan->id_kelas)->count();
-        $siswaIds = Siswa::where('id_kelas', $kelasBinaan->id_kelas)->pluck('id_siswa');
+        // Gabungkan 2 query duplikat menjadi 1
+        $siswaList = Siswa::where('id_kelas', $kelasBinaan->id_kelas)->get();
+        $totalSiswa = $siswaList->count();
+        $siswaIds = $siswaList->pluck('id_siswa');
 
         $totalAbsen = Absensi::whereIn('id_siswa', $siswaIds)->count();
         $hadirAbsen = Absensi::whereIn('id_siswa', $siswaIds)->where('status', 'Hadir')->count();
@@ -219,6 +221,7 @@ class DashboardController extends Controller
 
     /**
      * Hitung tren grafik kehadiran harian secara riil dari database.
+     * Optimasi: 1 query GROUP BY menggantikan N×4 query dalam loop.
      */
     private function getGrafikKehadiran(?Collection $siswaIds = null): array
     {
@@ -227,6 +230,7 @@ class DashboardController extends Controller
             $absensiQuery->whereIn('id_siswa', $siswaIds);
         }
 
+        // Ambil 5 tanggal terakhir
         $recentDates = (clone $absensiQuery)
             ->select('tanggal')
             ->distinct()
@@ -236,51 +240,58 @@ class DashboardController extends Controller
             ->reverse()
             ->values();
 
-        $labels = [];
-        $hadirData = [];
+        if ($recentDates->isEmpty()) {
+            return [
+                'kehadiranLabels'       => [['Senin', '-'], ['Selasa', '-'], ['Rabu', '-'], ['Kamis', '-'], ['Jumat', '-']],
+                'kehadiranHadir'        => [0, 0, 0, 0, 0],
+                'kehadiranSakitIzin'    => [0, 0, 0, 0, 0],
+                'kehadiranAlpa'         => [0, 0, 0, 0, 0],
+                'kehadiranRataRataPekan' => 0,
+            ];
+        }
+
+        // 1 query saja: ambil semua baris untuk 5 tanggal, group by tanggal+status di PHP
+        $rows = (clone $absensiQuery)
+            ->whereIn('tanggal', $recentDates)
+            ->selectRaw('tanggal, status, COUNT(*) as jumlah')
+            ->groupBy('tanggal', 'status')
+            ->get()
+            ->groupBy('tanggal');
+
+        $labels        = [];
+        $hadirData     = [];
         $sakitIzinData = [];
-        $alpaData = [];
+        $alpaData      = [];
         $totalHadirPct = 0;
 
         foreach ($recentDates as $tgl) {
             $dateObj = \Carbon\Carbon::parse($tgl)->locale('id');
-            $dayName = $dateObj->isoFormat('dddd');
-            $dayDate = $dateObj->isoFormat('D MMM');
-            $labels[] = [$dayName, $dayDate];
+            $labels[] = [$dateObj->isoFormat('dddd'), $dateObj->isoFormat('D MMM')];
 
-            $dayQuery = (clone $absensiQuery)->where('tanggal', $tgl);
-            $totalHarian = (clone $dayQuery)->count();
-            $hadirCount = (clone $dayQuery)->where('status', 'Hadir')->count();
-            $sakitIzinCount = (clone $dayQuery)->whereIn('status', ['Sakit', 'Izin'])->count();
-            $alpaCount = (clone $dayQuery)->where('status', 'Alpha')->count();
+            $dayRows    = $rows->get($tgl, collect());
+            $totalHarian = $dayRows->sum('jumlah');
+            $hadirCount  = $dayRows->where('status', 'Hadir')->sum('jumlah');
+            $sakitIzinCount = $dayRows->whereIn('status', ['Sakit', 'Izin'])->sum('jumlah');
+            $alpaCount   = $dayRows->where('status', 'Alpha')->sum('jumlah');
 
-            $hPct = $totalHarian > 0 ? round(($hadirCount / $totalHarian) * 100) : 0;
+            $hPct  = $totalHarian > 0 ? round(($hadirCount / $totalHarian) * 100) : 0;
             $siPct = $totalHarian > 0 ? round(($sakitIzinCount / $totalHarian) * 100) : 0;
-            $aPct = $totalHarian > 0 ? round(($alpaCount / $totalHarian) * 100) : 0;
+            $aPct  = $totalHarian > 0 ? round(($alpaCount / $totalHarian) * 100) : 0;
 
-            $hadirData[] = $hPct;
+            $hadirData[]     = $hPct;
             $sakitIzinData[] = $siPct;
-            $alpaData[] = $aPct;
-            $totalHadirPct += $hPct;
+            $alpaData[]      = $aPct;
+            $totalHadirPct  += $hPct;
         }
 
         $countDays = count($recentDates);
-        $rataRataPekan = $countDays > 0 ? round($totalHadirPct / $countDays, 1) : 0;
-
-        if (empty($labels)) {
-            $labels = [['Senin', '-'], ['Selasa', '-'], ['Rabu', '-'], ['Kamis', '-'], ['Jumat', '-']];
-            $hadirData = [0, 0, 0, 0, 0];
-            $sakitIzinData = [0, 0, 0, 0, 0];
-            $alpaData = [0, 0, 0, 0, 0];
-            $rataRataPekan = 0;
-        }
 
         return [
-            'kehadiranLabels' => $labels,
-            'kehadiranHadir' => $hadirData,
-            'kehadiranSakitIzin' => $sakitIzinData,
-            'kehadiranAlpa' => $alpaData,
-            'kehadiranRataRataPekan' => $rataRataPekan,
+            'kehadiranLabels'        => $labels,
+            'kehadiranHadir'         => $hadirData,
+            'kehadiranSakitIzin'     => $sakitIzinData,
+            'kehadiranAlpa'          => $alpaData,
+            'kehadiranRataRataPekan' => $countDays > 0 ? round($totalHadirPct / $countDays, 1) : 0,
         ];
     }
 }

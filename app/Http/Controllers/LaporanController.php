@@ -44,10 +44,15 @@ class LaporanController extends Controller
             ];
         })->toArray();
 
-        // Rekapitulasi siswa per tingkat (B2: tingkat integer 7, 8, 9)
-        $countVII = Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', 7))->count();
-        $countVIII = Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', 8))->count();
-        $countIX = Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', 9))->count();
+        // Rekapitulasi siswa per tingkat — 1 query GROUP BY menggantikan 3 query terpisah
+        $siswaPerTingkat = Siswa::join('kelas', 'siswa.id_kelas', '=', 'kelas.id_kelas')
+            ->selectRaw('kelas.tingkat, COUNT(siswa.id_siswa) as jumlah')
+            ->groupBy('kelas.tingkat')
+            ->pluck('jumlah', 'tingkat');
+
+        $countVII  = $siswaPerTingkat->get(7, 0);
+        $countVIII = $siswaPerTingkat->get(8, 0);
+        $countIX   = $siswaPerTingkat->get(9, 0);
 
         return view('laporan.index', compact(
             'totalSiswa',

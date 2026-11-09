@@ -18,7 +18,7 @@ class EarlyWarningController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $semesterList = Semester::orderBy('id_semester')->get();
+        $semesterList = Semester::cachedAll();
 
         // --- Data-Level Access Control ---
         if ($user && $user->isWaliKelas()) {
@@ -28,7 +28,7 @@ class EarlyWarningController extends Controller
             $selectedKelasId = $kelasBinaan->id_kelas; // Wali hanya bisa melihat kelasnya sendiri
         } else {
             // Operator: akses penuh
-            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $kelasList = Kelas::cachedAll();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
             $selectedKelasId = (int) $request->query('kelas_id', $defaultKelasId);
         }

@@ -18,7 +18,7 @@ class PresensiController extends Controller
     public function presensiKelas(Request $request)
     {
         $user = auth()->user();
-        $semesterList = Semester::orderBy('id_semester')->get();
+        $semesterList = Semester::cachedAll();
 
         // Data-Level Access Control
         if ($user && $user->isWaliKelas()) {
@@ -27,7 +27,7 @@ class PresensiController extends Controller
             $defaultKelasId = $kelasBinaan->id_kelas;
             $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
-            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $kelasList = Kelas::cachedAll();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
             $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }
@@ -117,8 +117,8 @@ class PresensiController extends Controller
     public function presensiEkskul(Request $request)
     {
         $user = auth()->user();
-        $semesterList = Semester::orderBy('id_semester')->get();
-        $ekskulList = Ekstrakurikuler::orderBy('nama_ekskul')->get();
+        $semesterList = Semester::cachedAll();
+        $ekskulList = Ekstrakurikuler::cachedAll();
 
         // Data-Level Access Control
         if ($user && $user->isWaliKelas()) {
@@ -127,7 +127,7 @@ class PresensiController extends Controller
             $defaultKelasId = $kelasBinaan->id_kelas;
             $selectedKelasId = $kelasBinaan->id_kelas;
         } else {
-            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $kelasList = Kelas::cachedAll();
             $defaultKelasId = $kelasList->first()->id_kelas ?? 1;
             $selectedKelasId = $request->query('kelas_id', $defaultKelasId);
         }

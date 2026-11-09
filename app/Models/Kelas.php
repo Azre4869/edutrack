@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Kelas extends Model
 {
@@ -16,6 +17,27 @@ class Kelas extends Model
         'tahun_ajaran',
         'id_wali_kelas',
     ];
+
+    /**
+     * Invalidasi cache kelas saat data berubah.
+     */
+    protected static function booted(): void
+    {
+        $invalidate = fn() => Cache::forget('kelas_all');
+
+        static::saved($invalidate);
+        static::deleted($invalidate);
+    }
+
+    /**
+     * Dapatkan semua kelas terurut (cached 30 menit).
+     */
+    public static function cachedAll()
+    {
+        return Cache::remember('kelas_all', 1800, function () {
+            return static::orderBy('nama_kelas')->get();
+        });
+    }
 
     public function waliKelas()
     {

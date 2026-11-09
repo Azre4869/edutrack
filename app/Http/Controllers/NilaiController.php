@@ -19,7 +19,7 @@ class NilaiController extends Controller
     public function inputNilai(Request $request)
     {
         $user = auth()->user();
-        $semesterList = Semester::orderBy('id_semester')->get();
+        $semesterList = Semester::cachedAll();
         $activeSemester = Semester::aktif();
         $tahunAjaranList = Semester::getTahunAjaranList();
         $selectedTahunAjaran = $request->query('tahun_ajaran', $activeSemester?->tahun_ajaran ?? '2026/2027');
@@ -31,18 +31,18 @@ class NilaiController extends Controller
             if ($mapelList->isEmpty()) {
                 abort(403, 'Akses ditolak: Anda belum ditugaskan mengampu mata pelajaran apapun.');
             }
-            $kelasList = Kelas::orderBy('nama_kelas')->get(); // Guru bisa mengajar di banyak kelas
+            $kelasList = Kelas::cachedAll(); // Guru bisa mengajar di banyak kelas
             $defaultMapelId = $mapelList->first()->id_mapel ?? null;
         } elseif ($user->isWaliKelas()) {
             // Wali Kelas hanya melihat kelas binaannya
             $kelasBinaan = $user->requireKelasBinaan();
             $kelasList = collect([$kelasBinaan]);
-            $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
+            $mapelList = MataPelajaran::cachedAll();
             $defaultMapelId = $mapelList->first()->id_mapel ?? null;
         } else {
             // Operator: akses penuh
-            $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
-            $kelasList = Kelas::orderBy('nama_kelas')->get();
+            $mapelList = MataPelajaran::cachedAll();
+            $kelasList = Kelas::cachedAll();
             $defaultMapelId = $mapelList->first()?->id_mapel ?? null;
         }
 

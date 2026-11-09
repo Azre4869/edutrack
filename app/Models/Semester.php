@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Semester extends Model
 {
@@ -21,6 +22,19 @@ class Semester extends Model
     ];
 
     /**
+     * Invalidasi semua cache semester saat data berubah.
+     */
+    protected static function booted(): void
+    {
+        $invalidate = fn() => Cache::forget('semester_all')
+            | Cache::forget('semester_aktif')
+            | Cache::forget('semester_tahun_ajaran_list');
+
+        static::saved($invalidate);
+        static::deleted($invalidate);
+    }
+
+    /**
      * Scope untuk semester aktif.
      */
     public function scopeActive($query)
@@ -29,19 +43,33 @@ class Semester extends Model
     }
 
     /**
-     * Dapatkan semester aktif saat ini, fallback ke semester terbaru.
+     * Dapatkan semester aktif saat ini (cached 10 menit), fallback ke semester terbaru.
      */
     public static function aktif(): ?self
     {
-        return static::where('is_active', true)->first()
-            ?? static::orderBy('id_semester', 'desc')->first();
+        return Cache::remember('semester_aktif', 600, function () {
+            return static::where('is_active', true)->first()
+                ?? static::orderBy('id_semester', 'desc')->first();
+        });
     }
 
     /**
-     * Dapatkan daftar tahun ajaran unik yang terurut menurun.
+     * Dapatkan semua semester terurut (cached 30 menit).
+     */
+    public static function cachedAll()
+    {
+        return Cache::remember('semester_all', 1800, function () {
+            return static::orderBy('id_semester')->get();
+        });
+    }
+
+    /**
+     * Dapatkan daftar tahun ajaran unik yang terurut menurun (cached 30 menit).
      */
     public static function getTahunAjaranList()
     {
-        return static::distinct()->orderBy('tahun_ajaran', 'desc')->pluck('tahun_ajaran');
+        return Cache::remember('semester_tahun_ajaran_list', 1800, function () {
+            return static::distinct()->orderBy('tahun_ajaran', 'desc')->pluck('tahun_ajaran');
+        });
     }
 }
