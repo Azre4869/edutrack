@@ -118,6 +118,34 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
    - *Catatan teknis*: Kolom `tindakan` di tabel `tindak_lanjut` diisi hardcode `'Sesi konseling dijadwalkan'` karena kolom bersifat NOT NULL — tidak kritis, karena catatan isi sebenarnya disimpan di kolom `catatan_konseling`. Ini adalah peninggalan desain lama yang **sengaja dibiarkan** (tidak memerlukan perbaikan kritis).
    - *Catatan desain*: Tabel `nilai_harian` ada di skema database dan model sudah dibuat, namun **sengaja ditinggalkan** tanpa UI input (keputusan desain produk). Kolom ini hanya diisi oleh seeder simulasi dan dikonsumsi AI — bukan fitur yang perlu diimplementasikan.
 
+### G. Optimasi Performa Basis Data & In-Memory Caching (Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi (Commit `f03475e`).
+- **Implementasi**:
+  - **Model-Level Caching**:
+    - [`app/Models/Semester.php`](file:///e:/tugasprog/edutrack/app/Models/Semester.php): Menambahkan cache in-memory/file pada `Semester::aktif()` (TTL 10 menit), `Semester::cachedAll()` (TTL 30 menit), dan `Semester::getTahunAjaranList()` (TTL 30 menit). Seluruh cache otomatis ter-invalidate saat event `saved` atau `deleted`.
+    - [`app/Models/Kelas.php`](file:///e:/tugasprog/edutrack/app/Models/Kelas.php), [`app/Models/MataPelajaran.php`](file:///e:/tugasprog/edutrack/app/Models/MataPelajaran.php), [`app/Models/Ekstrakurikuler.php`](file:///e:/tugasprog/edutrack/app/Models/Ekstrakurikuler.php): Menambahkan method `cachedAll()` (TTL 30 menit) dengan invalidasi otomatis.
+  - **Eliminasi N+1 Query Dashboard**:
+    - Pada `DashboardController::getGrafikKehadiran()`, mengubah pola loop 5 hari $\times$ 4 query status (sebelumnya 20 query terpisah) menjadi **1 query agregat** menggunakan `GROUP BY tanggal, status` lalu dikelompokkan pada layer PHP.
+    - Pada `DashboardController::wali()`, menggabungkan query `count()` dan `pluck()` menjadi satu kali eksekusi data siswa.
+  - **Pemadatan Query Rekapitulasi Laporan**:
+    - Pada `LaporanController::index()`, perhitungan siswa per tingkat 7, 8, dan 9 yang sebelumnya memicu 3 query terpisah dipadatkan menjadi **1 query tunggal** berbasis `GROUP BY kelas.tingkat`.
+  - **Pengurangan Beban Database Cloud**:
+    - Pengaturan default `CACHE_STORE` di `.env.example` disesuaikan menjadi `file` guna menghindari round-trip query ke tabel `cache` di remote database.
+
+### H. Perbaikan Fatal Timeout & Arsitektur Early Warning System (Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi (Commit `b7047f5`).
+- **Implementasi**:
+  - Menghapus pemanggilan tak bersyarat `runAnalysis()` pada setiap HTTP GET di [`EarlyWarningService.php`](file:///e:/tugasprog/edutrack/app/Services/EarlyWarning/EarlyWarningService.php). Analisis penuh hanya dijalankan jika data analisis untuk kelas & semester tersebut belum ada sama sekali, memangkas waktu pemuatan halaman dari >35 detik (yang sebelumnya fatal error) menjadi di bawah 1 detik.
+  - Mengimplementasikan in-memory caching untuk pencarian Operator dan Wali Kelas di [`NotificationBuilder.php`](file:///e:/tugasprog/edutrack/app/Services/EarlyWarning/NotificationBuilder.php) guna mengeliminasi N+1 query notifikasi per siswa berisiko.
+
+### I. Perbaikan Ergonomi Antarmuka: Scrollable Sidebar Navigation
+- **Status**: Selesai & Terverifikasi.
+- **Implementasi**:
+  - Pada [`resources/views/layouts/app.blade.php`](file:///e:/tugasprog/edutrack/resources/views/layouts/app.blade.php#L70-L82), elemen navigasi sidebar `<aside>` dirombak dengan struktur Flexbox modern:
+    - **Logo Header**: Menggunakan `shrink-0` agar tetap sticky di bagian atas.
+    - **Menu Navigasi**: Diberikan container `flex-1 overflow-y-auto px-3 py-4 space-y-1` sehingga seluruh menu dapat di-scroll dengan sangat halus pada zoom 100% atau layar beresolusi laptop rendah tanpa ada menu yang terpotong.
+    - **User Profile Footer**: Diberikan `shrink-0` di bagian bawah sidebar agar tetap tampak rapi dan tidak tertutup konten menu.
+
 ---
 
 ## 2. Fitur yang Belum Selesai / Sedang Berlangsung (Pending Tasks)
@@ -144,6 +172,10 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Tindak Lanjut Operator mengalami 403 Forbidden | Redirect setelah submit mengarah ke rute wali kelas (`wali.early-warning`) | Redirect disesuaikan berdasarkan peran pengguna (`operator.early-warning` vs `wali.early-warning`) |
 | Draf konseling tersimpan tidak muncul di antarmuka web | Setelah submit, form me-reset ke draf baru dan belum ada komponen UI untuk menampilkan data riwayat dari tabel `tindak_lanjut` | Ditambahkan query riwayat di `TindakLanjutController`, kartu Riwayat Sesi Konseling di `index.blade.php`, serta tombol Tandai Selesai dan Hapus dengan proteksi DLAC |
 | Menu Tindak Lanjut otomatis membuka siswa "Firdausi Anam" | Controller lama melakukan fallback `$siswa = Siswa::first()` jika parameter ID siswa kosong | Halaman utama `/tindak-lanjut` diubah menjadi Rekap Terpadu seluruh riwayat konseling sekolah, form konseling baru dipindah ke `/tindak-lanjut/{id_siswa}` |
+| Fatal error timeout 30 detik pada GET `/wali/early-warning` | Method `getAnalysisViewData()` memanggil `runAnalysis()` penuh secara sinkron di setiap HTTP request ke remote cloud database | `runAnalysis()` dibungkus pemeriksaan status `!$hasAnalysis`; jika data analisis sudah ada, langsung baca hasil tersimpan |
+| Tampilan CSS rusak (Mixed Content) pada deploy Railway HTTPS | Reverse proxy Railway mengakhiri SSL tanpa header proxy dipercaya oleh Laravel, sehingga asset dipanggil via HTTP | Ditambahkan `$middleware->trustProxies(at: '*')` di `bootstrap/app.php` dan `URL::forceScheme('https')` di `AppServiceProvider.php` |
+| Sidebar terpotong dan tidak bisa di-scroll pada zoom 100% | Elemen `<aside>` berposisi `fixed` tanpa container berkemampuan `overflow-y-auto` | Struktur sidebar diubah menjadi 3 zona: Logo (shrink-0), Menu (flex-1 overflow-y-auto), Profil (shrink-0) |
+| Gagal menghubungi service AI (cURL error 7: 127.0.0.1:8001) | Service Python FastAPI belum dijalankan di Railway, sementara Laravel mencari AI di localhost container | Microservice `ai-service` dideploy sebagai service terpisah di Railway dan dihubungkan via variabel `AI_SERVICE_URL` |
 
 ---
 

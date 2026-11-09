@@ -68,17 +68,17 @@
     @endphp
 
     <!-- SIDEBAR -->
-    <aside class="w-64 bg-white min-h-screen flex flex-col justify-between shadow-xl fixed left-0 top-0 bottom-0 z-40">
-        <div>
-            <!-- LOGO HEADER -->
-            <div class="px-6 py-6 border-b border-gray-100 flex items-center justify-center">
-                <a href="{{ url('/') }}" class="flex items-center space-x-3">
-                    <img src="{{ asset('images/logo-edutrack.png') }}" alt="EduTrack Logo" class="h-14 object-contain">
-                </a>
-            </div>
+    <aside class="w-64 bg-white h-screen flex flex-col shadow-xl fixed left-0 top-0 bottom-0 z-40">
+        <!-- LOGO HEADER (Sticky Top) -->
+        <div class="px-6 py-6 border-b border-gray-100 flex items-center justify-center shrink-0">
+            <a href="{{ url('/') }}" class="flex items-center space-x-3">
+                <img src="{{ asset('images/logo-edutrack.png') }}" alt="EduTrack Logo" class="h-14 object-contain">
+            </a>
+        </div>
 
-            <!-- NAVIGATION ITEMS -->
-            <nav class="mt-4 px-3 space-y-1">
+        <!-- NAVIGATION ITEMS (Scrollable Middle) -->
+        <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+            <nav class="space-y-1">
 
                 @if($role === 'Operator')
                     <!-- OPERATOR MENU -->
@@ -272,7 +272,7 @@
         </div>
 
         <!-- PROFILE AT BOTTOM OF SIDEBAR -->
-        <div class="p-4 border-t border-gray-100 bg-gray-50/70">
+        <div class="p-4 border-t border-gray-100 bg-gray-50/70 shrink-0">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-edu-orange flex items-center justify-center text-white font-bold text-lg shadow-sm">
                     <i class="fa-solid fa-user"></i>
