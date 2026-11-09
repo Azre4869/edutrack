@@ -215,10 +215,17 @@ class EarlyWarningService
         ?string $search = null,
         int $selectedId = 0
     ): array {
-        // Jalankan sinkronisasi analisis untuk kelas terpilih agar data selalu akurat & up-to-date
-        $siswaCount = Siswa::where('id_kelas', $selectedKelasId)->count();
-        if ($siswaCount > 0) {
-            $this->runAnalysis($selectedSemesterId, $selectedKelasId, 'Manual', auth()->id());
+        // Jalankan analisis awal HANYA jika data analisis belum ada sama sekali untuk kelas & semester ini.
+        // Jika sudah ada, gunakan data yang tersimpan agar tidak membebani database di setiap refresh halaman.
+        $hasAnalysis = AnalisisSiswa::whereHas('siswa', fn($q) => $q->where('id_kelas', $selectedKelasId))
+            ->where('id_semester', $selectedSemesterId)
+            ->exists();
+
+        if (!$hasAnalysis) {
+            $siswaCount = Siswa::where('id_kelas', $selectedKelasId)->count();
+            if ($siswaCount > 0) {
+                $this->runAnalysis($selectedSemesterId, $selectedKelasId, 'Manual', auth()->id());
+            }
         }
 
         // Ambil data siswa di kelas dengan relasi analisis terbaru untuk semester terpilih

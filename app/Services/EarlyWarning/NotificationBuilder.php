@@ -9,6 +9,9 @@ use App\Services\EarlyWarning\DTOs\StudentAnalysisResultDTO;
 
 class NotificationBuilder
 {
+    protected static ?\Illuminate\Support\Collection $cachedOperators = null;
+    protected static array $cachedWaliUsers = [];
+
     /**
      * Buat notifikasi pintar untuk siswa berisiko tinggi / sedang dengan proteksi anti-spam.
      *
@@ -27,17 +30,21 @@ class NotificationBuilder
         $idWaliGuru = $siswa->kelas?->id_wali_kelas;
         $targetUsers = collect();
 
-        // 1. Wali Kelas dari kelas siswa
+        // 1. Wali Kelas dari kelas siswa (cached)
         if ($idWaliGuru) {
-            $waliUser = User::where('id_guru', $idWaliGuru)->where('role', 'Wali Kelas')->first();
-            if ($waliUser) {
-                $targetUsers->push($waliUser);
+            if (!array_key_exists($idWaliGuru, static::$cachedWaliUsers)) {
+                static::$cachedWaliUsers[$idWaliGuru] = User::where('id_guru', $idWaliGuru)->where('role', 'Wali Kelas')->first();
+            }
+            if (static::$cachedWaliUsers[$idWaliGuru]) {
+                $targetUsers->push(static::$cachedWaliUsers[$idWaliGuru]);
             }
         }
 
-        // 2. Operator (koordinator akademik / BK)
-        $operators = User::where('role', 'Operator')->get();
-        foreach ($operators as $op) {
+        // 2. Operator (koordinator akademik / BK) (cached)
+        if (static::$cachedOperators === null) {
+            static::$cachedOperators = User::where('role', 'Operator')->get();
+        }
+        foreach (static::$cachedOperators as $op) {
             $targetUsers->push($op);
         }
 
