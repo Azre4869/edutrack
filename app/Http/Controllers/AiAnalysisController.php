@@ -202,12 +202,20 @@ class AiAnalysisController extends Controller
                 ->with('eval_error', $evalResponse['error'] ?? 'Gagal menghubungi service AI.');
         }
 
-        // Simpan hasil evaluasi ke ai_run.metrik terbaru
+        // Simpan hasil evaluasi ke ai_run.metrik terbaru (atau buat baru jika belum ada run analisis)
         $latestRun = AiRun::where('status', 'Success')->orderBy('id', 'desc')->first();
         if ($latestRun) {
             $metrik = $latestRun->metrik ?? [];
             $metrik['eval'] = $evalResponse['data'];
             $latestRun->update(['metrik' => $metrik]);
+        } else {
+            AiRun::create([
+                'id_semester'   => $selectedSemesterId,
+                'model_version' => $evalResponse['data']['model_version'] ?? '1.0.0-kmeans-iforest',
+                'status'        => 'Success',
+                'metrik'        => ['eval' => $evalResponse['data']],
+                'dibuat_pada'   => now(),
+            ]);
         }
 
         Cache::forget('ai_health_status');
