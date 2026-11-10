@@ -160,34 +160,44 @@ def evaluate(req: AnalyzeRequest):
     if not dev_mode:
         raise HTTPException(status_code=403, detail="Endpoint evaluasi dinonaktifkan di mode non-dev.")
 
-    # Jalankan analisis terlebih dahulu
-    analysis_res = analyze(req)
-    siswa_outputs_raw = [o.model_dump() for o in analysis_res.hasil]
+    try:
+        # Jalankan analisis terlebih dahulu
+        analysis_res = analyze(req)
+        siswa_outputs_raw = [o.model_dump() for o in analysis_res.hasil]
 
-    # Ambil persona_map dari request jika dikirimkan oleh Laravel
-    persona_map = None
-    if req.persona_labels:
-        persona_map = {int(k): str(v) for k, v in req.persona_labels.items()}
+        # Ambil persona_map dari request jika dikirimkan oleh Laravel
+        persona_map = None
+        if req.persona_labels:
+            persona_map = {}
+            for k, v in req.persona_labels.items():
+                try:
+                    persona_map[int(k)] = str(v).strip()
+                except (ValueError, TypeError):
+                    continue
 
-    base_dir = os.path.dirname(os.path.dirname(__file__))
-    local_csv = os.path.join(base_dir, "data", "persona_label.csv")
-    monorepo_csv = os.path.join(base_dir, "..", "database", "seeders", "data", "persona_label.csv")
-    target_csv = local_csv if os.path.exists(local_csv) else monorepo_csv
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        local_csv = os.path.join(base_dir, "data", "persona_label.csv")
+        monorepo_csv = os.path.join(base_dir, "..", "database", "seeders", "data", "persona_label.csv")
+        target_csv = local_csv if os.path.exists(local_csv) else monorepo_csv
 
-    eval_result = evaluate_simulation(
-        siswa_outputs=siswa_outputs_raw,
-        raw_siswa_inputs=req.siswa,
-        csv_path=target_csv,
-        persona_map=persona_map
-    )
+        eval_result = evaluate_simulation(
+            siswa_outputs=siswa_outputs_raw,
+            raw_siswa_inputs=req.siswa,
+            csv_path=target_csv,
+            persona_map=persona_map
+        )
 
-    return {
-        "status": eval_result.get("status", "success"),
-        "waktu_evaluasi": datetime.now(timezone.utc).isoformat(),
-        "klaster_overview": analysis_res.klaster.model_dump(),
-        "clustering": eval_result.get("clustering", {}),
-        "anomali_p8": eval_result.get("anomali_p8", {}),
-        "anomali_kritis": eval_result.get("anomali_kritis", {}),
-        "tren_prediksi": eval_result.get("tren_prediksi", {}),
-        "evaluasi": eval_result,
-    }
+        return {
+            "status": eval_result.get("status", "success"),
+            "waktu_evaluasi": datetime.now(timezone.utc).isoformat(),
+            "klaster_overview": analysis_res.klaster.model_dump(),
+            "clustering": eval_result.get("clustering", {}),
+            "anomali_p8": eval_result.get("anomali_p8", {}),
+            "anomali_kritis": eval_result.get("anomali_kritis", {}),
+            "tren_prediksi": eval_result.get("tren_prediksi", {}),
+            "evaluasi": eval_result,
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"AI Evaluator Error: {str(e)}")
