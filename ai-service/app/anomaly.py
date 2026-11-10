@@ -167,8 +167,8 @@ def detect_anomalies(
                 })
 
         # 4. Kriteria final anomali
-        # is_anomaly = true jika IsolationForest menandai DAN (ada |z| >= 2.2 ATAU aturan perubahan mendadak terpenuhi)
-        is_anomaly = bool(is_iforest_flagged and (has_high_z or sudden_drop_triggered))
+        # is_anomaly = true jika ada aturan perubahan mendadak (sudden drop / P8) ATAU (IsolationForest menandai DAN ada z-score deviasi)
+        is_anomaly = bool(sudden_drop_triggered or (is_iforest_flagged and has_high_z))
 
         # Jika is_anomaly tapi belum ada reason terlampir, sertakan reason dengan z tertinggi
         if is_anomaly and not reasons:
