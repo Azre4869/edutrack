@@ -146,6 +146,21 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
     - **Menu Navigasi**: Diberikan container `flex-1 overflow-y-auto px-3 py-4 space-y-1` sehingga seluruh menu dapat di-scroll dengan sangat halus pada zoom 100% atau layar beresolusi laptop rendah tanpa ada menu yang terpotong.
     - **User Profile Footer**: Diberikan `shrink-0` di bagian bawah sidebar agar tetap tampak rapi dan tidak tertutup konten menu.
 
+### J. Modul Evaluasi & Validasi Model AI (Machine Learning Validation)
+- **Status**: Selesai, Terintegrasi Penuh, & Terverifikasi di Lingkungan Produksi Railway.
+- **Implementasi**:
+  - **Arsitektur Pengujian Ground-Truth**:
+    - Validasi performa model Machine Learning lokal (K-Means, Isolation Forest, dan Regresi OLS) terhadap dataset persona terkontrol (`persona_label.csv` - 156 siswa).
+    - Memetakan NIS unik siswa secara dinamis ke ID siswa aktual di basis data saat runtime untuk mengatasi inkonsistensi auto-increment basis data cloud.
+  - **Metrik Terukur**:
+    - **Adjusted Rand Index (ARI) & Cluster Purity**: Mengukur keselarasan pengelompokan alami tanpa supervisi (*unsupervised*) K-Means terhadap profil persona perilaku siswa.
+    - **Deteksi Anomali Persona P8**: Menguji keandalan deteksi siswa berprestasi yang mengalami penurunan tajam mendadak (*sudden drop*) di pekan-pekan akhir.
+    - **Akurasi Prediksi Tren (MAE - Mean Absolute Error)**: Menguji ketepatan regresi linier leave-last-out dibandingkan baseline naive.
+  - **Ketahanan & Integrasi Cloud**:
+    - Proteksi crash HTTP 500 Scikit-learn (penyeragaman panjang sampel evaluasi satu-loop).
+    - Mekanisme fallback pembuatan record `AiRun` mandiri serta penyimpanan metrik evaluasi pada atribut JSON `metrik['eval']` di database.
+    - Flash notification informatif pada antarmuka web saat evaluasi berhasil dijalankan atau dilewati.
+
 ---
 
 ## 2. Fitur yang Belum Selesai / Sedang Berlangsung (Pending Tasks)
@@ -176,6 +191,8 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Tampilan CSS rusak (Mixed Content) pada deploy Railway HTTPS | Reverse proxy Railway mengakhiri SSL tanpa header proxy dipercaya oleh Laravel, sehingga asset dipanggil via HTTP | Ditambahkan `$middleware->trustProxies(at: '*')` di `bootstrap/app.php` dan `URL::forceScheme('https')` di `AppServiceProvider.php` |
 | Sidebar terpotong dan tidak bisa di-scroll pada zoom 100% | Elemen `<aside>` berposisi `fixed` tanpa container berkemampuan `overflow-y-auto` | Struktur sidebar diubah menjadi 3 zona: Logo (shrink-0), Menu (flex-1 overflow-y-auto), Profil (shrink-0) |
 | Gagal menghubungi service AI (cURL error 7: 127.0.0.1:8001) | Service Python FastAPI belum dijalankan di Railway, sementara Laravel mencari AI di localhost container | Microservice `ai-service` dideploy sebagai service terpisah di Railway dan dihubungkan via variabel `AI_SERVICE_URL` |
+| Evaluasi Model AI "Hasil Belum Tersedia" & angka 0,000 | Path `persona_label.csv` tidak ditemukan di container Python terpisah & mismatch ID auto-increment basis data | Laravel mengirimkan mapping persona via payload HTTP berbasis NIS unik siswa, controller melakukan flattening data JSON, dan menyimpan evaluasi mandiri di `AiRun` |
+| Service AI merespons HTTP 500 saat evaluasi model | Inkonsistensi panjang array sampel evaluasi anomali pada Scikit-learn (`ValueError: inconsistent numbers of samples`) | Sinkronisasi pembentukan array `matched_true`, `matched_pred`, dan `matched_is_anomaly` dalam satu loop yang sama di `evaluator.py` |
 
 ---
 
