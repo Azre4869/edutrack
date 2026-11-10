@@ -8,45 +8,45 @@
 <div class="space-y-4">
 
     {{-- Stat Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {{-- Total Siswa --}}
-        <div class="bg-white rounded-xl p-6 flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                <i class="fas fa-users text-3xl text-edu-orange"></i>
+        <div class="bg-white rounded-xl p-5 sm:p-6 flex items-center gap-4 shadow-sm border border-gray-100">
+            <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                <i class="fas fa-users text-2xl sm:text-3xl text-edu-orange"></i>
             </div>
             <div>
-                <p class="text-gray-500 text-sm font-semibold">Total Siswa</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $totalSiswa }}</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-semibold">Total Siswa</p>
+                <p class="text-3xl sm:text-4xl font-bold text-edu-orange font-montserrat">{{ $totalSiswa }}</p>
             </div>
         </div>
         {{-- Kehadiran --}}
-        <div class="bg-white rounded-xl p-6 flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                <i class="fas fa-calendar-check text-3xl text-edu-orange"></i>
+        <div class="bg-white rounded-xl p-5 sm:p-6 flex items-center gap-4 shadow-sm border border-gray-100">
+            <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                <i class="fas fa-calendar-check text-2xl sm:text-3xl text-edu-orange"></i>
             </div>
             <div>
-                <p class="text-gray-500 text-sm font-semibold">Kehadiran Hari ini</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $kehadiranPct }}%</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-semibold">Kehadiran Hari ini</p>
+                <p class="text-3xl sm:text-4xl font-bold text-edu-orange font-montserrat">{{ $kehadiranPct }}%</p>
             </div>
         </div>
         {{-- Rata-rata Nilai --}}
-        <div class="bg-white rounded-xl p-6 flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                <i class="fas fa-chart-line text-3xl text-edu-orange"></i>
+        <div class="bg-white rounded-xl p-5 sm:p-6 flex items-center gap-4 shadow-sm border border-gray-100">
+            <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                <i class="fas fa-chart-line text-2xl sm:text-3xl text-edu-orange"></i>
             </div>
             <div>
-                <p class="text-gray-500 text-sm font-semibold">Rata-rata Nilai Kelas</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ number_format($rataRataNilai, 1, ',', '.') }}</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-semibold">Rata-rata Nilai Kelas</p>
+                <p class="text-3xl sm:text-4xl font-bold text-edu-orange font-montserrat">{{ number_format($rataRataNilai, 1, ',', '.') }}</p>
             </div>
         </div>
         {{-- Jumlah Guru --}}
-        <div class="bg-white rounded-xl p-6 flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                <i class="fas fa-chalkboard-teacher text-3xl text-edu-orange"></i>
+        <div class="bg-white rounded-xl p-5 sm:p-6 flex items-center gap-4 shadow-sm border border-gray-100">
+            <div class="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                <i class="fas fa-chalkboard-teacher text-2xl sm:text-3xl text-edu-orange"></i>
             </div>
             <div>
-                <p class="text-gray-500 text-sm font-semibold">Jumlah Guru</p>
-                <p class="text-4xl font-bold text-edu-orange font-montserrat">{{ $jumlahGuru }}</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-semibold">Jumlah Guru</p>
+                <p class="text-3xl sm:text-4xl font-bold text-edu-orange font-montserrat">{{ $jumlahGuru }}</p>
             </div>
         </div>
     </div>

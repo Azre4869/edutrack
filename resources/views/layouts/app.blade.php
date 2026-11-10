@@ -55,7 +55,7 @@
         }
     </style>
 </head>
-<body class="bg-edu-blue min-h-screen flex text-gray-900 antialiased overflow-x-hidden">
+<body class="bg-edu-blue min-h-screen flex flex-col text-gray-900 antialiased overflow-x-hidden">
 
     @php
         $currentUser = auth()->user() ?? (object)[
@@ -67,13 +67,20 @@
         $currentRoute = Route::currentRouteName();
     @endphp
 
-    <!-- SIDEBAR -->
-    <aside class="w-64 bg-white h-screen flex flex-col shadow-xl fixed left-0 top-0 bottom-0 z-40">
+    <!-- MOBILE BACKDROP OVERLAY -->
+    <div id="sidebarBackdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 hidden transition-opacity lg:hidden" aria-hidden="true"></div>
+
+    <!-- SIDEBAR DRAWER (Off-canvas on mobile, fixed on lg desktop) -->
+    <aside id="sidebarNav" class="w-64 bg-white h-screen flex flex-col shadow-2xl lg:shadow-xl fixed left-0 top-0 bottom-0 z-50 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
         <!-- LOGO HEADER (Sticky Top) -->
-        <div class="px-6 py-6 border-b border-gray-100 flex items-center justify-center shrink-0">
+        <div class="px-5 py-5 border-b border-gray-100 flex items-center justify-between lg:justify-center shrink-0">
             <a href="{{ url('/') }}" class="flex items-center space-x-3">
-                <img src="{{ asset('images/logo-edutrack.png') }}" alt="EduTrack Logo" class="h-14 object-contain">
+                <img src="{{ asset('images/logo-edutrack.png') }}" alt="EduTrack Logo" class="h-11 lg:h-14 object-contain">
             </a>
+            <!-- Mobile Close Button -->
+            <button type="button" onclick="toggleMobileSidebar(false)" class="lg:hidden p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition cursor-pointer" title="Tutup Menu">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
         </div>
 
         <!-- NAVIGATION ITEMS (Scrollable Middle) -->
@@ -285,13 +292,37 @@
         </div>
     </aside>
 
+    <!-- MOBILE TOP BAR (Sticky Top for Mobile/Tablet < lg) -->
+    <div class="lg:hidden sticky top-0 z-30 bg-edu-blue/95 backdrop-blur-sm border-b border-blue-400/30 px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <button type="button" onclick="toggleMobileSidebar(true)" class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 text-white flex items-center justify-center transition cursor-pointer" aria-label="Buka Menu Navigasi">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <a href="{{ url('/') }}" class="flex items-center space-x-2">
+                <img src="{{ asset('images/logo-edutrack.png') }}" alt="Logo" class="h-8 object-contain">
+                <span class="text-white font-extrabold text-base tracking-wide font-heading">EduTrack</span>
+            </a>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="text-[11px] font-bold text-blue-100 bg-white/10 px-2.5 py-1 rounded-lg font-heading hidden sm:inline-block">
+                {{ $role }}
+            </span>
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" title="Keluar Sistem" class="w-9 h-9 rounded-xl bg-edu-orange hover:bg-edu-orangeHover text-white flex items-center justify-center transition shadow cursor-pointer">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- MAIN CONTENT AREA -->
-    <main class="ml-64 flex-1 min-w-0 p-8 min-h-screen">
+    <main class="ml-0 lg:ml-64 flex-1 min-w-0 p-4 sm:p-6 lg:p-8 min-h-screen">
         <!-- TOP HEADER -->
-        <header class="flex items-center justify-between mb-6">
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
-                <h1 class="text-3xl font-black text-white font-heading tracking-wide">@yield('page_title', 'Dashboard')</h1>
-                <nav class="mt-0.5 flex items-center flex-wrap gap-1 text-sm font-medium font-heading text-blue-100" aria-label="Breadcrumb">
+                <h1 class="text-2xl sm:text-3xl font-black text-white font-heading tracking-wide">@yield('page_title', 'Dashboard')</h1>
+                <nav class="mt-0.5 flex items-center flex-wrap gap-1 text-xs sm:text-sm font-medium font-heading text-blue-100" aria-label="Breadcrumb">
                     @hasSection('breadcrumb')
                         @yield('breadcrumb')
                     @elseif(View::hasSection('page_subtitle'))
@@ -370,7 +401,7 @@
                 </nav>
             </div>
 
-            <div class="flex items-center space-x-6">
+            <div class="hidden sm:flex items-center space-x-6">
                 <!-- Date in Indonesian -->
                 <div class="text-white text-sm font-semibold font-heading tracking-wider">
                     {{ now()->locale('id')->translatedFormat('l, j F Y') }}
@@ -379,7 +410,7 @@
                 <!-- LOGOUT BUTTON -->
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" title="Logout" class="w-10 h-10 rounded-lg bg-edu-orange hover:bg-edu-orangeHover text-white flex items-center justify-center transition shadow-md">
+                    <button type="submit" title="Logout" class="w-10 h-10 rounded-lg bg-edu-orange hover:bg-edu-orangeHover text-white flex items-center justify-center transition shadow-md cursor-pointer">
                         <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
                     </button>
                 </form>
@@ -471,6 +502,42 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        // Mobile Sidebar Drawer Toggle
+        function toggleMobileSidebar(open = null) {
+            const sidebar = document.getElementById('sidebarNav');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (!sidebar || !backdrop) return;
+            
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            const shouldOpen = open !== null ? open : !isOpen;
+
+            if (shouldOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+            }
+        }
+
+        // Auto close backdrop on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                toggleMobileSidebar(false);
+            }
+        });
     </script>
     @stack('scripts')
 </body>

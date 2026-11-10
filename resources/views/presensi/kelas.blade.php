@@ -13,22 +13,22 @@
 
 <div class="space-y-4">
     <!-- FILTER & CONTROL BAR (MATCHING MOCKUP) -->
-    <div class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 font-heading">
-        <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-lg border border-gray-100 font-heading">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
             <!-- Form Filter Murni GET (TIDAK AKAN MENYIMPAN DATA, HANYA GANTI TAMPILAN) -->
-            <form id="filterForm" method="GET" action="{{ route($rolePrefix . '.presensi-kelas') }}" class="flex flex-wrap items-center gap-4 flex-1">
+            <form id="filterForm" method="GET" action="{{ route($rolePrefix . '.presensi-kelas') }}" class="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap items-end gap-3 sm:gap-4 flex-1">
                 <!-- Tanggal -->
                 <div>
                     <label class="block text-[11px] font-bold text-gray-700 mb-1">Tanggal</label>
                     <div class="relative">
-                        <input type="date" name="tanggal" value="{{ $selectedTanggal }}" onchange="document.getElementById('filterForm').submit()" class="appearance-none bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                        <input type="date" name="tanggal" value="{{ $selectedTanggal }}" onchange="document.getElementById('filterForm').submit()" class="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     </div>
                 </div>
 
                 <!-- Tahun Ajaran -->
                 <div>
                     <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
-                    <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                         @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
                             <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
                         @endforeach
@@ -38,7 +38,7 @@
                 <!-- Semester -->
                 <div>
                     <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
-                    <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                         @foreach($semesterList as $sm)
                             <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
                         @endforeach
@@ -53,7 +53,7 @@
                             <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
                         @endif
                     </label>
-                    <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                         @foreach($kelasList as $k)
                             <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
                         @endforeach
@@ -61,7 +61,8 @@
                 </div>
 
                 <!-- Search Input -->
-                <div class="pt-4 flex-1 min-w-[200px]">
+                <div class="col-span-2 sm:col-span-4 lg:flex-1 min-w-[200px]">
+                    <label class="block text-[11px] font-bold text-gray-700 mb-1">Cari Siswa</label>
                     <div class="relative">
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-edu-orange text-xs"></i>
                         <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, atau kelas siswa......" class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
@@ -70,14 +71,14 @@
             </form>
 
             <!-- Right: Simpan Semua Button / Mode Read-Only -->
-            <div class="pt-4">
+            <div class="w-full lg:w-auto flex justify-end">
                 @if(!$isReadOnly)
-                <button type="submit" form="savePresensiForm" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
+                <button type="submit" form="savePresensiForm" class="w-full sm:w-auto justify-center bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>Simpan Semua</span>
                 </button>
                 @else
-                <span class="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl shadow-sm">
+                <span class="w-full sm:w-auto justify-center inline-flex items-center space-x-1.5 px-4 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl shadow-sm">
                     <i class="fa-solid fa-lock text-amber-600"></i>
                     <span>Mode Lihat Saja (Read-Only)</span>
                 </span>
@@ -93,8 +94,13 @@
         <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
         <input type="hidden" name="kelas_id" value="{{ $selectedKelasId }}">
 
+    <!-- Petunjuk Geser Tabel Mobile -->
+    <div class="block lg:hidden my-2 text-[11px] text-blue-100 font-medium text-right">
+        <i class="fa-solid fa-arrows-left-right mr-1"></i>Geser tabel untuk melihat seluruh status &rarr;
+    </div>
+
     <!-- EXCEL SPREADSHEET TABLE -->
-    <div class="bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden w-full max-w-full">
+    <div class="bg-white rounded-3xl p-3 sm:p-4 shadow-xl border border-gray-200 overflow-hidden w-full max-w-full">
         <div class="overflow-x-auto w-full max-h-[640px] pb-2">
             <table class="w-full min-w-[1000px] excel-table border-collapse text-xs text-left">
                 <thead>

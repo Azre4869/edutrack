@@ -28,11 +28,11 @@
         </div>
 
         {{-- Filter Bar --}}
-        <form action="{{ url()->current() }}" method="GET" class="mt-4 flex flex-wrap gap-3 items-end">
+        <form action="{{ url()->current() }}" method="GET" class="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end">
             <div>
                 <label class="block text-[11px] font-bold text-gray-600 mb-1 font-heading">Semester</label>
                 <select name="semester_id" onchange="this.form.submit()"
-                    class="bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    class="w-full sm:w-auto bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($semesterList as $sm)
                         <option value="{{ $sm->id_semester }}" {{ $semesterId == $sm->id_semester ? 'selected' : '' }}>
                             {{ $sm->nama_semester }} {{ $sm->tahun_ajaran }}
@@ -48,14 +48,16 @@
                         class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
                 </div>
             </div>
-            <button type="submit" class="bg-edu-orange hover:bg-orange-600 text-white text-xs font-bold py-2 px-4 rounded-xl transition">
-                <i class="fa-solid fa-filter mr-1"></i> Filter
-            </button>
-            @if($search)
-                <a href="{{ url()->current() }}?semester_id={{ $semesterId }}" class="text-xs text-gray-400 hover:text-gray-700 py-2 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition">
-                    <i class="fa-solid fa-xmark mr-1"></i> Reset
-                </a>
-            @endif
+            <div class="flex items-center gap-2">
+                <button type="submit" class="flex-1 sm:flex-none justify-center bg-edu-orange hover:bg-orange-600 text-white text-xs font-bold py-2 px-4 rounded-xl transition cursor-pointer flex items-center">
+                    <i class="fa-solid fa-filter mr-1"></i> Filter
+                </button>
+                @if($search)
+                    <a href="{{ url()->current() }}?semester_id={{ $semesterId }}" class="flex-1 sm:flex-none text-center text-xs text-gray-400 hover:text-gray-700 py-2 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-xmark mr-1"></i> Reset
+                    </a>
+                @endif
+            </div>
         </form>
     </div>
 

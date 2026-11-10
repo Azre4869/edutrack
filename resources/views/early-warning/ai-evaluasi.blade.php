@@ -77,7 +77,7 @@
 @endif
 
 {{-- METRIK GRID --}}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 font-heading">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 font-heading">
     {{-- METRIK 1: CLUSTERING (ARI & PURITY) --}}
     <div class="bg-white rounded-3xl p-6 shadow-md border border-gray-100 flex flex-col justify-between">
         <div>

@@ -20,47 +20,47 @@
 @endphp
 
 {{-- ======= 4 TOP STAT CARDS ======= --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 font-heading">
-    <div class="bg-white rounded-3xl p-5 shadow-md border border-gray-100 flex items-center space-x-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 font-heading">
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-gray-100 flex items-center space-x-3">
         <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl flex-shrink-0">
             <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
         <div>
             <p class="text-xs font-bold text-red-600">Risiko Tinggi</p>
-            <h3 class="text-2xl font-black text-gray-900 mt-0.5">
+            <h3 class="text-xl sm:text-2xl font-black text-gray-900 mt-0.5">
                 {{ $stats['tinggi']['count'] }} <span class="text-xs font-semibold text-gray-400">({{ $stats['tinggi']['pct'] }})</span>
             </h3>
         </div>
     </div>
-    <div class="bg-white rounded-3xl p-5 shadow-md border border-gray-100 flex items-center space-x-3">
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-gray-100 flex items-center space-x-3">
         <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-xl flex-shrink-0">
             <i class="fa-solid fa-circle-exclamation"></i>
         </div>
         <div>
             <p class="text-xs font-bold text-amber-500">Risiko Sedang</p>
-            <h3 class="text-2xl font-black text-gray-900 mt-0.5">
+            <h3 class="text-xl sm:text-2xl font-black text-gray-900 mt-0.5">
                 {{ $stats['sedang']['count'] }} <span class="text-xs font-semibold text-gray-400">({{ $stats['sedang']['pct'] }})</span>
             </h3>
         </div>
     </div>
-    <div class="bg-white rounded-3xl p-5 shadow-md border border-gray-100 flex items-center space-x-3">
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-gray-100 flex items-center space-x-3">
         <div class="w-12 h-12 rounded-full bg-blue-100 text-edu-blue flex items-center justify-center text-xl flex-shrink-0">
             <i class="fa-solid fa-circle-info"></i>
         </div>
         <div>
             <p class="text-xs font-bold text-edu-blue">Risiko Kecil</p>
-            <h3 class="text-2xl font-black text-gray-900 mt-0.5">
+            <h3 class="text-xl sm:text-2xl font-black text-gray-900 mt-0.5">
                 {{ $stats['kecil']['count'] }} <span class="text-xs font-semibold text-gray-400">({{ $stats['kecil']['pct'] }})</span>
             </h3>
         </div>
     </div>
-    <div class="bg-white rounded-3xl p-5 shadow-md border border-gray-100 flex items-center space-x-3">
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-gray-100 flex items-center space-x-3">
         <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl flex-shrink-0">
             <i class="fa-solid fa-circle-check"></i>
         </div>
         <div>
             <p class="text-xs font-bold text-emerald-600">Status Normal</p>
-            <h3 class="text-2xl font-black text-gray-900 mt-0.5">
+            <h3 class="text-xl sm:text-2xl font-black text-gray-900 mt-0.5">
                 {{ $stats['normal']['count'] }} <span class="text-xs font-semibold text-gray-400">({{ $stats['normal']['pct'] }})</span>
             </h3>
         </div>
@@ -68,12 +68,12 @@
 </div>
 
 {{-- ======= FILTER BAR ======= --}}
-<div class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
-    <form action="{{ url()->current() }}" method="GET" class="flex flex-wrap items-end justify-between gap-4">
-        <div class="flex flex-wrap items-end gap-4 flex-1">
+<div class="bg-white rounded-3xl p-4 sm:p-5 shadow-lg border border-gray-100 mb-6 font-heading">
+    <form action="{{ url()->current() }}" method="GET" class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-end gap-3 sm:gap-4 flex-1">
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Ajaran</label>
-                <select name="tahun_ajaran" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="tahun_ajaran" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
                         <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
                     @endforeach
@@ -81,7 +81,7 @@
             </div>
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
-                <select name="semester_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="semester_id" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($semesterList as $sm)
                         <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
                     @endforeach
@@ -94,13 +94,13 @@
                         <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
                     @endif
                 </label>
-                <select name="kelas_id" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="kelas_id" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($kelasList as $k)
                         <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="flex-1 min-w-[220px]">
+            <div class="col-span-2 sm:col-span-3 lg:flex-1 min-w-[200px]">
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Cari Siswa</label>
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-edu-orange text-xs"></i>
@@ -109,30 +109,35 @@
                 </div>
             </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <a href="{{ route($rolePrefix . '.early-warning.ai', array_filter(['semester_id' => $selectedSemesterId, 'kelas_id' => $selectedKelasId])) }}"
-               class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition"
+               class="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition"
                style="background-color: #4f46e5; color: #ffffff;">
                 <i class="fa-solid fa-brain text-white"></i>
                 <span class="text-white">Analisis AI</span>
             </a>
             @if(!$isWali)
             <a href="{{ route('operator.early-warning.kriteria') }}"
-               class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center space-x-1.5 transition">
+               class="flex-1 sm:flex-none justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center space-x-1.5 transition">
                 <i class="fa-solid fa-sliders"></i>
                 <span>Kelola Kriteria</span>
             </a>
             @endif
             <button type="submit" form="form-run-ews"
                     onclick="return confirm('Jalankan analisis Early Warning sekarang?')"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition"
+                    class="flex-1 sm:flex-none justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center space-x-1.5 transition cursor-pointer"
                     style="background-color: #059669; color: #ffffff;">
                 <i class="fa-solid fa-bolt text-white"></i>
                 <span class="text-white">Jalankan Analisis</span>
             </button>
             <a href="{{ url()->current() }}"
-               class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-md flex items-center space-x-1.5 transition"
+               class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center space-x-1.5 transition"
                style="background-color: #E04F26; color: #ffffff;">
+                <i class="fa-solid fa-rotate-right text-white"></i>
+                <span class="text-white">Reset</span>
+            </a>
+        </div>
+    </form>
                 <i class="fa-solid fa-rotate-right text-white"></i>
                 <span class="text-white">Reset</span>
             </a>
@@ -166,7 +171,11 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
     {{-- LEFT TABLE (SPAN 8) --}}
-    <div class="lg:col-span-8 bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden">
+    <div class="lg:col-span-8 bg-white rounded-3xl p-3 sm:p-4 shadow-xl border border-gray-200 overflow-hidden">
+        <!-- Petunjuk Geser Tabel Mobile -->
+        <div class="block lg:hidden mb-2 text-[11px] text-gray-500 font-medium text-right">
+            <i class="fa-solid fa-arrows-left-right mr-1 text-edu-orange"></i>Geser tabel untuk melihat seluruh data &rarr;
+        </div>
         <div class="overflow-x-auto max-h-[640px]">
             {{-- table-fixed + kolom lebar tetap mencegah scroll horizontal di 1366px --}}
             <table class="w-full min-w-[720px] table-fixed border-collapse text-xs text-left excel-table">

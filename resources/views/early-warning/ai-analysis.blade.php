@@ -112,7 +112,7 @@
 @if($latestRun)
 
 {{-- ======= STAT CARDS ======= --}}
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 font-heading">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 font-heading">
     <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex items-center space-x-3">
         <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg flex-shrink-0">
             <i class="fa-solid fa-users"></i>
@@ -268,6 +268,11 @@
         <span class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 whitespace-nowrap">
             Total {{ $anomalies->count() }} Terdeteksi
         </span>
+    </div>
+
+    <!-- Petunjuk Geser Tabel Mobile -->
+    <div class="block lg:hidden mb-2 text-[11px] text-gray-500 font-medium text-right">
+        <i class="fa-solid fa-arrows-left-right mr-1 text-edu-orange"></i>Geser tabel untuk melihat seluruh data &rarr;
     </div>
 
     <div class="overflow-x-auto">

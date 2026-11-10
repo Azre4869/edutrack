@@ -12,13 +12,14 @@
 @endphp
 
 <!-- FILTER BAR -->
-<form id="filterForm" method="GET" action="{{ route($prefix . '.catatan') }}" class="bg-white rounded-3xl p-5 shadow-lg border border-gray-100 mb-6 font-heading">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-4">
+<!-- FILTER BAR -->
+<form id="filterForm" method="GET" action="{{ route($prefix . '.catatan') }}" class="bg-white rounded-3xl p-4 sm:p-5 shadow-lg border border-gray-100 mb-6 font-heading">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-end gap-3 sm:gap-4 flex-1">
             <!-- Tahun Ajaran -->
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Tahun Pelajaran</label>
-                <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
                         <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
                     @endforeach
@@ -28,7 +29,7 @@
             <!-- Semester -->
             <div>
                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Semester</label>
-                <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($semesterList as $sm)
                         <option value="{{ $sm->id_semester }}" {{ $selectedSemesterId == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
                     @endforeach
@@ -43,7 +44,7 @@
                         <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
                     @endif
                 </label>
-                <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-xs font-semibold py-2 px-3 rounded-xl focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($kelasList as $k)
                         <option value="{{ $k->id_kelas }}" {{ $selectedKelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
                     @endforeach
@@ -51,7 +52,8 @@
             </div>
 
             <!-- Search -->
-            <div class="pt-4 flex-1 min-w-[240px]">
+            <div class="col-span-2 sm:col-span-3 lg:flex-1 min-w-[200px]">
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Cari Siswa</label>
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-edu-orange text-xs"></i>
                     <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama atau NIS siswa..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edu-orange">
@@ -60,12 +62,12 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="pt-4 flex items-center space-x-3">
-            <button type="button" onclick="isiTemplateDefault()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 px-4 rounded-xl border border-gray-300 flex items-center space-x-2 transition cursor-pointer" title="Isi otomatis kolom catatan yang masih kosong dengan rekomendasi standar">
+        <div class="flex items-center flex-wrap gap-2.5 w-full lg:w-auto">
+            <button type="button" onclick="isiTemplateDefault()" class="flex-1 sm:flex-none justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 px-4 rounded-xl border border-gray-300 flex items-center space-x-2 transition cursor-pointer" title="Isi otomatis kolom catatan yang masih kosong dengan rekomendasi standar">
                 <i class="fa-solid fa-wand-magic-sparkles text-edu-orange"></i>
                 <span>Template Otomatis</span>
             </button>
-            <button type="submit" form="formCatatan" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
+            <button type="submit" form="formCatatan" class="flex-1 sm:flex-none justify-center bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
                 <i class="fa-solid fa-floppy-disk"></i>
                 <span>Simpan Semua</span>
             </button>
@@ -78,8 +80,13 @@
     <input type="hidden" name="semester_id" value="{{ $selectedSemesterId }}">
     <input type="hidden" name="kelas_id" value="{{ $selectedKelasId }}">
 
+    <!-- Petunjuk Geser Tabel Mobile -->
+    <div class="block lg:hidden mb-2 text-[11px] text-blue-100 font-medium text-right">
+        <i class="fa-solid fa-arrows-left-right mr-1"></i>Geser tabel untuk melihat seluruh catatan &rarr;
+    </div>
+
     <!-- EXCEL TABLE CONTAINER -->
-    <div class="bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-3xl p-3 sm:p-4 shadow-xl border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto max-h-[640px]">
             <table class="w-full excel-table border-collapse text-xs text-left">
                 <thead>

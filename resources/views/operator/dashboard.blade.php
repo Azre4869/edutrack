@@ -8,7 +8,7 @@
 
 @section('content')
 <!-- 4 STAT CARDS -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
     <!-- Card 1: Total Siswa -->
     <div class="bg-white rounded-3xl p-6 shadow-md border border-gray-100 flex flex-col items-center justify-center text-center">
         <h3 class="text-lg font-bold text-gray-900 font-heading mb-4">Total Siswa</h3>
@@ -70,13 +70,13 @@
             </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600 font-medium">
-            <div class="flex items-center space-x-3">
+        <div class="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-gray-600 font-medium">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-edu-blue inline-block mr-1"></span> Hadir Tepat Waktu</span>
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block mr-1"></span> Sakit & Izin</span>
                 <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-400 inline-block mr-1"></span> Alpa / Tanpa Ket.</span>
             </div>
-            <span class="text-[11px] font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">Rata-rata: {{ $kehadiranRataRataPekan }}%</span>
+            <span class="text-[11px] font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded shrink-0">Rata-rata: {{ $kehadiranRataRataPekan }}%</span>
         </div>
     </div>
 
@@ -91,7 +91,7 @@
             </div>
 
             <!-- Donut Chart & Legend -->
-            <div class="flex items-center justify-around mb-6">
+            <div class="flex flex-col sm:flex-row items-center justify-around gap-4 mb-6">
                 <div class="relative w-28 h-28">
                     <canvas id="nilaiDonutChart"></canvas>
                     <div class="absolute inset-0 flex items-center justify-center flex-col">

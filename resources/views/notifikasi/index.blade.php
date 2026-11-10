@@ -18,7 +18,7 @@
 <div class="space-y-4">
 
     {{-- Stat Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {{-- Semua --}}
         <div class="bg-white rounded-xl p-5 flex items-center gap-4 shadow-sm border border-gray-100">
             <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center shrink-0">

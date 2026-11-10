@@ -178,6 +178,26 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
   - **Pembaruan Rangkaian Pengujian (Feature Tests)**:
     - [`tests/Feature/StoreNilaiValidationTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/StoreNilaiValidationTest.php) & [`tests/Feature/StorePresensiValidationTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/StorePresensiValidationTest.php): Menambahkan uji 403 Forbidden saat Operator mencoba menyimpan nilai atau presensi, serta memastikan Guru Mapel dan Wali Kelas tetap dapat menginput data secara normal.
 
+### L. Implementasi Tampilan Responsif Mobile & Smartphone (Mobile-First Ergonomics)
+- **Status**: Selesai, Terintegrasi Penuh, & Terverifikasi (`npm run build` sukses).
+- **Implementasi**:
+  - **Navigasi Off-Canvas Drawer Modern**:
+    - Layout induk [`layouts/app.blade.php`](file:///e:/tugasprog/edutrack/resources/views/layouts/app.blade.php): Sidebar desktop (`lg:w-64`) diubah menjadi off-canvas drawer pada layar ponsel/tablet (`-translate-x-full lg:translate-x-0`) lengkap dengan animasi slide-in halus (`duration-300`).
+    - Ditambahkan **Top Bar Mobile** sticky di atas layar ponsel dengan tombol hamburger (`fa-bars`), logo EduTrack mini, role badge, dan tombol logout cepat.
+    - Ditambahkan **Backdrop Gelap** (`#sidebarBackdrop`) dengan efek blur transparan yang otomatis menutup drawer saat disentuh di luar atau saat menekan tombol `Escape`.
+    - Ditambahkan tombol silang (`fa-xmark`) di bagian header sidebar untuk menutup menu secara manual di ponsel.
+  - **Adaptasi Kisi Metrik & Kartu Statistik**:
+    - Seluruh kisi kartu metrik (Dashboard Operator, Wali, Guru, Notifikasi, Laporan, Early Warning) diubah dari layout desktop kaku menjadi adaptif 1 kolom di HP, 2 kolom di tablet, dan 4 kolom di desktop (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`).
+  - **Bilah Filter & Pencarian Fleksibel**:
+    - Seluruh form filter (Nilai, Presensi Kelas, Presensi Ekskul, Data Master Siswa/Guru/Kelas/Mapel/Ekskul/Semester, Rapor, dan Catatan Sikap) kini tersusun rapi menggunakan Flexbox/Grid adaptif (`grid grid-cols-2 sm:grid-cols-3 lg:flex` atau `flex flex-col sm:flex-row`).
+    - Tombol aksi (Export Excel, Tambah Data, Simpan Semua, Reset) kini mengambil lebar penuh atau sejajar di layar kecil sehingga nyaman disentuh jari (*touch-friendly*).
+  - **Penanganan Tabel Lebar (Table Horizontal Scroll & Indikator)**:
+    - Kontainer seluruh tabel data dibungkus dengan wrapper `overflow-x-auto custom-scrollbar` yang aman dari *layout break*.
+    - Ditambahkan petunjuk visual geser (*scroll hint*) di atas tabel khusus pada layar mobile: *"Geser tabel untuk melihat kolom lainnya →"*.
+  - **Optimalisasi Modal Dialog & Toast**:
+    - Modal Capaian Kompetensi dan Deskripsi Ekskul diberikan batasan tinggi `max-h-[90vh] overflow-y-auto` dengan padding ramah layar kecil (`p-4 sm:p-6`) agar tidak terpotong saat keyboard virtual aktif.
+    - Notifikasi toast disesuaikan posisinya (`bottom-4 right-4 left-4 sm:left-auto sm:right-5`) agar pas di layar ponsel.
+
 ---
 
 ## 2. Fitur yang Belum Selesai / Sedang Berlangsung (Pending Tasks)

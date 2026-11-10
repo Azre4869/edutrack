@@ -14,16 +14,16 @@
 <div class="space-y-4">
 
     {{-- Filter Bar (Murni GET) --}}
-    <form id="filterForm" method="GET" action="{{ route($rolePrefix . '.rapor') }}" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 font-heading">
-        <div class="flex flex-wrap items-center gap-4">
+    <form id="filterForm" method="GET" action="{{ route($rolePrefix . '.rapor') }}" class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 font-heading">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap items-end gap-3 sm:gap-4">
             <div>
                 <label class="text-xs text-gray-700 mb-1 block font-bold">Tanggal</label>
                 <input type="date" name="tanggal" value="{{ $selectedTanggal ?? date('Y-m-d') }}" onchange="document.getElementById('filterForm').submit()"
-                    class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
             </div>
             <div>
                 <label class="text-xs text-gray-700 mb-1 block font-bold">Tahun Ajaran</label>
-                <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="tahun_ajaran" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($tahunAjaranList ?? \App\Models\Semester::getTahunAjaranList() as $ta)
                         <option value="{{ $ta }}" {{ ($selectedTahunAjaran ?? '') === $ta ? 'selected' : '' }}>{{ $ta }}</option>
                     @endforeach
@@ -31,7 +31,7 @@
             </div>
             <div>
                 <label class="text-xs text-gray-700 mb-1 block font-bold">Semester</label>
-                <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="semester_id" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($semesterList as $sm)
                         <option value="{{ $sm->id_semester }}" {{ ($selectedSemesterId ?? '') == $sm->id_semester ? 'selected' : '' }}>{{ $sm->nama_semester }}</option>
                     @endforeach
@@ -44,13 +44,13 @@
                         <span class="text-[10px] text-edu-blue font-normal"><i class="fa-solid fa-lock text-[9px] mr-0.5"></i>Binaan</span>
                     @endif
                 </label>
-                <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
+                <select name="kelas_id" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none cursor-pointer">
                     @foreach($kelasList as $k)
                         <option value="{{ $k->id_kelas }}" {{ ($selectedKelasId ?? 1) == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="flex-1 min-w-[200px]">
+            <div class="col-span-2 sm:col-span-4 lg:flex-1 min-w-[200px]">
                 <label class="text-xs text-gray-700 mb-1 block font-bold">Cari Siswa</label>
                 <div class="relative">
                     <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, atau kelas siswa......"
@@ -61,11 +61,16 @@
         </div>
     </form>
 
+    <!-- Petunjuk Geser Tabel Mobile -->
+    <div class="block lg:hidden my-2 text-[11px] text-blue-100 font-medium text-right">
+        <i class="fa-solid fa-arrows-left-right mr-1"></i>Geser tabel untuk melihat nilai &rarr;
+    </div>
+
     {{-- Main Content: Table + Sidebar --}}
     <div class="flex flex-col lg:flex-row gap-4">
 
         {{-- Table --}}
-        <div class="flex-1 bg-white rounded-3xl p-4 shadow-xl border border-gray-200 overflow-hidden">
+        <div class="flex-1 bg-white rounded-3xl p-3 sm:p-4 shadow-xl border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto w-full max-h-[640px] pb-2">
                 <table class="w-full text-xs border-collapse text-left excel-table">
                     <thead>
