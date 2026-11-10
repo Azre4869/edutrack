@@ -8,6 +8,8 @@
 @php
     $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'wali';
     $isWali = auth()->user()?->isWaliKelas() ?? false;
+    $isOperator = (auth()->user()->role ?? '') === 'Operator';
+    $isReadOnly = $isOperator;
 @endphp
 
 <!-- FILTER BAR (FORM MURNI GET - TIDAK MENYIMPAN DATA SAAT GANTI FILTER) -->
@@ -58,12 +60,19 @@
             </div>
         </div>
 
-        <!-- Simpan Semua -->
+        <!-- Simpan Semua / Mode Read-Only -->
         <div class="pt-4">
+            @if(!$isReadOnly)
             <button type="submit" form="formPresensiEkskul" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
                 <i class="fa-solid fa-floppy-disk"></i>
                 <span>Simpan Semua</span>
             </button>
+            @else
+            <span class="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl shadow-sm">
+                <i class="fa-solid fa-lock text-amber-600"></i>
+                <span>Mode Lihat Saja (Read-Only)</span>
+            </span>
+            @endif
         </div>
     </div>
 </form>
@@ -121,7 +130,7 @@
 
                             <!-- Ekskul 1 -->
                             <td class="p-1 border border-black">
-                                <select id="ekskul_select_{{ $s->id_siswa }}_0" name="ekskul[{{ $s->id_siswa }}][0][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
+                                <select id="ekskul_select_{{ $s->id_siswa }}_0" name="ekskul[{{ $s->id_siswa }}][0][id_ekskul]" {{ $isReadOnly ? 'disabled' : '' }} class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/70' : '' }}">
                                     <option value="">-- Pilih --</option>
                                     @foreach($ekskulList as $e)
                                         <option value="{{ $e->id_ekskul }}" {{ ($ne1 && $ne1->id_ekskul == $e->id_ekskul) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
@@ -129,7 +138,7 @@
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <select id="predikat_select_{{ $s->id_siswa }}_0" name="ekskul[{{ $s->id_siswa }}][0][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
+                                <select id="predikat_select_{{ $s->id_siswa }}_0" name="ekskul[{{ $s->id_siswa }}][0][predikat]" {{ $isReadOnly ? 'disabled' : '' }} class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200 {{ $isReadOnly ? 'cursor-not-allowed' : '' }}">
                                     <option value="Sangat Baik" {{ ($ne1 && $ne1->predikat == 'Sangat Baik') ? 'selected' : '' }}>A</option>
                                     <option value="Baik" {{ ($ne1 && $ne1->predikat == 'Baik') || !$ne1 ? 'selected' : '' }}>B</option>
                                     <option value="Cukup" {{ ($ne1 && $ne1->predikat == 'Cukup') ? 'selected' : '' }}>C</option>
@@ -137,14 +146,14 @@
                             </td>
                             <td class="p-1 text-center border border-black">
                                 <input type="hidden" id="deskripsi_{{ $s->id_siswa }}_0" name="ekskul[{{ $s->id_siswa }}][0][deskripsi]" value="{{ $ne1->deskripsi ?? '' }}">
-                                <button type="button" id="btn_deskripsi_{{ $s->id_siswa }}_0" onclick="bukaModalDeskripsi({{ $s->id_siswa }}, 0, '{{ addslashes($s->nama) }}', 'Ekstrakurikuler 1')" title="{{ $hasCustom1 ? 'Deskripsi: ' . $ne1->deskripsi : 'Tulis Deskripsi Capaian' }}" class="w-6 h-6 rounded {{ $hasCustom1 ? 'bg-emerald-600 text-white' : 'bg-edu-blue text-white' }} inline-flex items-center justify-center text-[10px] hover:opacity-80 transition cursor-pointer">
-                                    <i class="fa-solid {{ $hasCustom1 ? 'fa-check' : 'fa-pen' }}"></i>
+                                <button type="button" id="btn_deskripsi_{{ $s->id_siswa }}_0" onclick="bukaModalDeskripsi({{ $s->id_siswa }}, 0, '{{ addslashes($s->nama) }}', 'Ekstrakurikuler 1')" title="{{ $hasCustom1 ? 'Deskripsi: ' . $ne1->deskripsi : ($isReadOnly ? 'Lihat Deskripsi' : 'Tulis Deskripsi Capaian') }}" class="w-6 h-6 rounded {{ $hasCustom1 ? 'bg-emerald-600 text-white' : 'bg-edu-blue text-white' }} inline-flex items-center justify-center text-[10px] hover:opacity-80 transition cursor-pointer">
+                                    <i class="fa-solid {{ $hasCustom1 ? 'fa-check' : ($isReadOnly ? 'fa-eye' : 'fa-pen') }}"></i>
                                 </button>
                             </td>
 
                             <!-- Ekskul 2 -->
                             <td class="p-1 border border-black">
-                                <select id="ekskul_select_{{ $s->id_siswa }}_1" name="ekskul[{{ $s->id_siswa }}][1][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
+                                <select id="ekskul_select_{{ $s->id_siswa }}_1" name="ekskul[{{ $s->id_siswa }}][1][id_ekskul]" {{ $isReadOnly ? 'disabled' : '' }} class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/70' : '' }}">
                                     <option value="">-- Pilih --</option>
                                     @foreach($ekskulList as $e)
                                         <option value="{{ $e->id_ekskul }}" {{ ($ne2 && $ne2->id_ekskul == $e->id_ekskul) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
@@ -152,7 +161,7 @@
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <select id="predikat_select_{{ $s->id_siswa }}_1" name="ekskul[{{ $s->id_siswa }}][1][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
+                                <select id="predikat_select_{{ $s->id_siswa }}_1" name="ekskul[{{ $s->id_siswa }}][1][predikat]" {{ $isReadOnly ? 'disabled' : '' }} class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200 {{ $isReadOnly ? 'cursor-not-allowed' : '' }}">
                                     <option value="Sangat Baik" {{ ($ne2 && $ne2->predikat == 'Sangat Baik') ? 'selected' : '' }}>A</option>
                                     <option value="Baik" {{ ($ne2 && $ne2->predikat == 'Baik') || !$ne2 ? 'selected' : '' }}>B</option>
                                     <option value="Cukup" {{ ($ne2 && $ne2->predikat == 'Cukup') ? 'selected' : '' }}>C</option>
@@ -160,14 +169,14 @@
                             </td>
                             <td class="p-1 text-center border border-black">
                                 <input type="hidden" id="deskripsi_{{ $s->id_siswa }}_1" name="ekskul[{{ $s->id_siswa }}][1][deskripsi]" value="{{ $ne2->deskripsi ?? '' }}">
-                                <button type="button" id="btn_deskripsi_{{ $s->id_siswa }}_1" onclick="bukaModalDeskripsi({{ $s->id_siswa }}, 1, '{{ addslashes($s->nama) }}', 'Ekstrakurikuler 2')" title="{{ $hasCustom2 ? 'Deskripsi: ' . $ne2->deskripsi : 'Tulis Deskripsi Capaian' }}" class="w-6 h-6 rounded {{ $hasCustom2 ? 'bg-emerald-600 text-white' : 'bg-edu-blue text-white' }} inline-flex items-center justify-center text-[10px] hover:opacity-80 transition cursor-pointer">
-                                    <i class="fa-solid {{ $hasCustom2 ? 'fa-check' : 'fa-pen' }}"></i>
+                                <button type="button" id="btn_deskripsi_{{ $s->id_siswa }}_1" onclick="bukaModalDeskripsi({{ $s->id_siswa }}, 1, '{{ addslashes($s->nama) }}', 'Ekstrakurikuler 2')" title="{{ $hasCustom2 ? 'Deskripsi: ' . $ne2->deskripsi : ($isReadOnly ? 'Lihat Deskripsi' : 'Tulis Deskripsi Capaian') }}" class="w-6 h-6 rounded {{ $hasCustom2 ? 'bg-emerald-600 text-white' : 'bg-edu-blue text-white' }} inline-flex items-center justify-center text-[10px] hover:opacity-80 transition cursor-pointer">
+                                    <i class="fa-solid {{ $hasCustom2 ? 'fa-check' : ($isReadOnly ? 'fa-eye' : 'fa-pen') }}"></i>
                                 </button>
                             </td>
 
                             <!-- Ekskul 3 -->
                             <td class="p-1 border border-black">
-                                <select id="ekskul_select_{{ $s->id_siswa }}_2" name="ekskul[{{ $s->id_siswa }}][2][id_ekskul]" class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs">
+                                <select id="ekskul_select_{{ $s->id_siswa }}_2" name="ekskul[{{ $s->id_siswa }}][2][id_ekskul]" {{ $isReadOnly ? 'disabled' : '' }} class="w-full bg-white border border-gray-300 rounded px-1.5 py-1 text-xs {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/70' : '' }}">
                                     <option value="">-- Pilih --</option>
                                     @foreach($ekskulList as $e)
                                         <option value="{{ $e->id_ekskul }}" {{ ($ne3 && $ne3->id_ekskul == $e->id_ekskul) ? 'selected' : '' }}>{{ $e->nama_ekskul }}</option>
@@ -175,7 +184,7 @@
                                 </select>
                             </td>
                             <td class="p-1 text-center border border-black">
-                                <select id="predikat_select_{{ $s->id_siswa }}_2" name="ekskul[{{ $s->id_siswa }}][2][predikat]" class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200">
+                                <select id="predikat_select_{{ $s->id_siswa }}_2" name="ekskul[{{ $s->id_siswa }}][2][predikat]" {{ $isReadOnly ? 'disabled' : '' }} class="bg-blue-50 text-edu-blue font-bold rounded px-1.5 py-1 text-xs border border-blue-200 {{ $isReadOnly ? 'cursor-not-allowed' : '' }}">
                                     <option value="Sangat Baik" {{ ($ne3 && $ne3->predikat == 'Sangat Baik') ? 'selected' : '' }}>A</option>
                                     <option value="Baik" {{ ($ne3 && $ne3->predikat == 'Baik') || !$ne3 ? 'selected' : '' }}>B</option>
                                     <option value="Cukup" {{ ($ne3 && $ne3->predikat == 'Cukup') ? 'selected' : '' }}>C</option>
@@ -183,14 +192,14 @@
                             </td>
                             <td class="p-1 text-center border border-black">
                                 <input type="hidden" id="deskripsi_{{ $s->id_siswa }}_2" name="ekskul[{{ $s->id_siswa }}][2][deskripsi]" value="{{ $ne3->deskripsi ?? '' }}">
-                                <button type="button" id="btn_deskripsi_{{ $s->id_siswa }}_2" onclick="bukaModalDeskripsi({{ $s->id_siswa }}, 2, '{{ addslashes($s->nama) }}', 'Ekstrakurikuler 3')" title="{{ $hasCustom3 ? 'Deskripsi: ' . $ne3->deskripsi : 'Tulis Deskripsi Capaian' }}" class="w-6 h-6 rounded {{ $hasCustom3 ? 'bg-emerald-600 text-white' : 'bg-edu-blue text-white' }} inline-flex items-center justify-center text-[10px] hover:opacity-80 transition cursor-pointer">
-                                    <i class="fa-solid {{ $hasCustom3 ? 'fa-check' : 'fa-pen' }}"></i>
+                                <button type="button" id="btn_deskripsi_{{ $s->id_siswa }}_2" onclick="bukaModalDeskripsi({{ $s->id_siswa }}, 2, '{{ addslashes($s->nama) }}', 'Ekstrakurikuler 3')" title="{{ $hasCustom3 ? 'Deskripsi: ' . $ne3->deskripsi : ($isReadOnly ? 'Lihat Deskripsi' : 'Tulis Deskripsi Capaian') }}" class="w-6 h-6 rounded {{ $hasCustom3 ? 'bg-emerald-600 text-white' : 'bg-edu-blue text-white' }} inline-flex items-center justify-center text-[10px] hover:opacity-80 transition cursor-pointer">
+                                    <i class="fa-solid {{ $hasCustom3 ? 'fa-check' : ($isReadOnly ? 'fa-eye' : 'fa-pen') }}"></i>
                                 </button>
                             </td>
 
                             <!-- Keterangan / Catatan Siswa -->
                             <td class="p-1.5 border border-black">
-                                <input type="text" name="catatan[{{ $s->id_siswa }}]" value="{{ $waliNote }}" placeholder="Catatan untuk siswa..." class="w-full px-2 py-1 bg-white text-xs border border-gray-300 rounded focus:ring-1 focus:ring-edu-orange focus:outline-none">
+                                <input type="text" name="catatan[{{ $s->id_siswa }}]" value="{{ $waliNote }}" placeholder="{{ $isReadOnly ? '-' : 'Catatan untuk siswa...' }}" {{ $isReadOnly ? 'readonly disabled' : '' }} class="w-full px-2 py-1 bg-white text-xs border border-gray-300 rounded focus:ring-1 focus:ring-edu-orange focus:outline-none {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/70' : '' }}">
                             </td>
                         </tr>
                     @empty
@@ -222,7 +231,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1">Kegiatan Ekstrakurikuler *</label>
-                    <select id="modalEkskulSelect" class="w-full p-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <select id="modalEkskulSelect" {{ $isReadOnly ? 'disabled' : '' }} class="w-full p-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none {{ $isReadOnly ? 'bg-gray-50/70 text-gray-500 cursor-not-allowed' : '' }}">
                         <option value="">-- Pilih Kegiatan --</option>
                         @foreach($ekskulList as $e)
                             <option value="{{ $e->id_ekskul }}">{{ $e->nama_ekskul }}</option>
@@ -231,7 +240,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1">Nilai / Predikat *</label>
-                    <select id="modalPredikatSelect" class="w-full p-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none">
+                    <select id="modalPredikatSelect" {{ $isReadOnly ? 'disabled' : '' }} class="w-full p-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-edu-orange focus:outline-none {{ $isReadOnly ? 'bg-gray-50/70 text-gray-500 cursor-not-allowed' : '' }}">
                         <option value="Sangat Baik">A - Sangat Baik</option>
                         <option value="Baik" selected>B - Baik</option>
                         <option value="Cukup">C - Cukup</option>
@@ -242,9 +251,10 @@
             <!-- Textarea Deskripsi -->
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Deskripsi / Capaian Ekstrakurikuler:</label>
-                <textarea id="modalDeskripsiText" rows="3" class="w-full p-3 border border-gray-300 rounded-xl text-xs font-body focus:ring-2 focus:ring-edu-orange focus:outline-none" placeholder="Tuliskan catatan capaian siswa pada kegiatan ini..."></textarea>
+                <textarea id="modalDeskripsiText" rows="3" {{ $isReadOnly ? 'readonly' : '' }} class="w-full p-3 border border-gray-300 rounded-xl text-xs font-body focus:ring-2 focus:ring-edu-orange focus:outline-none {{ $isReadOnly ? 'bg-gray-50/70 text-gray-700 cursor-not-allowed' : '' }}" placeholder="Tuliskan catatan capaian siswa pada kegiatan ini..."></textarea>
             </div>
 
+            @if(!$isReadOnly)
             <!-- Rekomendasi Cepat -->
             <div>
                 <p class="text-[11px] font-bold text-gray-500 mb-1.5">Pilihan Cepat:</p>
@@ -260,18 +270,25 @@
                     </button>
                 </div>
             </div>
+            @endif
 
             <div class="pt-3 flex items-center justify-between border-t border-gray-100">
+                @if(!$isReadOnly)
                 <button type="button" onclick="setQuickDeskripsi('')" class="text-[11px] text-red-500 hover:text-red-700 font-semibold cursor-pointer">
                     <i class="fa-solid fa-trash-can mr-1"></i>Kosongkan
                 </button>
+                @else
+                <div></div>
+                @endif
                 <div class="flex space-x-2">
                     <button type="button" onclick="tutupModalDeskripsi()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition cursor-pointer">
-                        Batal
+                        {{ $isReadOnly ? 'Tutup' : 'Batal' }}
                     </button>
+                    @if(!$isReadOnly)
                     <button type="button" id="btnSimpanModalDeskripsi" onclick="simpanModalDeskripsiAjax()" class="px-5 py-2 bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center">
                         <span>Simpan Deskripsi</span>
                     </button>
+                    @endif
                 </div>
             </div>
         </div>

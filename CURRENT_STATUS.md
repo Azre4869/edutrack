@@ -161,6 +161,23 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
     - Mekanisme fallback pembuatan record `AiRun` mandiri serta penyimpanan metrik evaluasi pada atribut JSON `metrik['eval']` di database.
     - Flash notification informatif pada antarmuka web saat evaluasi berhasil dijalankan atau dilewati.
 
+### K. Pembatasan Hak Akses Operator: Read-Only pada Modul Nilai & Presensi (Baru Diselesaikan)
+- **Status**: Selesai & Terverifikasi.
+- **Implementasi**:
+  - **Prinsip Pembagian Wewenang (Separation of Concerns)**:
+    - Operator bertindak murni sebagai pengawas/pemantau data akademik sekolah. Hak mutasi/input nilai dipegang oleh **Guru Mapel** pengampu, dan mutasi/input presensi dipegang oleh **Wali Kelas**.
+    - Operator tetap memiliki fleksibilitas penuh untuk melihat (read-only) seluruh data nilai (lintas kelas, mapel, semester) dan seluruh data presensi harian/ekskul tanpa batasan filter kelas binaan.
+  - **Proteksi Tingkat Controller & FormRequest**:
+    - [`StoreNilaiRequest.php`](file:///e:/tugasprog/edutrack/app/Http/Requests/StoreNilaiRequest.php) & [`StorePresensiRequest.php`](file:///e:/tugasprog/edutrack/app/Http/Requests/StorePresensiRequest.php): Menolak request dari Operator pada method `authorize()` (`return false` -> otomatis HTTP 403 Forbidden).
+    - [`NilaiController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/NilaiController.php): Guard eksplisit pada `storeNilai()` dan `storeCapaian()` yang mengembalikan `abort(403)` jika user adalah Operator.
+    - [`PresensiController.php`](file:///e:/tugasprog/edutrack/app/Http/Controllers/PresensiController.php): Guard eksplisit pada `storePresensiKelas()`, `storePresensiEkskul()`, dan `storeDeskripsiAjax()` yang mengembalikan `abort(403)` jika user adalah Operator.
+  - **Penyesuaian Antarmuka Pengguna (Blade Views)**:
+    - [`resources/views/nilai/input-nilai.blade.php`](file:///e:/tugasprog/edutrack/resources/views/nilai/input-nilai.blade.php): Tombol "Simpan Semua" diganti dengan badge `Mode Lihat Saja (Read-Only)`. Seluruh input TP1–TP8 dan SAS berstatus `readonly disabled` dengan styling visual `bg-gray-50/70 cursor-not-allowed`. Modal capaian kompetensi dikunci read-only dan tombol simpan dihilangkan.
+    - [`resources/views/presensi/kelas.blade.php`](file:///e:/tugasprog/edutrack/resources/views/presensi/kelas.blade.php): Tombol "Simpan Semua" diganti badge `Mode Lihat Saja (Read-Only)`. Radio button kehadiran (Hadir/Sakit/Izin/Alpha) serta input keterangan berstatus `disabled` / `readonly`.
+    - [`resources/views/presensi/ekskul.blade.php`](file:///e:/tugasprog/edutrack/resources/views/presensi/ekskul.blade.php): Tombol "Simpan Semua" diganti badge `Mode Lihat Saja (Read-Only)`. Pilihan ekskul, predikat, dan modal capaian/deskripsi dikunci read-only bagi Operator.
+  - **Pembaruan Rangkaian Pengujian (Feature Tests)**:
+    - [`tests/Feature/StoreNilaiValidationTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/StoreNilaiValidationTest.php) & [`tests/Feature/StorePresensiValidationTest.php`](file:///e:/tugasprog/edutrack/tests/Feature/StorePresensiValidationTest.php): Menambahkan uji 403 Forbidden saat Operator mencoba menyimpan nilai atau presensi, serta memastikan Guru Mapel dan Wali Kelas tetap dapat menginput data secara normal.
+
 ---
 
 ## 2. Fitur yang Belum Selesai / Sedang Berlangsung (Pending Tasks)
@@ -193,6 +210,7 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Gagal menghubungi service AI (cURL error 7: 127.0.0.1:8001) | Service Python FastAPI belum dijalankan di Railway, sementara Laravel mencari AI di localhost container | Microservice `ai-service` dideploy sebagai service terpisah di Railway dan dihubungkan via variabel `AI_SERVICE_URL` |
 | Evaluasi Model AI "Hasil Belum Tersedia" & angka 0,000 | Path `persona_label.csv` tidak ditemukan di container Python terpisah & mismatch ID auto-increment basis data | Laravel mengirimkan mapping persona via payload HTTP berbasis NIS unik siswa, controller melakukan flattening data JSON, dan menyimpan evaluasi mandiri di `AiRun` |
 | Service AI merespons HTTP 500 saat evaluasi model | Inkonsistensi panjang array sampel evaluasi anomali pada Scikit-learn (`ValueError: inconsistent numbers of samples`) | Sinkronisasi pembentukan array `matched_true`, `matched_pred`, dan `matched_is_anomaly` dalam satu loop yang sama di `evaluator.py` |
+| Operator memiliki wewenang input & ubah nilai serta presensi | Belum ada pemisahan wewenang mutasi antara Operator dengan Guru Mapel dan Wali Kelas pada controller dan form request | Modul Nilai dan Presensi diubah menjadi mode Read-Only untuk Operator dengan proteksi 403 Forbidden di controller/request dan penguncian input di antarmuka Blade |
 
 ---
 

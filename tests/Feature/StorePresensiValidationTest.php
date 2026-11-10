@@ -19,13 +19,29 @@ class StorePresensiValidationTest extends TestCase
     }
 
     /**
-     * Test validasi required pada store presensi kelas.
+     * Test operator tidak diperbolehkan menyimpan presensi (read-only) -> 403 Forbidden.
      */
-    public function test_store_presensi_validation_required_fields(): void
+    public function test_operator_cannot_store_presensi(): void
     {
         $operator = User::where('username', 'operator')->first();
 
         $response = $this->actingAs($operator)->post(route('operator.presensi-kelas.store'), [
+            'tanggal' => '2026-11-03',
+            'semester_id' => 1,
+            'status' => [],
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * Test validasi required pada store presensi kelas.
+     */
+    public function test_store_presensi_validation_required_fields(): void
+    {
+        $wali = User::where('username', 'walikelas')->first();
+
+        $response = $this->actingAs($wali)->post(route('wali.presensi-kelas.store'), [
             // Kosong tanpa tanggal, semester_id, status
         ]);
 
@@ -37,13 +53,13 @@ class StorePresensiValidationTest extends TestCase
      */
     public function test_store_presensi_validates_status_values(): void
     {
-        $operator = User::where('username', 'operator')->first();
+        $wali = User::where('username', 'walikelas')->first();
         $siswa = Siswa::firstOrCreate(
             ['nis' => 'TEST_PRESENSI_01'],
             ['nama' => 'Siswa Test Presensi', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
         );
 
-        $response = $this->actingAs($operator)->post(route('operator.presensi-kelas.store'), [
+        $response = $this->actingAs($wali)->post(route('wali.presensi-kelas.store'), [
             'tanggal' => '2026-11-03',
             'semester_id' => 1,
             'status' => [

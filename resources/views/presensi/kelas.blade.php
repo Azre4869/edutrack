@@ -7,6 +7,8 @@
 @section('content')
 @php
     $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'wali';
+    $isOperator = (auth()->user()->role ?? '') === 'Operator';
+    $isReadOnly = $isOperator;
 @endphp
 
 <div class="space-y-4">
@@ -67,12 +69,19 @@
                 </div>
             </form>
 
-            <!-- Right: Simpan Semua Button (Tersambung ke savePresensiForm via atribut form) -->
+            <!-- Right: Simpan Semua Button / Mode Read-Only -->
             <div class="pt-4">
+                @if(!$isReadOnly)
                 <button type="submit" form="savePresensiForm" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>Simpan Semua</span>
                 </button>
+                @else
+                <span class="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl shadow-sm">
+                    <i class="fa-solid fa-lock text-amber-600"></i>
+                    <span>Mode Lihat Saja (Read-Only)</span>
+                </span>
+                @endif
             </div>
         </div>
     </div>
@@ -117,29 +126,29 @@
 
                             <!-- RADIO BUTTONS -->
                             <td class="p-2 text-center border border-black">
-                                <label class="inline-flex items-center justify-center cursor-pointer">
-                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Hadir" {{ $currentStatus === 'Hadir' ? 'checked' : '' }} class="w-4 h-4 text-edu-blue focus:ring-edu-blue border-gray-400">
+                                <label class="inline-flex items-center justify-center {{ $isReadOnly ? 'cursor-default' : 'cursor-pointer' }}">
+                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Hadir" {{ $currentStatus === 'Hadir' ? 'checked' : '' }} {{ $isReadOnly ? 'disabled' : '' }} class="w-4 h-4 text-edu-blue focus:ring-edu-blue border-gray-400">
                                 </label>
                             </td>
                             <td class="p-2 text-center border border-black">
-                                <label class="inline-flex items-center justify-center cursor-pointer">
-                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Sakit" {{ $currentStatus === 'Sakit' ? 'checked' : '' }} class="w-4 h-4 text-amber-500 focus:ring-amber-500 border-gray-400">
+                                <label class="inline-flex items-center justify-center {{ $isReadOnly ? 'cursor-default' : 'cursor-pointer' }}">
+                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Sakit" {{ $currentStatus === 'Sakit' ? 'checked' : '' }} {{ $isReadOnly ? 'disabled' : '' }} class="w-4 h-4 text-amber-500 focus:ring-amber-500 border-gray-400">
                                 </label>
                             </td>
                             <td class="p-2 text-center border border-black">
-                                <label class="inline-flex items-center justify-center cursor-pointer">
-                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Izin" {{ $currentStatus === 'Izin' ? 'checked' : '' }} class="w-4 h-4 text-emerald-500 focus:ring-emerald-500 border-gray-400">
+                                <label class="inline-flex items-center justify-center {{ $isReadOnly ? 'cursor-default' : 'cursor-pointer' }}">
+                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Izin" {{ $currentStatus === 'Izin' ? 'checked' : '' }} {{ $isReadOnly ? 'disabled' : '' }} class="w-4 h-4 text-emerald-500 focus:ring-emerald-500 border-gray-400">
                                 </label>
                             </td>
                             <td class="p-2 text-center border border-black">
-                                <label class="inline-flex items-center justify-center cursor-pointer">
-                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Alpha" {{ $currentStatus === 'Alpha' ? 'checked' : '' }} class="w-4 h-4 text-red-500 focus:ring-red-500 border-gray-400">
+                                <label class="inline-flex items-center justify-center {{ $isReadOnly ? 'cursor-default' : 'cursor-pointer' }}">
+                                    <input type="radio" name="status[{{ $s->id_siswa }}]" value="Alpha" {{ $currentStatus === 'Alpha' ? 'checked' : '' }} {{ $isReadOnly ? 'disabled' : '' }} class="w-4 h-4 text-red-500 focus:ring-red-500 border-gray-400">
                                 </label>
                             </td>
 
                             <!-- KETERANGAN INPUT / SELECT -->
                             <td class="p-1.5 border border-black">
-                                <input type="text" name="keterangan[{{ $s->id_siswa }}]" placeholder="Catatan kehadiran (opsional)..." class="w-full px-3 py-1 bg-transparent text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-edu-orange">
+                                <input type="text" name="keterangan[{{ $s->id_siswa }}]" placeholder="{{ $isReadOnly ? '-' : 'Catatan kehadiran (opsional)...' }}" {{ $isReadOnly ? 'readonly disabled' : '' }} class="w-full px-3 py-1 bg-transparent text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-edu-orange {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/50' : '' }}">
                             </td>
                         </tr>
                     @empty

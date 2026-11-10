@@ -71,8 +71,12 @@ class PresensiController extends Controller
 
     public function storePresensiKelas(StorePresensiRequest $request)
     {
-        $validated = $request->validated();
         $user = auth()->user();
+        if ($user && $user->isOperator()) {
+            abort(403, 'Akses ditolak: Operator hanya memiliki hak akses melihat (read-only) data presensi.');
+        }
+
+        $validated = $request->validated();
         if ($user && $user->isWaliKelas()) {
             $user->requireKelasBinaan();
         }
@@ -175,6 +179,10 @@ class PresensiController extends Controller
     public function storePresensiEkskul(Request $request)
     {
         $user = auth()->user();
+        if ($user && $user->isOperator()) {
+            abort(403, 'Akses ditolak: Operator hanya memiliki hak akses melihat (read-only) data presensi & nilai ekstrakurikuler.');
+        }
+
         if ($user && $user->isWaliKelas()) {
             $user->requireKelasBinaan();
         }
@@ -265,6 +273,11 @@ class PresensiController extends Controller
 
     public function storeDeskripsiAjax(Request $request)
     {
+        $user = auth()->user();
+        if ($user && $user->isOperator()) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Operator hanya memiliki hak akses melihat (read-only) deskripsi ekstrakurikuler.'], 403);
+        }
+
         $request->validate([
             'siswa_id'    => 'required|exists:siswa,id_siswa',
             'id_ekskul'   => 'required|exists:ekstrakurikuler,id_ekskul',

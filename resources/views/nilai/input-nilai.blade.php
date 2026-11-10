@@ -9,6 +9,8 @@
     $rolePrefix = (auth()->user()->role ?? '') === 'Operator' ? 'operator' : 'guru';
     $isGuru = auth()->user()->isGuruMapel();
     $isWali = auth()->user()->isWaliKelas();
+    $isOperator = (auth()->user()->role ?? '') === 'Operator';
+    $isReadOnly = $isOperator;
 @endphp
 
 <!-- FILTER BAR (FORM MURNI GET - TIDAK MENYIMPAN DATA SAAT GANTI FILTER) -->
@@ -76,12 +78,19 @@
             </div>
         </div>
 
-        <!-- Simpan Semua Button (Mentarget form input nilai) -->
+        <!-- Simpan Semua Button / Mode Read-Only -->
         <div class="pt-4">
+            @if(!$isReadOnly)
             <button type="submit" form="formInputNilai" class="bg-edu-orange hover:bg-edu-orangeHover text-white text-xs font-bold py-2.5 px-6 rounded-xl shadow-md flex items-center space-x-2 transition cursor-pointer">
                 <i class="fa-solid fa-floppy-disk"></i>
                 <span>Simpan Semua</span>
             </button>
+            @else
+            <span class="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl shadow-sm">
+                <i class="fa-solid fa-lock text-amber-600"></i>
+                <span>Mode Lihat Saja (Read-Only)</span>
+            </span>
+            @endif
         </div>
     </div>
 </form>
@@ -183,9 +192,10 @@
                                         name="nilai[{{ $s->id_siswa }}][tp{{ $tp }}]" 
                                         value="{{ $tpValues[$tp] }}" 
                                         placeholder="-"
+                                        {{ $isReadOnly ? 'readonly disabled' : '' }}
                                         oninput="calculateRow(this)"
                                         onchange="calculateRow(this)"
-                                        class="tp-input w-11 text-center py-1 bg-transparent rounded font-medium focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
+                                        class="tp-input w-11 text-center py-1 bg-transparent rounded font-medium focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200 {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/70 text-gray-700' : '' }}">
                                 </td>
                             @endfor
 
@@ -204,9 +214,10 @@
                                     name="nilai[{{ $s->id_siswa }}][sas]" 
                                     value="{{ $sasValue }}" 
                                     placeholder="-"
+                                    {{ $isReadOnly ? 'readonly disabled' : '' }}
                                     oninput="calculateRow(this)"
                                     onchange="calculateRow(this)"
-                                    class="sas-input w-12 text-center py-1 bg-transparent rounded font-bold focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200">
+                                    class="sas-input w-12 text-center py-1 bg-transparent rounded font-bold focus:bg-white focus:ring-1 focus:ring-edu-orange border border-gray-200 {{ $isReadOnly ? 'cursor-not-allowed bg-gray-50/70 text-gray-700' : '' }}">
                             </td>
 
                             <!-- Nilai Akhir (Rata-rata NS dan SAS) -->
@@ -272,16 +283,18 @@
             <input type="hidden" id="capaian_nomor" name="nomor" value="1">
 
             <div class="mb-6">
-                <textarea id="capaian_deskripsi" name="deskripsi" rows="8" placeholder="Text" class="w-full p-4 rounded-2xl bg-white text-gray-900 font-body text-sm border-0 focus:ring-4 focus:ring-orange-400 focus:outline-none shadow-inner"></textarea>
+                <textarea id="capaian_deskripsi" name="deskripsi" rows="8" placeholder="Deskripsi Capaian Kompetensi..." {{ $isReadOnly ? 'readonly' : '' }} class="w-full p-4 rounded-2xl bg-white text-gray-900 font-body text-sm border-0 focus:ring-4 focus:ring-orange-400 focus:outline-none shadow-inner {{ $isReadOnly ? 'cursor-not-allowed bg-gray-100' : '' }}"></textarea>
             </div>
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-center {{ $isReadOnly ? 'justify-center' : 'justify-between' }}">
                 <button type="button" onclick="closeModalCapaian()" class="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md transition">
-                    Kembali
+                    {{ $isReadOnly ? 'Tutup' : 'Kembali' }}
                 </button>
+                @if(!$isReadOnly)
                 <button type="button" id="btnSubmitCapaian" onclick="saveCapaian()" class="px-8 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md transition">
                     Simpan
                 </button>
+                @endif
             </div>
         </form>
     </div>

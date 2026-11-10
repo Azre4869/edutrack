@@ -11,6 +11,10 @@ class StorePresensiRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $user = $this->user();
+        if ($user && $user->isOperator()) {
+            return false;
+        }
         return true;
     }
 

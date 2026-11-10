@@ -97,8 +97,12 @@ class NilaiController extends Controller
 
     public function storeNilai(StoreNilaiRequest $request)
     {
-        $validated = $request->validated();
         $user = auth()->user();
+        if ($user && $user->isOperator()) {
+            abort(403, 'Akses ditolak: Operator hanya memiliki hak akses melihat (read-only) data nilai.');
+        }
+
+        $validated = $request->validated();
         $semesterId = $validated['semester_id'];
         $mapelId = (int)$validated['mapel_id'];
         $nilaiData = $validated['nilai'] ?? [];
@@ -221,6 +225,10 @@ class NilaiController extends Controller
     public function storeCapaian(Request $request)
     {
         $user = auth()->user();
+        if ($user && $user->isOperator()) {
+            return response()->json(['status' => 'error', 'message' => 'Akses ditolak: Operator hanya memiliki hak akses melihat (read-only) capaian kompetensi.'], 403);
+        }
+
         $mapelId = (int)$request->mapel_id;
 
         if ($user && !$user->canAccessMapel($mapelId)) {

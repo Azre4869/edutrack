@@ -21,14 +21,30 @@ class StoreNilaiValidationTest extends TestCase
     }
 
     /**
+     * Test operator tidak diperbolehkan menyimpan nilai (read-only) -> 403 Forbidden.
+     */
+    public function test_operator_cannot_store_nilai(): void
+    {
+        $operator = User::where('username', 'operator')->first();
+
+        $response = $this->actingAs($operator)->post(route('operator.nilai.store'), [
+            'semester_id' => 1,
+            'mapel_id' => 1,
+            'nilai' => [],
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    /**
      * Test validasi input nilai (semester, mapel, range nilai).
      */
     public function test_store_nilai_validation_rules(): void
     {
-        $operator = User::where('username', 'operator')->first();
+        $guru = User::where('username', 'gurumapel')->first();
 
         // Data tidak lengkap (missing semester & mapel)
-        $response = $this->actingAs($operator)->post(route('operator.nilai.store'), [
+        $response = $this->actingAs($guru)->post(route('guru.nilai.store'), [
             'nilai' => [],
         ]);
 
@@ -40,14 +56,15 @@ class StoreNilaiValidationTest extends TestCase
      */
     public function test_ns_and_nilai_akhir_are_calculated_on_server(): void
     {
-        $operator = User::where('username', 'operator')->first();
+        $guru = User::where('username', 'gurumapel')->first();
+        $mapel = MataPelajaran::where('id_guru', $guru->id_guru)->first();
+
         $siswa = Siswa::firstOrCreate(
             ['nis' => 'TEST_NILAI_01'],
             ['nama' => 'Siswa Test Nilai', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
         );
-        $mapel = MataPelajaran::first();
 
-        $response = $this->actingAs($operator)->post(route('operator.nilai.store'), [
+        $response = $this->actingAs($guru)->post(route('guru.nilai.store'), [
             'semester_id' => 1,
             'mapel_id' => $mapel->id_mapel,
             'nilai' => [
