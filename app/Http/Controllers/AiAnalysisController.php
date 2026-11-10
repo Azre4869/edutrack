@@ -166,8 +166,11 @@ class AiAnalysisController extends Controller
         $evalRunAt = null;
 
         if ($latestRun && isset($latestRun->metrik['eval'])) {
-            $evalData  = $latestRun->metrik['eval'];
-            $evalRunAt = $latestRun->updated_at;
+            $raw = $latestRun->metrik['eval'];
+            $evalData = (isset($raw['evaluasi']) && is_array($raw['evaluasi']))
+                ? array_merge($raw, $raw['evaluasi'])
+                : $raw;
+            $evalRunAt = $latestRun->updated_at ?? $latestRun->dibuat_pada;
         }
 
         return view('early-warning.ai-evaluasi', compact(
@@ -202,18 +205,23 @@ class AiAnalysisController extends Controller
                 ->with('eval_error', $evalResponse['error'] ?? 'Gagal menghubungi service AI.');
         }
 
+        $raw = $evalResponse['data'] ?? [];
+        $dataToSave = (isset($raw['evaluasi']) && is_array($raw['evaluasi']))
+            ? array_merge($raw, $raw['evaluasi'])
+            : $raw;
+
         // Simpan hasil evaluasi ke ai_run.metrik terbaru (atau buat baru jika belum ada run analisis)
         $latestRun = AiRun::where('status', 'Success')->orderBy('id', 'desc')->first();
         if ($latestRun) {
             $metrik = $latestRun->metrik ?? [];
-            $metrik['eval'] = $evalResponse['data'];
+            $metrik['eval'] = $dataToSave;
             $latestRun->update(['metrik' => $metrik]);
         } else {
             AiRun::create([
                 'id_semester'   => $selectedSemesterId,
-                'model_version' => $evalResponse['data']['model_version'] ?? '1.0.0-kmeans-iforest',
+                'model_version' => $dataToSave['model_version'] ?? '1.0.0-kmeans-iforest',
                 'status'        => 'Success',
-                'metrik'        => ['eval' => $evalResponse['data']],
+                'metrik'        => ['eval' => $dataToSave],
                 'dibuat_pada'   => now(),
             ]);
         }

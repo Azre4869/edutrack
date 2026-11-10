@@ -176,8 +176,12 @@ def evaluate(req: AnalyzeRequest):
     )
 
     return {
-        "status": "success",
+        "status": eval_result.get("status", "success"),
         "waktu_evaluasi": datetime.now(timezone.utc).isoformat(),
         "klaster_overview": analysis_res.klaster.model_dump(),
+        "clustering": eval_result.get("clustering", {}),
+        "anomali_p8": eval_result.get("anomali_p8", {}),
+        "anomali_kritis": eval_result.get("anomali_kritis", {}),
+        "tren_prediksi": eval_result.get("tren_prediksi", {}),
         "evaluasi": eval_result,
     }
