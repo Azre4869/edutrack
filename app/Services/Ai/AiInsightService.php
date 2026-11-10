@@ -180,13 +180,27 @@ class AiInsightService
             if (file_exists($csvPath) && ($handle = fopen($csvPath, 'r')) !== false) {
                 $header = fgetcsv($handle);
                 $idIdx = is_array($header) ? array_search('id_siswa', $header) : false;
+                $nisIdx = is_array($header) ? array_search('nis', $header) : false;
                 $personaIdx = is_array($header) ? array_search('persona', $header) : false;
 
-                if ($idIdx !== false && $personaIdx !== false) {
+                // Ambil mapping NIS => id_siswa aktual dari database siswa
+                $nisToIdMap = \App\Models\Siswa::pluck('id_siswa', 'nis')->toArray();
+
+                if ($personaIdx !== false && ($idIdx !== false || $nisIdx !== false)) {
                     $personaLabels = [];
                     while (($row = fgetcsv($handle)) !== false) {
-                        if (isset($row[$idIdx], $row[$personaIdx])) {
-                            $personaLabels[(string) trim($row[$idIdx])] = (string) trim($row[$personaIdx]);
+                        $nis = ($nisIdx !== false && isset($row[$nisIdx])) ? trim($row[$nisIdx]) : null;
+                        $persona = isset($row[$personaIdx]) ? trim($row[$personaIdx]) : null;
+
+                        if ($persona) {
+                            // Prioritaskan ID aktual dari database berdasarkan NIS unik
+                            $actualId = ($nis && isset($nisToIdMap[$nis]))
+                                ? $nisToIdMap[$nis]
+                                : ($idIdx !== false && isset($row[$idIdx]) ? trim($row[$idIdx]) : null);
+
+                            if ($actualId) {
+                                $personaLabels[(string) $actualId] = (string) $persona;
+                            }
                         }
                     }
                     if (!empty($personaLabels)) {
