@@ -28,33 +28,36 @@ def calculate_purity(y_true: List[str], y_pred: List[int]) -> float:
 def evaluate_simulation(
     siswa_outputs: List[Dict[str, Any]],
     raw_siswa_inputs: List[Any],
-    csv_path: Optional[str] = None
+    csv_path: Optional[str] = None,
+    persona_map: Optional[Dict[int, str]] = None
 ) -> Dict[str, Any]:
     """
     Modul D: Evaluasi Komprehensif AI terhadap Persona Label & Baseline Statistik.
     Persona label HANYA digunakan di sini untuk audit/benchmark, tidak masuk ke fitur model.
     """
-    if not csv_path:
-        base_dir = os.path.dirname(os.path.dirname(__file__))
-        local_csv = os.path.join(base_dir, "data", "persona_label.csv")
-        monorepo_csv = os.path.join(base_dir, "..", "database", "seeders", "data", "persona_label.csv")
-        csv_path = local_csv if os.path.exists(local_csv) else monorepo_csv
+    if persona_map is None:
+        if not csv_path:
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            local_csv = os.path.join(base_dir, "data", "persona_label.csv")
+            monorepo_csv = os.path.join(base_dir, "..", "database", "seeders", "data", "persona_label.csv")
+            csv_path = local_csv if os.path.exists(local_csv) else monorepo_csv
 
-    if not os.path.exists(csv_path):
-        return {"status": "skipped", "message": f"File persona label {csv_path} tidak ditemukan."}
+        if not os.path.exists(csv_path):
+            return {"status": "skipped", "message": f"File persona label {csv_path} tidak ditemukan."}
 
-    df_persona = pd.read_csv(csv_path)
-    persona_map = dict(zip(df_persona["id_siswa"], df_persona["persona"]))
+        df_persona = pd.read_csv(csv_path)
+        persona_map = dict(zip(df_persona["id_siswa"].astype(int), df_persona["persona"].astype(str)))
 
     # 1. Evaluasi Clustering vs Persona
     matched_true = []
     matched_pred = []
-    output_by_id = {o["id_siswa"]: o for o in siswa_outputs}
+    output_by_id = {int(o["id_siswa"]): o for o in siswa_outputs}
 
     for id_s, persona in persona_map.items():
-        if id_s in output_by_id:
+        id_int = int(id_s)
+        if id_int in output_by_id:
             matched_true.append(persona)
-            matched_pred.append(output_by_id[id_s]["cluster_id"])
+            matched_pred.append(output_by_id[id_int]["cluster_id"])
 
     ari_score = float(adjusted_rand_score(matched_true, matched_pred)) if matched_true else 0.0
     purity = calculate_purity(matched_true, matched_pred) if matched_true else 0.0

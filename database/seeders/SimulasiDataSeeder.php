@@ -23,6 +23,9 @@ class SimulasiDataSeeder extends Seeder
 
         $this->command?->info('=== MEMULAI SEEDING DATA SIMULASI EDUTRACK ===');
 
+        // Pastikan Master Data (Guru, Kelas, Semester, Mapel) sudah ada
+        $this->call(MasterDataSeeder::class);
+
         // 2. DETERMINISTIC SEED (Mencegah non-deterministik)
         mt_srand(2026);
 

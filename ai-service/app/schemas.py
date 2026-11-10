@@ -45,6 +45,7 @@ class AnalyzeRequest(BaseModel):
     contamination: float = 0.08
     kriteria: Optional[KriteriaInput] = Field(default_factory=KriteriaInput)
     siswa: List[SiswaInput]
+    persona_labels: Optional[Dict[str, str]] = None
 
 
 class AnomalyReason(BaseModel):

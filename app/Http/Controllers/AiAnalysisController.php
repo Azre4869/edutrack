@@ -210,6 +210,12 @@ class AiAnalysisController extends Controller
             ? array_merge($raw, $raw['evaluasi'])
             : $raw;
 
+        if (($dataToSave['status'] ?? '') === 'skipped') {
+            return redirect()
+                ->route('operator.early-warning.ai.evaluasi', ['semester_id' => $selectedSemesterId])
+                ->with('eval_error', 'Evaluasi model dilewati: ' . ($dataToSave['message'] ?? 'Data ground truth persona belum cocok dengan semester ini.'));
+        }
+
         // Simpan hasil evaluasi ke ai_run.metrik terbaru (atau buat baru jika belum ada run analisis)
         $latestRun = AiRun::where('status', 'Success')->orderBy('id', 'desc')->first();
         if ($latestRun) {

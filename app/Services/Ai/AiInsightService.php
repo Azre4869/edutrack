@@ -23,7 +23,7 @@ class AiInsightService
     {
         $enabled = config('services.ai.enabled', true);
         $baseUrl = rtrim(config('services.ai.url', 'http://127.0.0.1:8001'), '/');
-        $timeout = (int) config('services.ai.timeout', 15);
+        $timeout = (int) config('services.ai.timeout', 60);
 
         if (!$enabled) {
             return [
@@ -166,9 +166,38 @@ class AiInsightService
     public function evaluateModel(int $semesterId): array
     {
         $baseUrl = rtrim(config('services.ai.url', 'http://127.0.0.1:8001'), '/');
-        $timeout = (int) config('services.ai.timeout', 20);
+        $timeout = max(60, (int) config('services.ai.timeout', 60));
 
         $payload = $this->extractor->extractForCohort($semesterId);
+
+        // Sisipkan mapping persona_labels dari CSV jika tersedia di repo Laravel
+        $csvCandidates = [
+            database_path('seeders/data/persona_label.csv'),
+            base_path('ai-service/data/persona_label.csv'),
+        ];
+
+        foreach ($csvCandidates as $csvPath) {
+            if (file_exists($csvPath) && ($handle = fopen($csvPath, 'r')) !== false) {
+                $header = fgetcsv($handle);
+                $idIdx = is_array($header) ? array_search('id_siswa', $header) : false;
+                $personaIdx = is_array($header) ? array_search('persona', $header) : false;
+
+                if ($idIdx !== false && $personaIdx !== false) {
+                    $personaLabels = [];
+                    while (($row = fgetcsv($handle)) !== false) {
+                        if (isset($row[$idIdx], $row[$personaIdx])) {
+                            $personaLabels[(string) trim($row[$idIdx])] = (string) trim($row[$personaIdx]);
+                        }
+                    }
+                    if (!empty($personaLabels)) {
+                        $payload['persona_labels'] = $personaLabels;
+                        fclose($handle);
+                        break;
+                    }
+                }
+                fclose($handle);
+            }
+        }
 
         try {
             $response = Http::timeout($timeout)

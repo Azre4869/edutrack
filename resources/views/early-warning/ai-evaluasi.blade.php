@@ -53,6 +53,13 @@
 </div>
 @endif
 
+@if(session('eval_error') || (isset($evalError) && $evalError))
+<div class="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center space-x-2 text-sm text-rose-800 font-heading">
+    <i class="fa-solid fa-circle-exclamation text-rose-600 flex-shrink-0"></i>
+    <span>{{ session('eval_error') ?? $evalError }}</span>
+</div>
+@endif
+
 {{-- ======= MAIN CONTENT ======= --}}
 @if(!empty($evalData) && ($evalData['status'] ?? '') === 'success')
 
