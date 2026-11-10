@@ -164,10 +164,15 @@ def evaluate(req: AnalyzeRequest):
     analysis_res = analyze(req)
     siswa_outputs_raw = [o.model_dump() for o in analysis_res.hasil]
 
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    local_csv = os.path.join(base_dir, "data", "persona_label.csv")
+    monorepo_csv = os.path.join(base_dir, "..", "database", "seeders", "data", "persona_label.csv")
+    target_csv = local_csv if os.path.exists(local_csv) else monorepo_csv
+
     eval_result = evaluate_simulation(
         siswa_outputs=siswa_outputs_raw,
         raw_siswa_inputs=req.siswa,
-        csv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "database", "seeders", "data", "persona_label.csv")
+        csv_path=target_csv
     )
 
     return {

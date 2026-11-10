@@ -28,12 +28,18 @@ def calculate_purity(y_true: List[str], y_pred: List[int]) -> float:
 def evaluate_simulation(
     siswa_outputs: List[Dict[str, Any]],
     raw_siswa_inputs: List[Any],
-    csv_path: str = "database/seeders/data/persona_label.csv"
+    csv_path: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Modul D: Evaluasi Komprehensif AI terhadap Persona Label & Baseline Statistik.
     Persona label HANYA digunakan di sini untuk audit/benchmark, tidak masuk ke fitur model.
     """
+    if not csv_path:
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        local_csv = os.path.join(base_dir, "data", "persona_label.csv")
+        monorepo_csv = os.path.join(base_dir, "..", "database", "seeders", "data", "persona_label.csv")
+        csv_path = local_csv if os.path.exists(local_csv) else monorepo_csv
+
     if not os.path.exists(csv_path):
         return {"status": "skipped", "message": f"File persona label {csv_path} tidak ditemukan."}
 

@@ -15,7 +15,8 @@ class RunEarlyWarningCommand extends Command
     {
         $this->info('Memulai analisis Early Warning System (EWS)...');
 
-        $semesterId = (int) ($this->option('semester') ?: 2);
+        $activeSemester = Semester::aktif();
+        $semesterId = (int) ($this->option('semester') ?: ($activeSemester?->id_semester ?? 1));
         $kelasId = $this->option('kelas') ? (int) $this->option('kelas') : null;
 
         $semester = Semester::find($semesterId);

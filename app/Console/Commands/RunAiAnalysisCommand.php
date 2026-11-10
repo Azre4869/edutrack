@@ -15,7 +15,8 @@ class RunAiAnalysisCommand extends Command
     {
         $this->info('Memulai pemrosesan Analisis AI (Machine Learning Lokal)...');
 
-        $semesterId = (int) ($this->option('semester') ?: 2);
+        $activeSemester = Semester::aktif();
+        $semesterId = (int) ($this->option('semester') ?: ($activeSemester?->id_semester ?? 1));
         $kelasId = $this->option('kelas') ? (int) $this->option('kelas') : null;
         $idLog = $this->option('log') ? (int) $this->option('log') : null;
 
