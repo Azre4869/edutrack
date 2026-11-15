@@ -102,4 +102,15 @@ class NotifikasiController extends Controller
 
         return back()->with('success', 'Notifikasi ditandai telah dibaca.');
     }
+
+    public function markAllRead()
+    {
+        $userId = auth()->id();
+
+        Notifikasi::where('id_user', $userId)
+            ->where('sudah_dibaca', 0)
+            ->update(['sudah_dibaca' => 1]);
+
+        return back()->with('success', 'Semua notifikasi telah ditandai sebagai dibaca.');
+    }
 }

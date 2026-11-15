@@ -126,4 +126,90 @@ class NotifikasiRealDataTest extends TestCase
         $response->assertRedirect();
         $this->assertEquals(1, $notif->fresh()->sudah_dibaca);
     }
+
+    /**
+     * Menandai semua notifikasi sebagai terbaca (mark all as read).
+     */
+    public function test_user_can_mark_all_notifications_as_read(): void
+    {
+        $wali = User::where('username', 'walikelas')->first();
+
+        $analisis = AnalisisSiswa::create([
+            'id_siswa' => 1,
+            'id_semester' => 1,
+            'status' => 'Perlu Perhatian',
+            'skor_total' => 65.5,
+            'rekomendasi' => 'Perlu bimbingan',
+            'tanggal_analisis' => now(),
+        ]);
+
+        // Buat beberapa notifikasi belum dibaca untuk user wali
+        Notifikasi::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $wali->id_user,
+            'pesan' => 'Notifikasi 1 Belum Dibaca',
+            'sudah_dibaca' => 0,
+            'tanggal_kirim' => now(),
+        ]);
+
+        Notifikasi::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $wali->id_user,
+            'pesan' => 'Notifikasi 2 Belum Dibaca',
+            'sudah_dibaca' => 0,
+            'tanggal_kirim' => now(),
+        ]);
+
+        $unreadBefore = Notifikasi::where('id_user', $wali->id_user)->where('sudah_dibaca', 0)->count();
+        $this->assertGreaterThanOrEqual(2, $unreadBefore);
+
+        $response = $this->actingAs($wali)->post(route('wali.notifikasi.read-all'));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $unreadAfter = Notifikasi::where('id_user', $wali->id_user)->where('sudah_dibaca', 0)->count();
+        $this->assertEquals(0, $unreadAfter);
+    }
+
+    /**
+     * Tandai semua dibaca tidak mempengaruhi notifikasi milik pengguna lain.
+     */
+    public function test_mark_all_as_read_does_not_affect_other_users_notifications(): void
+    {
+        $wali = User::where('username', 'walikelas')->first();
+        $operator = User::where('username', 'operator')->first();
+
+        $analisis = AnalisisSiswa::create([
+            'id_siswa' => 1,
+            'id_semester' => 1,
+            'status' => 'Perlu Perhatian',
+            'skor_total' => 65.5,
+            'rekomendasi' => 'Perlu bimbingan',
+            'tanggal_analisis' => now(),
+        ]);
+
+        // Notifikasi wali
+        Notifikasi::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $wali->id_user,
+            'pesan' => 'Notif Wali Belum Dibaca',
+            'sudah_dibaca' => 0,
+            'tanggal_kirim' => now(),
+        ]);
+
+        // Notifikasi operator
+        $notifOperator = Notifikasi::create([
+            'id_analisis' => $analisis->id_analisis,
+            'id_user' => $operator->id_user,
+            'pesan' => 'Notif Operator Tetap Unread',
+            'sudah_dibaca' => 0,
+            'tanggal_kirim' => now(),
+        ]);
+
+        $this->actingAs($wali)->post(route('wali.notifikasi.read-all'));
+
+        // Pastikan notifikasi operator tetap belum dibaca (sudah_dibaca = 0)
+        $this->assertEquals(0, $notifOperator->fresh()->sudah_dibaca);
+    }
 }

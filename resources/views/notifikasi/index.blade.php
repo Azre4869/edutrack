@@ -8,10 +8,10 @@
 @php
     $role = auth()->user()->role ?? '';
     $readRouteName = 'wali.notifikasi.read';
+    $readAllRouteName = 'wali.notifikasi.read-all';
     if ($role === 'Operator') {
         $readRouteName = 'operator.notifikasi.read';
-    } elseif ($role === 'Guru Mapel') {
-        $readRouteName = 'guru.notifikasi.read';
+        $readAllRouteName = 'operator.notifikasi.read-all';
     }
 @endphp
 
@@ -63,12 +63,24 @@
 
     {{-- Notification List --}}
     <div class="bg-white rounded-xl p-6 space-y-6 shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-            <h2 class="text-lg font-bold text-gray-800">Daftar Notifikasi</h2>
-            @if($isDemoData)
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                    <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
-                </span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div class="flex items-center gap-3">
+                <h2 class="text-lg font-bold text-gray-800">Daftar Notifikasi</h2>
+                @if($isDemoData)
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Data contoh
+                    </span>
+                @endif
+            </div>
+            @if($belumDibaca > 0)
+                <form action="{{ route($readAllRouteName) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" 
+                            class="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-edu-blue hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>Tandai Semua Dibaca</span>
+                    </button>
+                </form>
             @endif
         </div>
 

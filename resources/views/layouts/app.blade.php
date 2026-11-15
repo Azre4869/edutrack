@@ -267,12 +267,6 @@
                         <i class="fa-solid fa-book-open w-6 text-center mr-2 {{ request()->routeIs('guru.nilai*') ? 'text-white' : 'text-edu-orange' }}"></i>
                         <span>Nilai Siswa</span>
                     </a>
-
-                    <!-- Notifikasi -->
-                    <a href="{{ route('guru.notifikasi') }}" class="flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors {{ request()->routeIs('guru.notifikasi*') ? 'bg-edu-blue text-white shadow' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <i class="fa-solid fa-bell w-6 text-center mr-2 {{ request()->routeIs('guru.notifikasi*') ? 'text-white' : 'text-edu-orange' }}"></i>
-                        <span>Notifikasi</span>
-                    </a>
                 @endif
 
             </nav>

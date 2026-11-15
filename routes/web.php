@@ -110,6 +110,7 @@ Route::middleware(['web'])->group(function () {
 
         // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
+        Route::post('/notifikasi/read-all', [NotifikasiController::class, 'markAllRead'])->name('notifikasi.read-all');
         Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
 
@@ -153,6 +154,7 @@ Route::middleware(['web'])->group(function () {
 
         // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
+        Route::post('/notifikasi/read-all', [NotifikasiController::class, 'markAllRead'])->name('notifikasi.read-all');
         Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
 
@@ -171,9 +173,5 @@ Route::middleware(['web'])->group(function () {
         Route::get('/capaian', [NilaiController::class, 'inputNilai'])->name('capaian');
         Route::get('/capaian/detail', [NilaiController::class, 'getCapaian'])->name('capaian.detail');
         Route::post('/capaian', [NilaiController::class, 'storeCapaian'])->name('capaian.store');
-
-        // Notifikasi
-        Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
-        Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     });
 });

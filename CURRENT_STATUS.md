@@ -231,6 +231,7 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 | Evaluasi Model AI "Hasil Belum Tersedia" & angka 0,000 | Path `persona_label.csv` tidak ditemukan di container Python terpisah & mismatch ID auto-increment basis data | Laravel mengirimkan mapping persona via payload HTTP berbasis NIS unik siswa, controller melakukan flattening data JSON, dan menyimpan evaluasi mandiri di `AiRun` |
 | Service AI merespons HTTP 500 saat evaluasi model | Inkonsistensi panjang array sampel evaluasi anomali pada Scikit-learn (`ValueError: inconsistent numbers of samples`) | Sinkronisasi pembentukan array `matched_true`, `matched_pred`, dan `matched_is_anomaly` dalam satu loop yang sama di `evaluator.py` |
 | Operator memiliki wewenang input & ubah nilai serta presensi | Belum ada pemisahan wewenang mutasi antara Operator dengan Guru Mapel dan Wali Kelas pada controller dan form request | Modul Nilai dan Presensi diubah menjadi mode Read-Only untuk Operator dengan proteksi 403 Forbidden di controller/request dan penguncian input di antarmuka Blade |
+| Notifikasi belum memiliki opsi tandai semua dibaca | Pengguna harus menandai dibaca satu per satu pada daftar notifikasi | Ditambahkan tombol "Tandai Semua Dibaca" di header notifikasi dengan route `read-all` untuk semua role (Operator, Wali Kelas, Guru Mapel) yang mengupdate seluruh notifikasi belum dibaca milik pengguna aktif |
 
 ---
 
@@ -240,6 +241,7 @@ Status ini diverifikasi langsung terhadap kode sumber pada branch `testing-zaida
 |---|---|---|
 | Kolom `tindak_lanjut.tindakan` | Diisi hardcode `'Sesi konseling dijadwalkan'` | Kolom NOT NULL, pengembang lama tidak membuat field input; catatan sebenarnya ada di `catatan_konseling` yang sudah dipakai |
 | Tabel `nilai_harian` | Tidak ada UI input, hanya diisi seeder simulasi | Fitur ditinggalkan secara sadar; data nilai formatif tidak diinput secara terpisah di sistem ini |
+| Menu Notifikasi Guru Mapel | Dihapus dari rute dan antarmuka sidebar | Logika bisnis pengiriman peringatan EWS hanya ditujukan untuk Wali Kelas dan Operator; akun Guru Mapel tidak memiliki alur masuk notifikasi sehingga menu dihapus agar antarmuka fokus dan tidak membingungkan |
 
 ---
 

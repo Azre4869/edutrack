@@ -29,19 +29,19 @@ class FlashMessageTest extends TestCase
      */
     public function test_success_flash_appears_exactly_once_after_store_nilai(): void
     {
-        $operator  = User::where('username', 'operator')->first();
-        $mapel     = MataPelajaran::first();
+        $guru  = User::where('username', 'gurumapel')->first();
+        $mapel = MataPelajaran::where('id_guru', $guru->id_guru)->first() ?? MataPelajaran::first();
 
         $siswa = Siswa::firstOrCreate(
             ['nis' => 'FLASH_TEST_01'],
             ['nama' => 'Siswa Flash Test', 'jenis_kelamin' => 'L', 'id_kelas' => 1, 'status_siswa' => 'Aktif']
         );
 
-        // Kirim POST dengan Referer agar back() redirect ke halaman nilai, bukan ke /
-        $response = $this->actingAs($operator)
-            ->withHeaders(['Referer' => route('operator.nilai')])
+        // Kirim POST dengan Referer agar back() redirect ke halaman nilai guru, bukan ke /
+        $response = $this->actingAs($guru)
+            ->withHeaders(['Referer' => route('guru.nilai')])
             ->followingRedirects()
-            ->post(route('operator.nilai.store'), [
+            ->post(route('guru.nilai.store'), [
                 'semester_id' => 1,
                 'mapel_id'    => $mapel->id_mapel,
                 'nilai'       => [
